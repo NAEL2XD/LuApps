@@ -3,7 +3,8 @@ All of the LUA APIs in this page!
 Includes all VARIABLES, FUNCTIONS and EVENTS on all and what they do!
 
 If there's something below, but don't know what they do? You can use CTRL+F and find which function or variable and then see what it does for the function, event or variable!
-<small>This was automated, click here > [^1]</small>
+
+<small>This was generated, click [here](https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.)#this-was-generated) for the code.</small>
 
 There are a total of:
 * 49 functions.
@@ -339,4 +340,5 @@ Function called when script moves 1 frame.
 ### `tweenComplete(tag:String)`
 Function called when a tween is completed.
 
-[^1]: *Generated from luapi2markdown in [extras/luapi2markdown.py](https://github.com/NAEL2XD/LuApps/tree/main/source)*
+# This was generated!
+*Generated from luapi2markdown in [extras/luapi2markdown.py](https://github.com/NAEL2XD/LuApps/tree/main/source)*
