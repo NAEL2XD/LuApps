@@ -1,6 +1,7 @@
 package;
 
 
+import lime.app.Application;
 import flixel.util.FlxTimer;
 import flixel.tweens.FlxTween;
 import flixel.FlxState;
@@ -23,11 +24,13 @@ class Dummy extends FlxState
 	public var timers:Map<String, FlxTimer> = new Map<String, FlxTimer>();
 	public var luaArray:Array<LuaEngine> = PlayState.lolArray;
 
-	var oldTime:Float = Timer.stamp(); //time
+	public static var oldTime:Float = Timer.stamp(); //time
 
 	override public function create()
 	{
 		instance = this;
+
+		updateVars();
 
 		callOnLuas("create");
 		super.create();
@@ -35,15 +38,7 @@ class Dummy extends FlxState
 
 	override public function update(elapsed:Float)
 	{
-		set('fullscreen',   FlxG.fullscreen);
-		set('height',       FlxG.height);
-		set('mouseMoved',   FlxG.mouse.justMoved);
-		set('width',        FlxG.width);
-		set('mouseX',       FlxG.mouse.x);
-		set('mouseY',       FlxG.mouse.y);
-
-		set('fps',          FPSCounter.currentFPS);
-		set('time',         Timer.stamp() - oldTime);
+		updateVars();
 
 		callOnLuas("update", [elapsed]);
 
@@ -59,11 +54,27 @@ class Dummy extends FlxState
 			luaArray = [];
 
 			PlayState.lolArray = [];
-			PlayState.lolArray.push(new LuaEngine(PlayState.modRaw + "main.lua"));
+			PlayState.lolArray.push(new LuaEngine(PlayState.modRaw + "source/main.lua"));
 			FlxG.switchState(Dummy.new);
 		}
 		
 		super.update(elapsed);
+	}
+
+	public function updateVars()
+	{
+		set('author',       PlayState.author);
+		set('fullscreen',   FlxG.fullscreen);
+		set('fps',          FPSCounter.currentFPS);
+		set('height',       Application.current.window.height);
+		set('modName',      PlayState.modName);
+		set('modRaw',       PlayState.modRaw);
+		set('mouseMoved',   FlxG.mouse.justMoved);
+		set('mouseX',       FlxG.mouse.x);
+		set('mouseY',       FlxG.mouse.y);
+		set('osName',       Application.current.window.display.name);
+		set('time',         Timer.stamp() - oldTime);
+		set('width',        Application.current.window.width);
 	}
 
 	public function callOnLuas(event:String, args:Array<Dynamic> = null, ignoreStops = true, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {

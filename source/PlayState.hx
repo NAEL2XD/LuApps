@@ -1,5 +1,6 @@
 package;
 
+import lime.app.Application;
 import haxe.Timer;
 import openfl.media.Sound;
 import flixel.util.FlxTimer;
@@ -92,11 +93,16 @@ class PlayState extends FlxState
 		mouseDistance.makeGraphic(0, 0, FlxColor.RED);
 		add(mouseDistance);
 
-		var version:FlxText = new FlxText(20, 670, 1920, 'You are running ${Main.luversion} using ${Std.string(FlxG.VERSION)}');
-		version.setFormat("assets/fonts/main.ttf", 20, FlxColor.GRAY);
+		var version:FlxText = new FlxText(20, 675, 1920, 'You are running ${Main.luversion} using ${Std.string(FlxG.VERSION)}');
+		version.setFormat("assets/fonts/main.ttf", 20, Std.parseInt('0xFF4D4242'));
 		version.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 		version.bold = true;
 		version.underline = true;
+		new FlxTimer().start(5, function(e) {
+			FlxTween.tween(version, {y: 720, alpha: 0, "scale.y": 0.6}, 2, {ease: FlxEase.circIn, onComplete: function(e) {
+				version.destroy();
+			}});
+		});
 		add(version);
 
 		if (Prefs.allowParticles) {
@@ -128,11 +134,9 @@ class PlayState extends FlxState
 	}
 
 	function generate() {
-		for (table in spriteIDList)
-			for (sprite in table) sprite.destroy();
+		for (table in spriteIDList) for (sprite in table) sprite.destroy();
 
-		for (table in textIDList)
-			for (text in table) text.destroy();
+		for (table in textIDList) for (text in table) text.destroy();
 
 		function dumb(Value:Float):Void yPos = Value;
 
@@ -151,7 +155,7 @@ class PlayState extends FlxState
 		var done:Int = 0;
 		for (folder in checks) {
 			var fileName:String = "mods/" + folder + "/";
-			if (FileSystem.exists(fileName + "main.lua")) {
+			if (FileSystem.exists(fileName + "source/main.lua")) {
 				var name:String = folder;
 				var cred:String = "Unknown";
 				var pngExist:Bool = FileSystem.exists(fileName + "pack.png");
@@ -164,7 +168,7 @@ class PlayState extends FlxState
 						cred = extract.author;
 					} catch(e) trace('JSON for $folder is not formatted correctly.\nError: $e');
 				}
-				luaLists.push([name, fileName + "main.lua", folder, cred]);
+				luaLists.push([name, fileName + "source/main.lua", folder, cred]);
 
 				spriteIDList.push([]);
 				var l:Int = spriteIDList.length-1;
@@ -270,23 +274,21 @@ class PlayState extends FlxState
 
 			if (yPos < -160 * (luaLists.length - 4)) yPos = -160 * (luaLists.length - 4);
 			if (yPos > -5) yPos = -5;
+		}
 
-			if (luaLists.length > 4) {
-				var id:Int = 0;
-				for (table in spriteIDList) {
-					for (sprite in table) {
-						sprite.y = spriteYPos[id] + yPos;
-						id++;
-					}
-				}
-		
-				id = 0;
-				for (table in textIDList) {
-					for (text in table) {
-						text.y = textYPos[id] + yPos;
-						id++;
-					}
-				}
+		var id:Int = 0;
+		for (table in spriteIDList) {
+			for (sprite in table) {
+				sprite.y = spriteYPos[id] + yPos;
+				id++;
+			}
+		}
+
+		id = 0;
+		for (table in textIDList) {
+			for (text in table) {
+				text.y = textYPos[id] + yPos;
+				id++;
 			}
 		}
 
@@ -306,6 +308,7 @@ class PlayState extends FlxState
 				modRaw = "mods/" + luaLists[choice][2] + "/";
 				author = luaLists[choice][3];
 				lolArray.push(new LuaEngine(luaLists[choice][1]));
+				Application.current.window.title = 'LuApps: $modName';
 				FlxG.sound.destroy(true);
 				FlxG.switchState(Dummy.new);
 			}});

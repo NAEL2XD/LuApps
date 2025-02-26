@@ -71,13 +71,23 @@ function create()
     print(randomBool(50)) -- Gets random bool, i might get a true and you get a false.
 
     print(author) -- Prints who made it, it's "Nael2xd"
+
+    print(osName) -- The current os running, i'll get "Generic PnP Monitor".
+
+    sendPopup("", "HEY!") -- Window Popup.
+
+    setWindowName("Hello, my name is window!") -- Sets the window name next to the icon.
+
+    makeText("textread", getContent("text.txt"), 1920, 180, 180)
+    setTextSize("textread", 28)
+    addText("textread")
 end
 
 local enable = true
 -- On every frame pass, call an update, It's not "onUpdate".
 function update()
     -- time variable gets the time on how long has it ran.
-    print(time)
+    --print(time)
 
     -- Set the visibility! Beware, it cause lag.
     setMouseVisibility(false)
@@ -119,5 +129,5 @@ function update()
     -- Mouse Properties
     setTextString("mousemovechk", "Mouse X: " .. mouseX .. "\nMouse Y: " .. mouseY)
 
-    moveTowardsMouse("lol", 400) -- I'm gonna catch you!
+    moveTowardsMouse("lol", 800) -- I'm gonna catch you!
 end

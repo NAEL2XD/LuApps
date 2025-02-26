@@ -2,7 +2,9 @@ package;
 
 // Will credit them later..
 
-import flixel.sound.FlxSound;
+import debug.FPSCounter;
+import haxe.Timer;
+import lime.app.Application;
 import flixel.util.FlxTimer;
 import flixel.math.FlxVelocity;
 import openfl.media.Sound;
@@ -14,14 +16,12 @@ import sys.io.File;
 import sys.FileSystem;
 import flixel.util.FlxColor;
 import flixel.text.FlxText;
-import openfl.system.System;
 import llua.Lua;
 import llua.LuaL;
 import llua.State;
 import llua.Convert;
 import flixel.FlxG;
 import flixel.FlxSprite;
-import openfl.Lib;
 import openfl.filters.ShaderFilter;
 import Dummy;
 
@@ -60,19 +60,6 @@ class LuaEngine {
 
 		var raw:String = PlayState.modRaw;
 
-		set('fullscreen',   FlxG.fullscreen);
-		set('height',       FlxG.height);
-		set('mouseMoved',   FlxG.mouse.justMoved);
-		set('mouseX',       FlxG.mouse.x);
-		set('mouseY',       FlxG.mouse.y);
-		set('width',        FlxG.width);
-		
-		set('author',       PlayState.author);
-		set('time',         0);
-		set('fps',          0);
-		set('modName',      PlayState.modName);
-		set('modRaw',       raw);
-
 		Lua_helper.add_callback(lua, "print", function(text:String) {
 			print(text);
 		});
@@ -95,7 +82,7 @@ class LuaEngine {
 			resetSpriteTag(tag);
 			var sprite:ModchartSprite = new ModchartSprite(x, y);
 			if(image != null && image.length > 0) {
-				var path:String = raw + 'images/$image.png';
+				var path:String = raw + 'assets/images/$image.png';
 				var xd:BitmapData = null;
 				if (FileSystem.exists(path))
 					xd = BitmapData.fromFile(path);
@@ -279,7 +266,7 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "playMusic", function(music:String, ?volume:Float = 1, ?loop:Bool = false) {
-			FlxG.sound.playMusic(raw + 'music/$music.ogg', volume, loop);
+			FlxG.sound.playMusic(raw + 'assets/music/$music.ogg', volume, loop);
 		});
 
 		Lua_helper.add_callback(lua, "setWindowSize", function(?width:Int = 1280, ?height:Int = 720) {
@@ -469,15 +456,14 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "playSound", function(sound:String) {
-			var n:String = raw + 'sounds/$sound.ogg';
+			var n:String = raw + 'assets/sounds/$sound.ogg';
 
 			if (!FileSystem.exists(n)) {
 				print('playSound: Coundn\'t find sound file: $n', true);
 				return;
 			}
 
-			var sound:FlxSound;
-			sound = FlxG.sound.load(n);
+			var sound:Sound = Sound.fromFile(n);
 			sound.play();
 		});
 
@@ -491,10 +477,9 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "sendPopup", function(?title:String = "", desc:String = "") {
-			if (title != "")
-				title = PlayState.modName;
+			if (title == "") title = PlayState.modName;
 
-			if (desc != "") {
+			if (desc == "unknown description") {
 				print("sendPopup: Argument 2: Desc cannot be empty!", true);
 				return;
 			}
@@ -511,7 +496,7 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "randomBool", function(?chance:Float = 50) {
-			if (chance > 100) chance = 0;
+			if (chance > 100) chance = 100;
 			if (chance < 0)   chance = 0;
 
 			return FlxG.random.bool(chance);
@@ -614,19 +599,20 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "getContent", function(file:String = ''):String {
+			var n:String = raw + 'assets/data/$file';
 			if (file == '') {
 				print("getContent: File argument is empty!", true);
 				return "";
 			}
 
-			if (!FileSystem.exists(raw + file)) {
-				print("getContent: File does not exist! Did you make a typo?", true);
+			if (!FileSystem.exists(n)) {
+				print('getContent: File does not exist on $n! Did you make a typo?', true);
 				return "";
 			}
 				
-			print(raw + file);
-			var plswork:Dynamic = File.getContent(raw + file);
-			return plswork.toString();
+			print(n);
+			var plswork:Dynamic = File.getContent(n);
+			return plswork;
 		});
 
 		Lua_helper.add_callback(lua, "getColorFromFlx", function(color:String = ''):FlxColor {
@@ -652,6 +638,10 @@ class LuaEngine {
 			}
 
 			return col;
+		});
+
+		Lua_helper.add_callback(lua, "setWindowName", function(name:String = "LuApps") {
+			Application.current.window.title = name;
 		});
 	}
 
