@@ -3,6 +3,7 @@ All of the LUA APIs in this page!
 Includes all VARIABLES, FUNCTIONS and EVENTS on all and what they do!
 
 If there's something below, but don't know what they do? You can use CTRL+F and find which function or variable and then see what it does for the function, event or variable!
+
 <small>This was generated, click [here](https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.)#this-was-generated) for the code.</small>
 
 There are a total of:
