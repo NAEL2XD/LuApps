@@ -4,7 +4,7 @@ file = open('import.json', 'r')
 converter = json.loads(file.read())
 thing = list(converter.keys())
 
-markdownMake = "All of the LUA APIs in this page!\n\nIncludes all VARIABLES, FUNCTIONS and EVENTS on all and what they do!\n\nIf there's something below, but don't know what they do? You can use CTRL+F and find which function or variable and then see what it does for the function, event or variable!\n\n<small>This was generated, click [here](https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.)#this-was-generated) for the code.</small>\n\nThere are a total of:\n"
+markdownMake = "All of the LUA APIs in this page!\n\nIncludes all VARIABLES, FUNCTIONS and EVENTS on all and what they do!\n\nIf there's something below, but don't know what they do? You can use CTRL+F and find which function or variable and then see what it does for the function, event or variable!\n\n<small>This was generated, click [here](https://github.com/NAEL2XD/LuApps/blob/main/extras/main.py) for the code.</small>\n\nThere are a total of:\n"
 
 for i in range(3):
     markdownMake += f'* {len(list(converter[thing[i]].keys()))} {thing[i]}.\n'
