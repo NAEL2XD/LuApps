@@ -88,7 +88,7 @@ class LuaEngine {
 					xd = BitmapData.fromFile(path);
 				sprite.loadGraphic(xd);
 			}
-			sprite.antialiasing = true;
+			sprite.antialiasing = Prefs.antiAliasing;
 			Dummy.instance.sprites.set(tag, sprite);
 			sprite.active = true;
 		});
@@ -242,7 +242,7 @@ class LuaEngine {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null)
 			{
-				obj.font = '${raw}fonts/$newFont.ttf';
+				obj.font = '${raw}assets/fonts/$newFont.ttf';
 				return true;
 			}
 			print('setTextFont: Object $tag doesn\'t exist!', true);
@@ -640,8 +640,20 @@ class LuaEngine {
 			return col;
 		});
 
-		Lua_helper.add_callback(lua, "setWindowName", function(name:String = "LuApps") {
-			Application.current.window.title = name;
+		Lua_helper.add_callback(lua, "setWindowName", function(name:String) {
+			Main.changeWindowName(name);
+		});
+
+		Lua_helper.add_callback(lua, "objectsOverlap", function(obj1:String, obj2:String) {
+			var namesArray:Array<String> = [obj1, obj2];
+			var objectsArray:Array<FlxSprite> = [];
+			for (i in 0...namesArray.length)
+			{
+				var thinhg = Dummy.instance.getLuaObject(namesArray[i]);
+				if(thinhg != null) objectsArray.push(thinhg); else objectsArray.push(Reflect.getProperty(Dummy.instance, namesArray[i]));
+			}
+
+			return !objectsArray.contains(null) && FlxG.overlap(objectsArray[0], objectsArray[1]);
 		});
 	}
 

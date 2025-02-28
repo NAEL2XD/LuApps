@@ -76,16 +76,19 @@ function create()
 
     sendPopup("", "HEY!") -- Window Popup.
 
-    setWindowName("Hello, my name is window!") -- Sets the window name next to the icon.
-
-    makeText("textread", getContent("text.txt"), 1920, 180, 180)
+    makeText("textread", getContent("text.txt"), 1920, 0, 180)
     setTextSize("textread", 28)
+    screenCenter("textread") -- centers a text to screen
     addText("textread")
+
+    print(version) -- The current version of LuApps
 end
 
 local enable = true
 -- On every frame pass, call an update, It's not "onUpdate".
 function update()
+    setWindowName("Hello, my name is window!") -- Sets the window name next to the icon.
+
     -- time variable gets the time on how long has it ran.
     --print(time)
 

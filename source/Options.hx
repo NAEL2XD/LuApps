@@ -14,12 +14,40 @@ class Options extends FlxState
 {
 	var options:Array<Array<Dynamic>> = [
 		[
+			"Graphics",
+			"Setting your graphic to whatever's beautiful or just plain toaster.",
+			"State"
+		],
+		[
+			"Anti-Aliasing",
+			"If ON, most of the objects (especially images) will be sharped and clean.",
+			"Bool",
+			"antiAliasing"
+		],
+		[
+			"Low Detail",
+			"If ON, most details such as 2 overlapping objects on PlayState will be removed.",
+			"Bool",
+			"lowDetail"
+		],
+		[
 			"Framerate",
 			"How low or high do you want for the framerate?",
 			"Int",
 			"framerate",
-			[60, 240, 5, 1]
+			[60, 240, 3, 1]
 			// This is only for INT, 1st is Min, 2nd is Max, 3rd is ticks per frame till increment or decrement, 4th is how much they'll be incremented
+		],
+		[
+			"Visuals",
+			"For the people who wants to disable something distracting or etc.",
+			"State"
+		],
+		[
+			"Allow Particles.",
+			"If ON, particles will be used. This will likely increase CPU loads.",
+			"Bool",
+			"allowParticles"
 		],
 		[
 			"Show FPS",
@@ -27,76 +55,100 @@ class Options extends FlxState
 			"Bool",
 			"showFPS"
 		],
-		[
-			"Allow Particles.",
-			"If ON, particles will be used. This will increase CPU loads.",
-			"Bool",
-			"allowParticles"
-		]
 	];
 
-	var helpText:FlxText = new FlxText(0, 0, 1280, "Use your mouse and hover over an option and left click to select it\nPress BACKSPACE or ESCAPE to leave options.");
+	var helpText:FlxText = new FlxText(0, 0, 1280, "Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.");
 
 	var spriteList:Array<Array<FlxSprite>> = [];
 	var spriteYPos:Array<Float> = [];
 	var textList:Array<Array<FlxText>> = [];
 	var textYPos:Array<Float> = [];
+
 	var yPos:Float = 0;
+	var maxYPos:Float = 0;
 	var isSettingThing:Bool = false;
 	var allowMoving:Bool = true;
 	var triggered:Bool = false;
 	var oldTimer:Float = 0;
 	var ticksRemain:Int = 0;
 
+	var mouseDistance:FlxSprite = new FlxSprite();
+
 	override public function create()
 	{
+		Main.changeWindowName("Settings");
+
+		mouseDistance.makeGraphic(0, 0, FlxColor.RED);
+		add(mouseDistance);
+
 		var optionsBG:FlxSprite = new FlxSprite().makeGraphic(1280, 720, Std.parseInt('0xFF756C6C'));
 		optionsBG.alpha = 0;
 		FlxTween.tween(optionsBG, {alpha: 1}, 0.5);
 		add(optionsBG);
 
 		var count:Int = 0;
+		var yDown:Float = 0;
 		for (option in options) {
 			spriteList.push([]);
 			textList.push([]);
 
-			var i:Int = count;
-			spriteList[i].push(new FlxSprite().makeGraphic(860, 130, Std.parseInt('0xFF797979')));
-			spriteList[i][0].screenCenter();
-			spriteList[i][0].y = 60 + (160 * i);
-			add(spriteList[i][0]);
-
-			spriteList[i].push(new FlxSprite().makeGraphic(845, 115, Std.parseInt('0xFF363636')));
-			spriteList[i][1].screenCenter();
-			spriteList[i][1].y = 67.5 + (160 * i);
-			add(spriteList[i][1]);
+			var j:Int = textList.length-1;
 
 			var n:String = option[0];
 			var d:String = option[1];
+			var t:String = option[2];
 
-			textList[i].push(new FlxText(230, 75 + (160 * i), 1280, n));
-			textList[i][0].setFormat('assets/fonts/main.ttf', 56, FlxColor.WHITE);
-			textList[i][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
-			add(textList[i][0]);
+			if (t != "State") {
+				var i:Int = count;
 
-			textList[i].push(new FlxText(230, 145 + (160 * i), 1280, d));
-			textList[i][1].setFormat('assets/fonts/main.ttf', 20, FlxColor.WHITE);
-			textList[i][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
-			add(textList[i][1]);
+				spriteList[i].push(new FlxSprite().makeGraphic(860, 130, Std.parseInt('0xFF797979')));
+				spriteList[i][0].screenCenter();
+				spriteList[i][0].y = 60 + yDown;
+				add(spriteList[i][0]);
 
-			var value:Dynamic = Reflect.getProperty(Prefs, option[3]);
-			textList[i].push(new FlxText(-240, 70 + (160 * i), 1280, '$value', 60));
-			textList[i][2].setFormat('assets/fonts/main.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
-			textList[i][2].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
-			textList[i][2].underline = true;
-			add(textList[i][2]);
+				spriteList[i].push(new FlxSprite().makeGraphic(845, 115, Std.parseInt('0xFF363636')));
+				spriteList[i][1].screenCenter();
+				spriteList[i][1].y = 67.5 + yDown;
+				add(spriteList[i][1]);
 
-			if (option[2] == "Bool") textList[i][2].text = value ? "ON" : "OFF";
+				textList[j].push(new FlxText(230, 75 + yDown, 1280, n));
+				textList[j][0].setFormat('assets/fonts/main.ttf', 56, FlxColor.WHITE);
+				textList[j][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				add(textList[j][0]);
 
-			trace(value);
+				textList[j].push(new FlxText(230, 145 + yDown, 1280, d));
+				textList[j][1].setFormat('assets/fonts/main.ttf', 20, FlxColor.WHITE);
+				textList[j][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				add(textList[j][1]);
+
+				var value:Dynamic = Reflect.getProperty(Prefs, option[3]);
+				textList[j].push(new FlxText(-240, 70 + yDown, 1280, '$value', 60));
+				textList[j][2].setFormat('assets/fonts/main.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+				textList[j][2].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				textList[j][2].underline = true;
+				add(textList[j][2]);
+
+				if (option[2] == "Bool") textList[j][2].text = value ? "ON" : "OFF";
+
+				yDown += 160;
+			} else {
+				textList[j].push(new FlxText(0, 90 + yDown, 1280, option[0]));
+				textList[j][0].setFormat('assets/fonts/main.ttf', 64, FlxColor.WHITE, FlxTextAlign.CENTER);
+				textList[j][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				add(textList[j][0]);
+
+				textList[j].push(new FlxText(0, 164 + yDown, 1280, option[1]));
+				textList[j][1].setFormat('assets/fonts/main.ttf', 24, FlxColor.GRAY, FlxTextAlign.CENTER);
+				textList[j][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				add(textList[j][1]);
+
+				yDown += 160;
+			}
 
 			count++;
 		}
+
+		maxYPos = -(yDown < 630 ? 0 : yDown - 630);
 
 		helpText.setFormat('assets/fonts/main.ttf', 24, FlxColor.YELLOW, CENTER);
 		helpText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
@@ -120,6 +172,10 @@ class Options extends FlxState
 	}
 
 	var option:Int = 0;
+	var tickLeft:Int = 5;
+	var oldYPos:Float = 0;
+	var mouseYPos:Float = 0;
+	var mouseScroll:Float = 0;
 	override public function update(elapsed:Float)
 	{
 		if (!allowMoving) return;
@@ -129,9 +185,11 @@ class Options extends FlxState
 			var chosen:Int = -1;
 			for (sprite in spriteList) {
 				chosen++;
-				if (FlxG.mouse.overlaps(sprite[0])) {
-					option = chosen;
-					break;
+				if (options[chosen][2] != "State") {
+					if (FlxG.mouse.overlaps(sprite[0])) {
+						option = chosen;
+						break;
+					}
 				}
 			}
 
@@ -139,7 +197,51 @@ class Options extends FlxState
 			if (option != -1) {
 				for (tab in textList) {
 					numChosen++;
-					for (i in 0...3) textList[numChosen][i].color = numChosen == chosen ? FlxColor.YELLOW : FlxColor.WHITE;
+					if (options[numChosen][2] != "State")
+						for (i in 0...3) textList[numChosen][i].color = numChosen == chosen ? FlxColor.YELLOW : FlxColor.WHITE;
+				}
+			}
+
+			if (FlxG.mouse.justPressed) {
+				mouseYPos = FlxG.mouse.y;
+				oldYPos = yPos;
+			}
+
+			if (FlxG.mouse.pressed) {
+				var y:Int = FlxG.mouse.y;
+				yPos = oldYPos + (y - mouseYPos);
+				if (tickLeft == 0) {
+					tickLeft = 5;
+					mouseScroll = (mouseDistance.y - y)/4;
+					mouseDistance.y = y;
+				}
+				tickLeft--;
+			} else if (mouseScroll != 0) {
+				if (mouseScroll > 0) {
+					yPos -= mouseScroll;
+					mouseScroll -= 0.25;
+				} else {
+					yPos -= mouseScroll;
+					mouseScroll += 0.25;
+				}
+			}
+
+			if (yPos < maxYPos) yPos = maxYPos;
+			if (yPos > -5) yPos = -5;
+
+			var id:Int = 0;
+			for (table in spriteList) {
+				for (sprite in table) {
+					sprite.y = spriteYPos[id] + (yPos - 50);
+					id++;
+				}
+			}
+
+			id = 0;
+			for (table in textList) {
+				for (text in table) {
+					text.y = textYPos[id] + (yPos - 50);
+					id++;
 				}
 			}
 
@@ -197,6 +299,7 @@ class Options extends FlxState
 		if (FlxG.keys.anyJustPressed([BACKSPACE, ESCAPE])) {
 			isSettingThing = false;
 			triggered = false;
+			mouseScroll = 0; // I find it annoying, so i would do this.
 
 			var count:Int = 0;
 			for (spr in spriteList) {
@@ -217,7 +320,7 @@ class Options extends FlxState
 			}
 
 			FlxTween.tween(helpText, {"scale.y": 0}, 0.1, {ease: FlxEase.linear, onComplete: function(e) {
-				helpText.text = 'Use your mouse and hover over an option and left click to select it\nPress BACKSPACE or ESCAPE to leave options.';
+				helpText.text = 'Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.';
 				FlxTween.tween(helpText, {"scale.y": 1}, 0.1, {ease: FlxEase.linear});
 			}});
 			
@@ -249,6 +352,9 @@ class Options extends FlxState
 			case 'bool': if (FlxG.keys.justPressed.ENTER) v = !v;
 		}
 
+		Reflect.setProperty(Prefs, options[option][3], v);
+		textList[option][2].text = v;
+
 		switch(options[option][0]) {
 			case 'Framerate':
 				FlxG.updateFramerate = v;
@@ -256,10 +362,15 @@ class Options extends FlxState
 
 			case 'Show FPS':
 				Main.fpsVar.visible = v;
-		}
 
-		Reflect.setProperty(Prefs, options[option][3], v);
-		textList[option][2].text = v;
+			case 'Anti-Aliasing':
+				for (sprite in members)
+				{
+					var sprite:Dynamic = sprite;
+					var sprite:FlxSprite = sprite;
+					if(sprite != null && (sprite is FlxSprite) && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
+				}
+		}
 
 		if (t == 'bool') textList[option][2].text = v ? "ON" : "OFF";
 

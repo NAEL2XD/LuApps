@@ -1,1 +1,1 @@
-this is read from there!
+this comes from text.txt or assets/data/text.txt !

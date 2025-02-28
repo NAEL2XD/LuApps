@@ -74,6 +74,7 @@ class Dummy extends FlxState
 		set('mouseY',       FlxG.mouse.y);
 		set('osName',       Application.current.window.display.name);
 		set('time',         Timer.stamp() - oldTime);
+		set('version',      Main.luversion);
 		set('width',        Application.current.window.width);
 	}
 

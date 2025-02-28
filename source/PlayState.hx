@@ -34,7 +34,7 @@ class PlayState extends FlxState
 	var options:FlxSprite = new FlxSprite();
 	var mouseDistance:FlxSprite = new FlxSprite();
 	var sleepy:FlxSprite = new FlxSprite();
-	var optionsText:FlxText = new FlxText(1107, 642, 1920, "Options", 16);
+	var optionsText:FlxText = new FlxText(1104, 642, 1920, "Options", 16);
 
 	var allowTween:Bool = false;
 	var yPos:Float = -5;
@@ -51,11 +51,11 @@ class PlayState extends FlxState
 	{
 		super.create();
 
-		trace(modRaw);
+		Main.changeWindowName("Applications");
+
 		if (modRaw != "") {
 			modRaw = "";
-			/*FlxG.sound.music.volume = 0;
-			FlxG.sound.music.stop();*/
+			//if (FlxG.sound.music.playing) FlxG.sound.music.stop();
 			FlxG.resetState();
 		}
 
@@ -93,7 +93,7 @@ class PlayState extends FlxState
 		mouseDistance.makeGraphic(0, 0, FlxColor.RED);
 		add(mouseDistance);
 
-		var version:FlxText = new FlxText(20, 675, 1920, 'You are running ${Main.luversion} using ${Std.string(FlxG.VERSION)}');
+		var version:FlxText = new FlxText(20, 680, 1920, 'You are running v${Main.luversion}');
 		version.setFormat("assets/fonts/main.ttf", 20, Std.parseInt('0xFF4D4242'));
 		version.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 		version.bold = true;
@@ -106,7 +106,7 @@ class PlayState extends FlxState
 		add(version);
 
 		if (Prefs.allowParticles) {
-			new FlxTimer().start(0.05, function(e) {
+			new FlxTimer().start(Prefs.lowDetail ? 0.4 : 0.05, function(e) {
 				var sprite:FlxSprite = new FlxSprite(FlxG.random.float(-16, 1296), 720);
 				sprite.makeGraphic(16, 16, FlxColor.WHITE);
 				sprite.alpha = 0.6;
@@ -172,12 +172,14 @@ class PlayState extends FlxState
 
 				spriteIDList.push([]);
 				var l:Int = spriteIDList.length-1;
-				for (i in 0...2) {
+				var sprID:Int = 0;
+				for (i in 0...(Prefs.lowDetail ? 1 : 2)) {
 					spriteIDList[l].push(new FlxSprite().makeGraphic(816 + (14 * i), 126 + (14 * i), (i == 0 ? Std.parseInt('0xFF454545') : Std.parseInt('0xFF777777'))));
 					spriteIDList[l][i].screenCenter();
 					spriteIDList[l][i].alpha = 0.25;
 					spriteIDList[l][i].y = 70 + (160 * done) - (i == 1 ? 7 : 0);
 					add(spriteIDList[l][i]);
+					sprID++;
 				}
 
 				textIDList.push([]);
@@ -193,18 +195,18 @@ class PlayState extends FlxState
 				if (pngExist) image = BitmapData.fromFile(fileName + "pack.png");
 
 				spriteIDList[l].push(new FlxSprite().loadGraphic(pngExist ? image : "assets/images/unknown.png"));
-				spriteIDList[l][2].y = 58 + (160 * done);
-				spriteIDList[l][2].scale.x = 0.75;
-				spriteIDList[l][2].scale.y = 0.75;
-				spriteIDList[l][2].x = 230;
-				add(spriteIDList[l][2]);
+				spriteIDList[l][sprID].y = 58 + (160 * done);
+				spriteIDList[l][sprID].scale.x = 0.75;
+				spriteIDList[l][sprID].scale.y = 0.75;
+				spriteIDList[l][sprID].x = 230;
+				add(spriteIDList[l][sprID]);
 
 				done++;
 			}
 		}
 
 		if (done == 0) {
-			lime.app.Application.current.window.alert("There is nothing installed, to prevent crashing your game, it will be closed", "Warning");
+			Application.current.window.alert("There is nothing installed, to prevent crashing your game, it will be closed", "Warning");
 			lime.system.System.exit(1);
 		}
 
@@ -233,6 +235,13 @@ class PlayState extends FlxState
 	{
 		super.update(elapsed);
 
+		for (sprite in members)
+		{
+			var sprite:Dynamic = sprite;
+			var sprite:FlxSprite = sprite;
+			if(sprite != null && (sprite is FlxSprite) && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
+		}
+
 		if (!disableMoving) {
 			choice = -1;
 			var heldID:Int = 0;
@@ -259,7 +268,6 @@ class PlayState extends FlxState
 					tickLeft = 5;
 					mouseScroll = (mouseDistance.y - y)/4;
 					mouseDistance.y = y;
-					trace(mouseScroll);
 				}
 				tickLeft--;
 			} else if (mouseScroll != 0) {
@@ -307,8 +315,8 @@ class PlayState extends FlxState
 				modName = luaLists[choice][2];
 				modRaw = "mods/" + luaLists[choice][2] + "/";
 				author = luaLists[choice][3];
+				Main.changeWindowName(modName);
 				lolArray.push(new LuaEngine(luaLists[choice][1]));
-				Application.current.window.title = 'LuApps: $modName';
 				FlxG.sound.destroy(true);
 				FlxG.switchState(Dummy.new);
 			}});

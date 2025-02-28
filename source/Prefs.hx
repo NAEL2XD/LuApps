@@ -4,9 +4,12 @@ import flixel.FlxG;
 import flixel.input.keyboard.FlxKey;
 
 class Prefs {
-	public static var showFPS:Bool = true;
+	public static var antiAliasing:Bool = true;
+	public static var lowDetail:Bool = false;
 	public static var framerate:Int = 60;
+
 	public static var allowParticles:Bool = true;
+	public static var showFPS:Bool = true;
 
 	private static var flixelThings:Map<String, Array<String>> = [
 		"saveBlackList" => ["keyBinds", "defaultKeys"],
