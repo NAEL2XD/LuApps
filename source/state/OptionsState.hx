@@ -1,6 +1,5 @@
-package;
+package state;
 
-import haxe.Timer;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.FlxG;
@@ -8,9 +7,9 @@ import flixel.util.FlxColor;
 import flixel.text.FlxText;
 import flixel.FlxSprite;
 import flixel.FlxState;
-import Prefs;
+import utils.Prefs;
 
-class Options extends FlxState
+class OptionsState extends FlxState
 {
 	var options:Array<Array<Dynamic>> = [
 		[
@@ -69,7 +68,6 @@ class Options extends FlxState
 	var isSettingThing:Bool = false;
 	var allowMoving:Bool = true;
 	var triggered:Bool = false;
-	var oldTimer:Float = 0;
 	var ticksRemain:Int = 0;
 
 	var mouseDistance:FlxSprite = new FlxSprite();
@@ -106,10 +104,12 @@ class Options extends FlxState
 				spriteList[i][0].y = 60 + yDown;
 				add(spriteList[i][0]);
 
-				spriteList[i].push(new FlxSprite().makeGraphic(845, 115, Std.parseInt('0xFF363636')));
-				spriteList[i][1].screenCenter();
-				spriteList[i][1].y = 67.5 + yDown;
-				add(spriteList[i][1]);
+				if (!Prefs.lowDetail) {
+					spriteList[i].push(new FlxSprite().makeGraphic(845, 115, Std.parseInt('0xFF363636')));
+					spriteList[i][1].screenCenter();
+					spriteList[i][1].y = 67.5 + yDown;
+					add(spriteList[i][1]);
+				}
 
 				textList[j].push(new FlxText(230, 75 + yDown, 1280, n));
 				textList[j][0].setFormat('assets/fonts/main.ttf', 56, FlxColor.WHITE);
@@ -217,13 +217,8 @@ class Options extends FlxState
 				}
 				tickLeft--;
 			} else if (mouseScroll != 0) {
-				if (mouseScroll > 0) {
-					yPos -= mouseScroll;
-					mouseScroll -= 0.25;
-				} else {
-					yPos -= mouseScroll;
-					mouseScroll += 0.25;
-				}
+				if (mouseScroll > 0) mouseScroll -= 0.25; else mouseScroll += 0.25;
+				yPos -= mouseScroll;
 			}
 
 			if (yPos < maxYPos) yPos = maxYPos;
@@ -326,6 +321,8 @@ class Options extends FlxState
 			
 		}
 
+		if (!FlxG.keys.justPressed.ANY) return;
+
 		var t:String = options[option][2];
 		var v:Dynamic = Reflect.getProperty(Prefs, options[option][3]);
 		var r = 0;
@@ -368,7 +365,7 @@ class Options extends FlxState
 				{
 					var sprite:Dynamic = sprite;
 					var sprite:FlxSprite = sprite;
-					if(sprite != null && (sprite is FlxSprite) && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
+					if(sprite != null && sprite is FlxSprite && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
 				}
 		}
 

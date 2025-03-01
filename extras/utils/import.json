@@ -242,8 +242,23 @@
         },
         "setWindowName": {
             "returns": "void",
-            "args": "name:String = \"LuApps\"",
-            "documentation": "Sets the window name next to the icon.\n\n* `name` - The name of the window you want to set, defaults to `LuApps`."
+            "args": "name:String",
+            "documentation": "Sets the window name next to the icon.\n\n* `name` - The name of the window you want to set, defaults to `LuApps v{version} - modName`."
+        },
+        "objectsOverlap": {
+            "returns": "boolean",
+            "args": "obj1:String, obj2:String",
+            "documentation": "Checks if `obj1` and `obj2` are colliding, returns `true` if they're colliding, will return `false` if they aren't.\n\n* `obj1` - The first object tag to choose.\n* `obj2` - The second object tag to choose."
+        },
+        "runHaxeCode": {
+            "returns": "?",
+            "args": "codeToRun:String",
+            "documentation": "Runs haxe code and either returns the result you've inputted or changes how it looks.\n\n* `codeToRun` - The haxe code to run."
+        },
+        "addHaxeLibrary": {
+            "returns": "void",
+            "args": "libName:String, ?libPackage:String = ''",
+            "documentation": "Adds a haxe module for HScripts.\n\n* `libName` - The library name from haxelib.\n* `libPackage` - The package name from haxelib."
         }
     },
     "variables": {
@@ -294,6 +309,14 @@
         "osName": {
             "returns": "string",
             "documentation": "Gets the running Operating System's Name.\n\nAn example would be if you're running '**Generic PnP Monitor**'."
+        },
+        "version": {
+            "returns": "string",
+            "documentation": "The current version of LuApps, should be returning something like `0.0.1`."
+        },
+        "lowDetail": {
+            "returns": "boolean",
+            "documentation": "The current setting if the user has set \"Low Detail\" to on or off."
         }
     },
     "events": {

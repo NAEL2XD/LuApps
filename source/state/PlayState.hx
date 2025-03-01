@@ -1,5 +1,6 @@
-package;
+package state;
 
+import flixel.sound.FlxSound;
 import lime.app.Application;
 import haxe.Timer;
 import openfl.media.Sound;
@@ -14,8 +15,10 @@ import flixel.text.FlxText;
 import flixel.util.FlxColor;
 import flixel.FlxG;
 import openfl.display.BitmapData;
-import LuaEngine;
+import engine.LuaEngine;
+import utils.Prefs;
 import haxe.Json;
+import state.DummyState;
 
 class PlayState extends FlxState
 {
@@ -35,6 +38,7 @@ class PlayState extends FlxState
 	var mouseDistance:FlxSprite = new FlxSprite();
 	var sleepy:FlxSprite = new FlxSprite();
 	var optionsText:FlxText = new FlxText(1104, 642, 1920, "Options", 16);
+	var noApps:FlxText = new FlxText(0, 0, 1280, "There is no applications installed! Press R to refresh the list.", 32);
 
 	var allowTween:Bool = false;
 	var yPos:Float = -5;
@@ -46,6 +50,7 @@ class PlayState extends FlxState
 	var choice:Int = 0;
 	var oldChoice:Int = 0;
 	var disableMoving:Bool = false;
+	var hasNoApps:Bool = false;
 	
 	override public function create()
 	{
@@ -73,6 +78,13 @@ class PlayState extends FlxState
 
 		var gray:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, Std.parseInt('0xFF222222'));
 		add(gray);
+
+		noApps.setFormat("assets/fonts/main.ttf", 36, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
+		noApps.setBorderStyle(FlxTextBorderStyle.OUTLINE, FlxColor.BLACK, 2, 4);
+		noApps.screenCenter();
+		FlxTween.tween(noApps, {alpha: 0}, 1.5, {type: PINGPONG});
+		noApps.visible = false;
+		add(noApps);
 
 		generate();
 
@@ -205,9 +217,10 @@ class PlayState extends FlxState
 			}
 		}
 
+		hasNoApps = false;
 		if (done == 0) {
-			Application.current.window.alert("There is nothing installed, to prevent crashing your game, it will be closed", "Warning");
-			lime.system.System.exit(1);
+			hasNoApps = true;
+			noApps.visible = true;
 		}
 
 		for (table in spriteIDList)
@@ -243,19 +256,6 @@ class PlayState extends FlxState
 		}
 
 		if (!disableMoving) {
-			choice = -1;
-			var heldID:Int = 0;
-			for (sprite in spriteIDList) {
-				if (FlxG.mouse.overlaps(sprite[0])) {
-					choice = heldID;
-					oldChoice = choice;
-					break;
-				}
-				heldID++;
-			}
-		}
-
-		if (!disableMoving) {
 			if (FlxG.mouse.justPressed) {
 				mouseYPos = FlxG.mouse.y;
 				oldYPos = yPos;
@@ -284,46 +284,65 @@ class PlayState extends FlxState
 			if (yPos > -5) yPos = -5;
 		}
 
-		var id:Int = 0;
-		for (table in spriteIDList) {
-			for (sprite in table) {
-				sprite.y = spriteYPos[id] + yPos;
-				id++;
+		if (!hasNoApps) {
+			if (!disableMoving) {
+				choice = -1;
+				var heldID:Int = 0;
+				for (sprite in spriteIDList) {
+					if (FlxG.mouse.overlaps(sprite[0])) {
+						choice = heldID;
+						oldChoice = choice;
+						break;
+					}
+					heldID++;
+				}
 			}
-		}
 
-		id = 0;
-		for (table in textIDList) {
-			for (text in table) {
-				text.y = textYPos[id] + yPos;
-				id++;
+			var id:Int = 0;
+			for (table in spriteIDList) {
+				for (sprite in table) {
+					sprite.y = spriteYPos[id] + yPos;
+					id++;
+				}
 			}
-		}
+			
+			var sound:FlxSound = FlxG.sound.load('mods/test/assets/music/Inst.ogg');
+			sound.pitch = 1.5;
+			sound.play();
 
-		var numChosen:Int = -1;
-		for (tab in textIDList) {
-			numChosen++;
-			for (i in 0...2) textIDList[numChosen][i].color = numChosen == choice ? FlxColor.YELLOW : FlxColor.WHITE;
-		}
+			id = 0;
+			for (table in textIDList) {
+				for (text in table) {
+					text.y = textYPos[id] + yPos;
+					id++;
+				}
+			}
 
-		if (FlxG.mouse.justReleased && choice != -1 && !disableMoving) {
-			disableMoving = true;
-			var sprite:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
-			sprite.alpha = 0;
-			FlxG.sound.music.fadeOut(0.5, 0);
-			FlxTween.tween(sprite, {alpha: 1}, 1, {onComplete: function(e) {
-				modName = luaLists[choice][2];
-				modRaw = "mods/" + luaLists[choice][2] + "/";
-				author = luaLists[choice][3];
-				Main.changeWindowName(modName);
-				lolArray.push(new LuaEngine(luaLists[choice][1]));
-				FlxG.sound.destroy(true);
-				FlxG.switchState(Dummy.new);
-			}});
-			add(sprite);
+			var numChosen:Int = -1;
+			for (tab in textIDList) {
+				numChosen++;
+				for (i in 0...2) textIDList[numChosen][i].color = numChosen == choice ? FlxColor.YELLOW : FlxColor.WHITE;
+			}
 
-			var choose:Sound = Sound.fromFile('assets/sounds/choose.ogg');
-			choose.play();
+			if (FlxG.mouse.justReleased && choice != -1 && !disableMoving) {
+				disableMoving = true;
+				var sprite:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
+				sprite.alpha = 0;
+				FlxG.sound.music.fadeOut(0.5, 0);
+				FlxTween.tween(sprite, {alpha: 1}, 1, {onComplete: function(e) {
+					modName = luaLists[choice][2];
+					modRaw = "mods/" + luaLists[choice][2] + "/";
+					author = luaLists[choice][3];
+					Main.changeWindowName('$modName - $author');
+					lolArray.push(new LuaEngine(luaLists[choice][1]));
+					FlxG.sound.destroy(true);
+					FlxG.switchState(Dummy.new);
+				}});
+				add(sprite);
+
+				var choose:Sound = Sound.fromFile('assets/sounds/choose.ogg');
+				choose.play();
+			}
 		}
 
 		if (FlxG.mouse.overlaps(options)) {
@@ -339,7 +358,7 @@ class PlayState extends FlxState
 				movement.alpha = 0;
 				FlxG.sound.music.fadeOut(0.5, 0);
 				FlxTween.tween(movement, {alpha: 1}, 0.5, {onComplete: function(e) {
-					FlxG.switchState(Options.new);
+					FlxG.switchState(OptionsState.new);
 				}});
 				add(movement);
 

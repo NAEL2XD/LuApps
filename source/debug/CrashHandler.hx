@@ -1,4 +1,4 @@
-package;
+package debug;
 
 // an fully working crash handler on ALL platforms
 

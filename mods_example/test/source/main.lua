@@ -82,6 +82,14 @@ function create()
     addText("textread")
 
     print(version) -- The current version of LuApps
+
+    print(lowDetail) -- Checks if the user's Low Detail option, if it's on then it returns true, else it returns false.
+
+    runHaxeCode([[
+        var sound:FlxSound = FlxG.sound.load('mods/test/assets/music/Inst.ogg');
+		sound.pitch = 1.5;
+		sound.play();
+    ]]) -- Plays audio at 1.5x speed
 end
 
 local enable = true
@@ -93,7 +101,7 @@ function update()
     --print(time)
 
     -- Set the visibility! Beware, it cause lag.
-    setMouseVisibility(false)
+    setMouseVisibility()
 
     -- Checks if any is pressed.
     if mouseClicked("any") and enable then

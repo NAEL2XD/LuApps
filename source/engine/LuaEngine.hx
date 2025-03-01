@@ -1,4 +1,4 @@
-package;
+package engine;
 
 // Will credit them later..
 
@@ -23,7 +23,13 @@ import llua.Convert;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import openfl.filters.ShaderFilter;
-import Dummy;
+import state.DummyState;
+import state.PlayState;
+import utils.Prefs;
+
+import hscript.Parser;
+import hscript.Interp;
+import hscript.Expr;
 
 using StringTools;
 
@@ -36,6 +42,7 @@ class LuaEngine {
 	public var lua:State = null;
 	public var scriptName:String = '';
 	public var closed:Bool = false;
+	public static var hscript:HScript = null;
 	
 	public function new(script:String, ?scriptCode:String) {
 		lua = LuaL.newstate();
@@ -82,7 +89,7 @@ class LuaEngine {
 			resetSpriteTag(tag);
 			var sprite:ModchartSprite = new ModchartSprite(x, y);
 			if(image != null && image.length > 0) {
-				var path:String = raw + 'assets/images/$image.png';
+				var path:String = '${raw}assets/images/$image.png';
 				var xd:BitmapData = null;
 				if (FileSystem.exists(path))
 					xd = BitmapData.fromFile(path);
@@ -266,7 +273,7 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "playMusic", function(music:String, ?volume:Float = 1, ?loop:Bool = false) {
-			FlxG.sound.playMusic(raw + 'assets/music/$music.ogg', volume, loop);
+			FlxG.sound.playMusic('${raw}assets/music/$music.ogg', volume, loop);
 		});
 
 		Lua_helper.add_callback(lua, "setWindowSize", function(?width:Int = 1280, ?height:Int = 720) {
@@ -390,7 +397,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenX: Coundn\'t find object: $vars', true);
+				print('doTweenX: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenY", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -403,7 +410,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenY: Coundn\'t find object: $vars', true);
+				print('doTweenY: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenAngle", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -416,7 +423,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenAngle: Coundn\'t find object: $vars', true);
+				print('doTweenAngle: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenAlpha", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -429,7 +436,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenAlpha: Coundn\'t find object: $vars', true);
+				print('doTweenAlpha: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenColor", function(tag:String, vars:String, targetColor:String, duration:Float, ease:String) {
@@ -447,7 +454,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenColor: Coundn\'t find object: $vars', true);
+				print('doTweenColor: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "setMouseVisibility", function(?show:Bool = true) {
@@ -456,10 +463,10 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "playSound", function(sound:String) {
-			var n:String = raw + 'assets/sounds/$sound.ogg';
+			var n:String = '${raw}assets/sounds/$sound.ogg';
 
 			if (!FileSystem.exists(n)) {
-				print('playSound: Coundn\'t find sound file: $n', true);
+				print('playSound: Couldn\'t find sound file: $n', true);
 				return;
 			}
 
@@ -599,7 +606,7 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "getContent", function(file:String = ''):String {
-			var n:String = raw + 'assets/data/$file';
+			var n:String = '${raw}assets/data/$file';
 			if (file == '') {
 				print("getContent: File argument is empty!", true);
 				return "";
@@ -655,6 +662,32 @@ class LuaEngine {
 
 			return !objectsArray.contains(null) && FlxG.overlap(objectsArray[0], objectsArray[1]);
 		});
+
+		Lua_helper.add_callback(lua, "runHaxeCode", function(codeToRun:String) {
+			var retVal:Dynamic = null;
+
+			initHaxeModule();
+			try {
+				retVal = hscript.execute(codeToRun);
+			} catch (e:Dynamic) {
+				print(scriptName + ":" + lastCalledFunction + " - " + e, true);
+			}
+
+			if(retVal != null && !isOfTypes(retVal, [Bool, Int, Float, String, Array])) retVal = null;
+			return retVal;
+		});
+
+		Lua_helper.add_callback(lua, "addHaxeLibrary", function(libName:String, ?libPackage:String = '') {
+			initHaxeModule();
+			try {
+				var str:String = '';
+				if(libPackage.length > 0) str = libPackage + '.';
+
+				hscript.variables.set(libName, Type.resolveClass(str + libName));
+			} catch (e:Dynamic) {
+				print(scriptName + ":" + lastCalledFunction + " - " + e, true);
+			}
+		});
 	}
 
 	public function set(variable:String, data:Dynamic) {
@@ -668,6 +701,7 @@ class LuaEngine {
 	inline static function getTextObject(name:String):FlxText
 		return Dummy.instance.texts.exists(name) ? Dummy.instance.texts.get(name) : Reflect.getProperty(Dummy.instance, name);
 
+	var lastCalledFunction:String = '';
 	public function call(func:String, args:Array<Dynamic>):Dynamic {
 		if(closed) return Function_Continue;
 
@@ -908,6 +942,77 @@ class LuaEngine {
 
 		Reflect.setProperty(instance, variable, value);
 		return true;
+	}
+
+	public static function isOfTypes(value:Any, types:Array<Dynamic>)
+		{
+			for (type in types) if(Std.isOfType(value, type)) return true;
+			return false;
+		}
+
+	public function initHaxeModule()
+	{
+		if(hscript == null)
+		{
+			trace('initializing haxe interp for: $scriptName');
+			hscript = new HScript(); //TO DO: Fix issue with 2 scripts not being able to use the same variable names
+		}
+	}
+}
+
+class HScript
+{
+	public static var parser:Parser = new Parser();
+	public var interp:Interp;
+
+	public var variables(get, never):Map<String, Dynamic>;
+
+	public function get_variables() return interp.variables;
+
+	public function new()
+	{
+		interp = new Interp();
+		interp.variables.set('FlxG', FlxG);
+		interp.variables.set('FlxSprite', FlxSprite);
+		interp.variables.set('FlxText', FlxText);
+		interp.variables.set('FlxTimer', FlxTimer);
+		interp.variables.set('FlxTween', FlxTween);
+		interp.variables.set('FlxEase', FlxEase);
+		interp.variables.set('PlayState', PlayState);
+		interp.variables.set('game', Dummy.instance);
+		interp.variables.set('Prefs', Prefs);
+		interp.variables.set('ShaderFilter', ShaderFilter);
+		interp.variables.set('StringTools', StringTools);
+
+		interp.variables.set('setVar', function(name:String, value:Dynamic)
+		{
+			Dummy.instance.variables.set(name, value);
+		});
+
+		interp.variables.set('getVar', function(name:String)
+		{
+			var result:Dynamic = null;
+			if(Dummy.instance.variables.exists(name)) result = Dummy.instance.variables.get(name);
+			return result;
+		});
+
+		interp.variables.set('removeVar', function(name:String)
+		{
+			if(Dummy.instance.variables.exists(name))
+			{
+				Dummy.instance.variables.remove(name);
+				return true;
+			}
+			return false;
+		});
+	}
+
+	public function execute(codeToRun:String):Dynamic
+	{
+		@:privateAccess
+		HScript.parser.line = 1;
+		HScript.parser.allowTypes = true;
+		return interp.execute(HScript.parser.parseString(codeToRun));
 	}
 }
 

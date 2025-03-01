@@ -4,8 +4,8 @@ import lime.app.Application;
 import flixel.FlxGame;
 import openfl.display.Sprite;
 import debug.FPSCounter;
-import CrashHandler;
-import Prefs;
+import debug.CrashHandler;
+import utils.Prefs;
 
 class Main extends Sprite
 {
@@ -19,7 +19,7 @@ class Main extends Sprite
 		super();
 		CrashHandler.init();
 
-		addChild(new FlxGame(0, 0, PlayState));
+		addChild(new FlxGame(0, 0, state.PlayState));
 
 		fpsVar = new FPSCounter(3, 3, 0x00FFFFFF);
 		addChild(fpsVar);
@@ -30,5 +30,5 @@ class Main extends Sprite
 	}
 
 	public static function changeWindowName(name:String = "")
-		Application.current.window.title = 'Luapps v$luversion ${name != "" ? '- $name' : ''}';
+		Application.current.window.title = 'LuApps v$luversion ${name != "" ? '- $name' : ''}';
 }

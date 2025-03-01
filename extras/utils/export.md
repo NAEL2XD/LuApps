@@ -7,8 +7,8 @@ If there's something below, but don't know what they do? You can use CTRL+F and 
 <small>This was generated, click [here](https://github.com/NAEL2XD/LuApps/blob/main/extras/main.py) for the code.</small>
 
 There are a total of:
-* 49 functions.
-* 12 variables.
+* 52 functions.
+* 14 variables.
 * 3 events.
 
 # Functions
@@ -284,10 +284,27 @@ Gets the color from FlxColor and returns it's color value.
 
 [Lists of FlxColor that can be used](https://api.haxeflixel.com/flixel/util/FlxColor.html)
 
-### `setWindowName(name:String = "LuApps")`
+### `setWindowName(name:String)`
 Sets the window name next to the icon.
 
-* `name` - The name of the window you want to set, defaults to `LuApps`.
+* `name` - The name of the window you want to set, defaults to `LuApps v{version} - modName`.
+
+### `objectsOverlap(obj1:String, obj2:String)` -> `boolean`
+Checks if `obj1` and `obj2` are colliding, returns `true` if they're colliding, will return `false` if they aren't.
+
+* `obj1` - The first object tag to choose.
+* `obj2` - The second object tag to choose.
+
+### `runHaxeCode(codeToRun:String)` -> `?`
+Runs haxe code and either returns the result you've inputted or changes how it looks.
+
+* `codeToRun` - The haxe code to run.
+
+### `addHaxeLibrary(libName:String, ?libPackage:String = '')`
+Adds a haxe module for HScripts.
+
+* `libName` - The library name from haxelib.
+* `libPackage` - The package name from haxelib.
 
 
 # Variables
@@ -328,6 +345,12 @@ Sees how long has it ran for.
 Gets the running Operating System's Name.
 
 An example would be if you're running '**Generic PnP Monitor**'.
+
+### `version` -> `string`
+The current version of LuApps, should be returning something like `0.0.1`.
+
+### `lowDetail` -> `boolean`
+The current setting if the user has set "Low Detail" to on or off.
 
 
 # Events
