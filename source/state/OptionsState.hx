@@ -1,5 +1,7 @@
 package state;
 
+import utils.Utils;
+import flixel.sound.FlxSound;
 import flixel.tweens.FlxEase;
 import flixel.tweens.FlxTween;
 import flixel.FlxG;
@@ -7,11 +9,24 @@ import flixel.util.FlxColor;
 import flixel.text.FlxText;
 import flixel.FlxSprite;
 import flixel.FlxState;
+import haxe.Timer;
 import utils.Prefs;
 
 class OptionsState extends FlxState
 {
 	var options:Array<Array<Dynamic>> = [
+		[
+			"LuApps Settings",
+			"Have too many LuApps but want to show to something else? Now you can set them here.",
+			"State"
+		],
+		[
+			"Show Type",
+			"What type of LuApps you want it to show?",
+			"String",
+			"luAppsType",
+			["ALL"]
+		],
 		[
 			"Graphics",
 			"Setting your graphic to whatever's beautiful or just plain toaster.",
@@ -34,8 +49,14 @@ class OptionsState extends FlxState
 			"How low or high do you want for the framerate?",
 			"Int",
 			"framerate",
-			[60, 240, 3, 1]
-			// This is only for INT, 1st is Min, 2nd is Max, 3rd is ticks per frame till increment or decrement, 4th is how much they'll be incremented
+			[60, 240, 1] // Min, Max, Times per Change
+		],
+		[
+			"Resolution",
+			"How little or much quality do you want? Will resize if it's changed.",
+			"String",
+			"screenSize",
+			["640x360", "1280x720", "1920x1080"]
 		],
 		[
 			"Visuals",
@@ -54,6 +75,17 @@ class OptionsState extends FlxState
 			"Bool",
 			"showFPS"
 		],
+		[
+			"Debugging",
+			"For Developers debugging their application or this program.",
+			"State"
+		],
+		[
+			"Console",
+			"If ON, the console on top left will be shown if a debugPrint command is hit.",
+			"Bool",
+			"debugger"
+		],
 	];
 
 	var helpText:FlxText = new FlxText(0, 0, 1280, "Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.");
@@ -62,6 +94,7 @@ class OptionsState extends FlxState
 	var spriteYPos:Array<Float> = [];
 	var textList:Array<Array<FlxText>> = [];
 	var textYPos:Array<Float> = [];
+	var previewText:Array<Array<Dynamic>> = [];
 
 	var yPos:Float = 0;
 	var maxYPos:Float = 0;
@@ -69,6 +102,7 @@ class OptionsState extends FlxState
 	var allowMoving:Bool = true;
 	var triggered:Bool = false;
 	var ticksRemain:Int = 0;
+	var curOption:Int = 0;
 
 	var mouseDistance:FlxSprite = new FlxSprite();
 
@@ -84,21 +118,32 @@ class OptionsState extends FlxState
 		FlxTween.tween(optionsBG, {alpha: 1}, 0.5);
 		add(optionsBG);
 
+		// For LuApps Thingy
+		for (thing in PlayState.luaLists) if (!options[1][4].contains(thing[4])) options[1][4].push(thing[4]);
+
 		var count:Int = 0;
 		var yDown:Float = 0;
 		for (option in options) {
+
 			spriteList.push([]);
 			textList.push([]);
 
+			var i:Int = count;
 			var j:Int = textList.length-1;
 
 			var n:String = option[0];
 			var d:String = option[1];
 			var t:String = option[2];
 
-			if (t != "State") {
-				var i:Int = count;
+			var result:Float = yDown - 280;
+			if (result < 0) result = 0;
 
+			previewText.push([result, new FlxText(12, 22 + (24 * count), n.length * 18, n, 20)]);
+			previewText[i][1].setFormat('assets/fonts/main.ttf', 20, FlxColor.WHITE);
+			previewText[i][1].x += t != "State" ? 24 : 0;
+			add(previewText[i][1]);
+
+			if (t != "State") {
 				spriteList[i].push(new FlxSprite().makeGraphic(860, 130, Std.parseInt('0xFF797979')));
 				spriteList[i][0].screenCenter();
 				spriteList[i][0].y = 60 + yDown;
@@ -122,8 +167,8 @@ class OptionsState extends FlxState
 				add(textList[j][1]);
 
 				var value:Dynamic = Reflect.getProperty(Prefs, option[3]);
-				textList[j].push(new FlxText(-240, 70 + yDown, 1280, '$value', 60));
-				textList[j][2].setFormat('assets/fonts/main.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+				textList[j].push(new FlxText(-240, 77 + yDown, 1280, '$value', 60));
+				textList[j][2].setFormat('assets/fonts/consola.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 				textList[j][2].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 				textList[j][2].underline = true;
 				add(textList[j][2]);
@@ -176,53 +221,62 @@ class OptionsState extends FlxState
 	var oldYPos:Float = 0;
 	var mouseYPos:Float = 0;
 	var mouseScroll:Float = 0;
+	var colArray:Array<Int> = [0, 0];
 	override public function update(elapsed:Float)
 	{
-		if (!allowMoving) return;
+		colArray[1] = -1;
+		helpText.angle = Math.sin(Timer.stamp());
 
 		if (!isSettingThing) {
 			option = -1;
-			var chosen:Int = -1;
-			for (sprite in spriteList) {
-				chosen++;
-				if (options[chosen][2] != "State") {
-					if (FlxG.mouse.overlaps(sprite[0])) {
-						option = chosen;
+
+			if (allowMoving) {
+				updateColors();
+				for (sprite in previewText) {
+					colArray[1] += sprite[1].x == 22 ? 2 : 1;
+					if (FlxG.mouse.overlaps(sprite[1]) && FlxG.mouse.justPressed) {
+						allowMoving = false;
+						mouseScroll = 0;
+						colArray[0] = colArray[1];
+						
+						function move(Value:Float):Void yPos = Value;
+						
+						FlxTween.num(yPos, Math.abs(maxYPos) < sprite[0] ? maxYPos : -sprite[0], 0.7, {ease: FlxEase.backOut, onComplete: e -> {
+							allowMoving = true;
+						}}, move);
+					
+						sprite[1].color = FlxColor.YELLOW;
+						FlxTween.color(sprite[1], 0.7, sprite[1].color, FlxColor.WHITE);
+					
+						var sound:FlxSound = FlxG.sound.load('assets/sounds/woosh.ogg');
+						sound.play();
+					
 						break;
 					}
 				}
-			}
 
-			var numChosen:Int = -1;
-			if (option != -1) {
-				for (tab in textList) {
-					numChosen++;
-					if (options[numChosen][2] != "State")
-						for (i in 0...3) textList[numChosen][i].color = numChosen == chosen ? FlxColor.YELLOW : FlxColor.WHITE;
+				if (FlxG.mouse.justPressed) {
+					mouseYPos = FlxG.mouse.y;
+					oldYPos = yPos;
 				}
-			}
-
-			if (FlxG.mouse.justPressed) {
-				mouseYPos = FlxG.mouse.y;
-				oldYPos = yPos;
-			}
-
-			if (FlxG.mouse.pressed) {
-				var y:Int = FlxG.mouse.y;
-				yPos = oldYPos + (y - mouseYPos);
-				if (tickLeft == 0) {
-					tickLeft = 5;
-					mouseScroll = (mouseDistance.y - y)/4;
-					mouseDistance.y = y;
+		
+				if (FlxG.mouse.pressed) {
+					var y:Int = FlxG.mouse.y;
+					yPos = oldYPos + (y - mouseYPos);
+					if (tickLeft == 0) {
+						tickLeft = 5;
+						mouseScroll = (mouseDistance.y - y)/4;
+						mouseDistance.y = y;
+					}
+					tickLeft--;
+				} else if (mouseScroll != 0) {
+					if (mouseScroll > 0) mouseScroll -= 0.25; else mouseScroll += 0.25;
+					yPos -= mouseScroll;
 				}
-				tickLeft--;
-			} else if (mouseScroll != 0) {
-				if (mouseScroll > 0) mouseScroll -= 0.25; else mouseScroll += 0.25;
-				yPos -= mouseScroll;
-			}
-
-			if (yPos < maxYPos) yPos = maxYPos;
-			if (yPos > -5) yPos = -5;
+		
+				if (yPos < maxYPos) yPos = maxYPos;
+				if (yPos > -5) yPos = -5;
+			} else updateColors(false, colArray[0]);
 
 			var id:Int = 0;
 			for (table in spriteList) {
@@ -240,7 +294,7 @@ class OptionsState extends FlxState
 				}
 			}
 
-			if (FlxG.mouse.justPressed && option != -1) {
+			if (FlxG.mouse.justPressed && option != -1 && allowMoving) {
 				isSettingThing = true;
 				var t:String = options[option][2];
 				if (t.toLowerCase() != "bool") ticksRemain = options[option][4][2];
@@ -267,8 +321,12 @@ class OptionsState extends FlxState
 					helpText.text = 'This is a ${options[option][2]} type.\n';
 
 					switch(options[option][2]) {
-						case 'Int':  helpText.text  += "A/Q/LEFT to decrement, D/RIGHT to increment.";
-						case 'Bool': helpText.text += "Enter to Switch";
+						case 'Int':    helpText.text += "A/Q/LEFT to decrement, D/RIGHT to increment.";
+						case 'Bool':   helpText.text += "Enter to Switch";
+						case 'String':
+							helpText.text += "A/Q/LEFT to switch left, D/RIGHT to switch right.";
+							
+							curOption = options[option][4].indexOf(Reflect.getProperty(Prefs, options[option][3]));
 					}
 
 					FlxTween.tween(helpText, {"scale.y": 1}, 0.1, {ease: FlxEase.linear});
@@ -323,20 +381,19 @@ class OptionsState extends FlxState
 
 		if (!FlxG.keys.justPressed.ANY) return;
 
-		var t:String = options[option][2];
-		var v:Dynamic = Reflect.getProperty(Prefs, options[option][3]);
+		var t:String = options[option][2].toLowerCase();
+		var v:Dynamic = t != "string" ? Reflect.getProperty(Prefs, options[option][3]) : options[option][4][curOption];
 		var r = 0;
 		
-		t = t.toLowerCase();
 		var oldText:String = textList[option][2].text;
 		switch(t) {
 			case 'int' | 'float':
-				var allow:Array<Int> = [for (i in 0...4) options[option][4][i]];
+				var allow:Array<Int> = [for (i in 0...3) options[option][4][i]];
 
 				ticksRemain--;
 				if (ticksRemain == 0) {
-					if (FlxG.keys.anyPressed([Q, A, LEFT])) r = -allow[3];
-					else if (FlxG.keys.anyPressed([D, RIGHT])) r = allow[3];
+					if (FlxG.keys.anyPressed([Q, A, LEFT])) r = -allow[2];
+					else if (FlxG.keys.anyPressed([D, RIGHT])) r = allow[2];
 
 					ticksRemain = allow[2];
 				}
@@ -347,6 +404,17 @@ class OptionsState extends FlxState
 				else if (v > allow[1]) v = allow[1];
 
 			case 'bool': if (FlxG.keys.justPressed.ENTER) v = !v;
+
+			case 'string':
+				if (FlxG.keys.anyPressed([Q, A, LEFT])) curOption--;
+				else if (FlxG.keys.anyPressed([D, RIGHT])) curOption++;
+				
+				if (curOption < 0)
+					curOption = Math.round(options[option][4].length-1);
+				else if (curOption > options[option][4].length-1)
+					curOption = 0;
+
+				v = options[option][4][curOption];
 		}
 
 		Reflect.setProperty(Prefs, options[option][3], v);
@@ -367,6 +435,9 @@ class OptionsState extends FlxState
 					var sprite:FlxSprite = sprite;
 					if(sprite != null && sprite is FlxSprite && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
 				}
+
+			case 'Resolution':
+				Utils.setDefaultResolution();
 		}
 
 		if (t == 'bool') textList[option][2].text = v ? "ON" : "OFF";
@@ -374,7 +445,7 @@ class OptionsState extends FlxState
 		if (oldText != textList[option][2].text && Prefs.allowParticles) {
 			var sprite:FlxText = textList[option][2];
 			var oldPopup:FlxText = new FlxText(sprite.x, sprite.y, sprite.width, oldText);
-			oldPopup.setFormat('assets/fonts/main.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+			oldPopup.setFormat('assets/fonts/consola.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 			oldPopup.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 			oldPopup.underline = true;
 			FlxTween.tween(oldPopup, {
@@ -386,6 +457,29 @@ class OptionsState extends FlxState
 				oldPopup.destroy();
 			}});
 			add(oldPopup);
+		}
+	}
+
+	function updateColors(didChoose:Bool = true, chosen:Int = -1) {
+		var hasChosen:Bool = false;
+		if (didChoose) {
+			for (sprite in spriteList) {
+				chosen++;
+				if (options[chosen][2] != "State") {
+					if (FlxG.mouse.overlaps(sprite[0])) {
+						hasChosen = true;
+						option = chosen;
+						break;
+					}
+				}
+			}
+		} else hasChosen = true;
+
+		var numChosen:Int = -1;
+		for (tab in textList) {
+			numChosen++;
+			if (options[numChosen][2] != "State")
+				for (i in 0...3) textList[numChosen][i].color = (numChosen == chosen && hasChosen) ? FlxColor.YELLOW : FlxColor.WHITE;
 		}
 	}
 }

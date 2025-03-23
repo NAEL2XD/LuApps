@@ -1,7 +1,8 @@
 package state;
 
+import flixel.FlxSubState;
+import utils.Utils;
 import flixel.sound.FlxSound;
-import lime.app.Application;
 import haxe.Timer;
 import openfl.media.Sound;
 import flixel.util.FlxTimer;
@@ -20,6 +21,8 @@ import utils.Prefs;
 import haxe.Json;
 import state.DummyState;
 
+var luaLists:Array<Array<String>> = [];
+
 class PlayState extends FlxState
 {
 	public static var lolArray:Array<LuaEngine> = [];
@@ -31,13 +34,12 @@ class PlayState extends FlxState
 	var spriteYPos:Array<Float> = [];
 	var textIDList:Array<Array<FlxText>> = [];
 	var textYPos:Array<Float> = [];
-	var luaLists:Array<Array<String>> = [];
 
 	var optionsBG:FlxSprite = new FlxSprite();
+	var optionsText:FlxText = new FlxText(1095, 642, 1920, "Options", 16);
 	var options:FlxSprite = new FlxSprite();
 	var mouseDistance:FlxSprite = new FlxSprite();
 	var sleepy:FlxSprite = new FlxSprite();
-	var optionsText:FlxText = new FlxText(1104, 642, 1920, "Options", 16);
 	var noApps:FlxText = new FlxText(0, 0, 1280, "There is no applications installed! Press R to refresh the list.", 32);
 
 	var allowTween:Bool = false;
@@ -48,12 +50,10 @@ class PlayState extends FlxState
 	var oldTime:Float = 0;
 	var tickLeft:Int = 5;
 	var choice:Int = 0;
-	var oldChoice:Int = 0;
 	var disableMoving:Bool = false;
 	var hasNoApps:Bool = false;
 	
-	override public function create()
-	{
+	override public function create() {
 		super.create();
 
 		Main.changeWindowName("Applications");
@@ -65,8 +65,7 @@ class PlayState extends FlxState
 		}
 
 		FlxG.autoPause = false;
-		FlxG.resizeGame(1280, 720);
-		FlxG.resizeWindow(1280, 720);
+		if (!FlxG.fullscreen) Utils.setDefaultResolution();
 		FlxG.sound.muted = false;
 		FlxG.mouse.enabled = true;
 		FlxG.mouse.visible = true;
@@ -88,13 +87,13 @@ class PlayState extends FlxState
 
 		generate();
 
-		optionsBG.makeGraphic(150, 60, Std.parseInt('0xFFA78080'));
-		optionsBG.x = 1095;
+		optionsBG.makeGraphic(165, 60, Std.parseInt('0xFFA78080'));
+		optionsBG.x = 1080;
 		optionsBG.y = 635;
 		add(optionsBG);
 
-		options.makeGraphic(140, 50, Std.parseInt('0xFF534040'));
-		options.x = 1100;
+		options.makeGraphic(155, 50, Std.parseInt('0xFF534040'));
+		options.x = 1085;
 		options.y = 640;
 		add(options);
 
@@ -147,7 +146,6 @@ class PlayState extends FlxState
 
 	function generate() {
 		for (table in spriteIDList) for (sprite in table) sprite.destroy();
-
 		for (table in textIDList) for (text in table) text.destroy();
 
 		function dumb(Value:Float):Void yPos = Value;
@@ -170,6 +168,7 @@ class PlayState extends FlxState
 			if (FileSystem.exists(fileName + "source/main.lua")) {
 				var name:String = folder;
 				var cred:String = "Unknown";
+				var type:String = "ALL";
 				var pngExist:Bool = FileSystem.exists(fileName + "pack.png");
 
 				if (FileSystem.exists(fileName + "pack.json")) {
@@ -178,9 +177,12 @@ class PlayState extends FlxState
 
 						name = extract.name;
 						cred = extract.author;
+						type = extract.appType;
 					} catch(e) trace('JSON for $folder is not formatted correctly.\nError: $e');
 				}
-				luaLists.push([name, fileName + "source/main.lua", folder, cred]);
+
+				if (type != Prefs.luAppsType && Prefs.luAppsType != "ALL") continue;
+				luaLists.push([name, fileName + "source/main.lua", folder, cred, type]);
 
 				spriteIDList.push([]);
 				var l:Int = spriteIDList.length-1;
@@ -217,17 +219,11 @@ class PlayState extends FlxState
 			}
 		}
 
-		hasNoApps = false;
-		if (done == 0) {
-			hasNoApps = true;
-			noApps.visible = true;
-		}
+		hasNoApps = done == 0;
+		noApps.visible = done == 0;
 
-		for (table in spriteIDList)
-			for (sprite in table) spriteYPos.push(sprite.y);
-
-		for (table in textIDList)
-			for (text in table) textYPos.push(text.y);
+		for (table in spriteIDList) for (sprite in table) spriteYPos.push(sprite.y);
+		for (table in textIDList) for (text in table) textYPos.push(text.y);
 
 		var text:FlxText = new FlxText(20, 20, 1920, 'Fetched $done app(s).', 16);
 		text.setFormat("assets/fonts/main.ttf", 20, FlxColor.GREEN);
@@ -244,8 +240,7 @@ class PlayState extends FlxState
 		choice = 0;
 	}
 
-	override public function update(elapsed:Float)
-	{
+	override public function update(elapsed:Float) {
 		super.update(elapsed);
 
 		for (sprite in members)
@@ -291,7 +286,6 @@ class PlayState extends FlxState
 				for (sprite in spriteIDList) {
 					if (FlxG.mouse.overlaps(sprite[0])) {
 						choice = heldID;
-						oldChoice = choice;
 						break;
 					}
 					heldID++;
@@ -377,10 +371,8 @@ class PlayState extends FlxState
 		if (FlxG.mouse.justMoved) oldTime = Timer.stamp();
 
 		FlxTween.globalManager.cancelTweensOf(sleepy);
-		if (Timer.stamp() > oldTime + 30)
-			FlxTween.tween(sleepy, {alpha: 0.66}, 2);
-		else
-			FlxTween.tween(sleepy, {alpha: 0},    0.25);
+		if (Timer.stamp() > oldTime + 30) FlxTween.tween(sleepy, {alpha: 0.66}, 2);
+		else FlxTween.tween(sleepy, {alpha: 0}, 0.25);
 
 		if (FlxG.keys.justPressed.R) generate();
 	}

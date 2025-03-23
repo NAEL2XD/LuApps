@@ -2,6 +2,8 @@ package engine;
 
 // Will credit them later..
 
+import utils.Utils;
+import cpp.Prime;
 import debug.FPSCounter;
 import haxe.Timer;
 import lime.app.Application;
@@ -68,7 +70,7 @@ class LuaEngine {
 		var raw:String = PlayState.modRaw;
 
 		Lua_helper.add_callback(lua, "print", function(text:String) {
-			print(text);
+			Dummy.debugPrint(text);
 		});
 
 		Lua_helper.add_callback(lua, "makeSprite", function(tag:String, ?image:String, ?x:Float = 0, ?y:Float = 0) {
@@ -165,7 +167,7 @@ class LuaEngine {
 				return;
 			}
 
-			print('removeText: Object $thing does not exist!', true);
+			Dummy.debugPrint('removeText: Object $thing does not exist!', true);
 		});
 
 		Lua_helper.add_callback(lua, "setTextString", function(tag:String, text:String) {
@@ -175,7 +177,7 @@ class LuaEngine {
 				obj.text = text;
 				return true;
 			}
-			print('setTextString: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('setTextString: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
@@ -186,7 +188,7 @@ class LuaEngine {
 				obj.size = size;
 				return true;
 			}
-			print('setTextSize: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('setTextSize: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
@@ -201,7 +203,7 @@ class LuaEngine {
 				obj.borderColor = colorNum;
 				return true;
 			}
-			print('setTextBorder: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('setTextBorder: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
@@ -220,7 +222,7 @@ class LuaEngine {
 			}
 
 			if (!Dummy.instance.texts.exists(tag)) {
-				print("setTextBorderStyle: Sprite does not exist.", true);
+				Dummy.debugPrint("setTextBorderStyle: Sprite does not exist.", true);
 				return;
 			}
 
@@ -241,7 +243,7 @@ class LuaEngine {
 				obj.color = colorNum;
 				return true;
 			}
-			print('setTextColor: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('setTextColor: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
@@ -252,7 +254,7 @@ class LuaEngine {
 				obj.font = '${raw}assets/fonts/$newFont.ttf';
 				return true;
 			}
-			print('setTextFont: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('setTextFont: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
@@ -268,7 +270,7 @@ class LuaEngine {
 				}
 				return true;
 			}
-			print('setTextAlignment: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('setTextAlignment: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
@@ -288,7 +290,7 @@ class LuaEngine {
 				return;
 			}
 
-			print("Cannot access DUMMY variables!", true);
+			Dummy.debugPrint("Cannot access DUMMY variables!", true);
 		});
 
 		Lua_helper.add_callback(lua, "getProperty", function(variable:String) {
@@ -297,7 +299,7 @@ class LuaEngine {
 			if(thing.length > 1)
 				result = getVarInArray(gpltw(thing), thing[thing.length-1]);
 			else 
-				print("Cannot access DUMMY variables!", true);
+				Dummy.debugPrint("Cannot access DUMMY variables!", true);
 			return result;
 		});
 
@@ -383,7 +385,7 @@ class LuaEngine {
 				spr.blend = blendModeFromString(blend);
 				return true;
 			}
-			print('setBlendMode: Object $obj doesn\'t exist!', true);
+			Dummy.debugPrint('setBlendMode: Object $obj doesn\'t exist!', true);
 			return false;
 		});
 
@@ -397,7 +399,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenX: Couldn\'t find object: $vars', true);
+				Dummy.debugPrint('doTweenX: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenY", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -410,7 +412,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenY: Couldn\'t find object: $vars', true);
+				Dummy.debugPrint('doTweenY: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenAngle", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -423,7 +425,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenAngle: Couldn\'t find object: $vars', true);
+				Dummy.debugPrint('doTweenAngle: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenAlpha", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -436,7 +438,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenAlpha: Couldn\'t find object: $vars', true);
+				Dummy.debugPrint('doTweenAlpha: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenColor", function(tag:String, vars:String, targetColor:String, duration:Float, ease:String) {
@@ -454,7 +456,7 @@ class LuaEngine {
 					}
 				}));
 			} else
-				print('doTweenColor: Couldn\'t find object: $vars', true);
+				Dummy.debugPrint('doTweenColor: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "setMouseVisibility", function(?show:Bool = true) {
@@ -466,7 +468,7 @@ class LuaEngine {
 			var n:String = '${raw}assets/sounds/$sound.ogg';
 
 			if (!FileSystem.exists(n)) {
-				print('playSound: Couldn\'t find sound file: $n', true);
+				Dummy.debugPrint('playSound: Couldn\'t find sound file: $n', true);
 				return;
 			}
 
@@ -480,14 +482,14 @@ class LuaEngine {
 				return;
 			}
 
-			print("moveTowardsMouse: Sprite does not exist, did you make a typo?", true);
+			Dummy.debugPrint("moveTowardsMouse: Sprite does not exist, did you make a typo?", true);
 		});
 
 		Lua_helper.add_callback(lua, "sendPopup", function(?title:String = "", desc:String = "") {
 			if (title == "") title = PlayState.modName;
 
 			if (desc == "unknown description") {
-				print("sendPopup: Argument 2: Desc cannot be empty!", true);
+				Dummy.debugPrint("sendPopup: Argument 2: Desc cannot be empty!", true);
 				return;
 			}
 
@@ -548,7 +550,7 @@ class LuaEngine {
 				return;
 			}
 
-			print('screenCenter: Object $obj doesn\'t exist!', true);
+			Dummy.debugPrint('screenCenter: Object $obj doesn\'t exist!', true);
 		});
 
 		Lua_helper.add_callback(lua, "stringStartsWith", function(str:String, start:String) {
@@ -585,7 +587,7 @@ class LuaEngine {
 				thing2.updateHitbox();
 				return;
 			}
-			print('scaleObject: Couldnt find object: $obj', true);
+			Dummy.debugPrint('scaleObject: Couldnt find object: $obj', true);
 		});
 
 		Lua_helper.add_callback(lua, "runTimer", function(tag:String, time:Float = 1, loops:Int = 1) {
@@ -608,16 +610,15 @@ class LuaEngine {
 		Lua_helper.add_callback(lua, "getContent", function(file:String = ''):String {
 			var n:String = '${raw}assets/data/$file';
 			if (file == '') {
-				print("getContent: File argument is empty!", true);
+				Dummy.debugPrint("getContent: File argument is empty!", true);
 				return "";
 			}
 
 			if (!FileSystem.exists(n)) {
-				print('getContent: File does not exist on $n! Did you make a typo?', true);
+				Dummy.debugPrint('getContent: File does not exist on $n! Did you make a typo?', true);
 				return "";
 			}
 				
-			print(n);
 			var plswork:Dynamic = File.getContent(n);
 			return plswork;
 		});
@@ -670,7 +671,7 @@ class LuaEngine {
 			try {
 				retVal = hscript.execute(codeToRun);
 			} catch (e:Dynamic) {
-				print(scriptName + ":" + lastCalledFunction + " - " + e, true);
+				Dummy.debugPrint(scriptName + ":" + lastCalledFunction + " - " + e, true);
 			}
 
 			if(retVal != null && !isOfTypes(retVal, [Bool, Int, Float, String, Array])) retVal = null;
@@ -685,8 +686,18 @@ class LuaEngine {
 
 				hscript.variables.set(libName, Type.resolveClass(str + libName));
 			} catch (e:Dynamic) {
-				print(scriptName + ":" + lastCalledFunction + " - " + e, true);
+				Dummy.debugPrint(scriptName + ":" + lastCalledFunction + " - " + e, true);
 			}
+		});
+
+		Lua_helper.add_callback(lua, "clearConsole", function() {
+			for (text in Dummy.debugger) text.destroy();
+			
+			Dummy.debugger = [];
+		});
+
+		Lua_helper.add_callback(lua, "resetWindowSize", function() {
+			Utils.setDefaultResolution();
 		});
 	}
 
@@ -713,7 +724,7 @@ class LuaEngine {
 
 			if (type != Lua.LUA_TFUNCTION) {
 				if (type > Lua.LUA_TNIL) 
-					print('$func: attempt to call a ${typeToString(type)} value', true);
+					Dummy.debugPrint('$func: attempt to call a ${typeToString(type)} value', true);
 
 				Lua.pop(lua, 1);
 				return Function_Continue;
@@ -736,9 +747,8 @@ class LuaEngine {
 				var path:String = 'errors/${PlayState.modName}/main_$dateNow.log';
 
 				File.saveContent(path, '$func:\n$error');
-				lime.app.Application.current.window.alert('Error on lua script!\n\n$func:\n$error\n\nYou will be moved to PlayState.\nThe error is saved on "$path"', "ERROR");
-				Lua.close(lua);
-				FlxG.resetGame();
+
+				Dummy.debugPrint('$func: $error | This warning is saved on $path', true);
 				return Function_StopLua;
 			}
 
@@ -753,9 +763,6 @@ class LuaEngine {
 		}
 		return Function_Continue;
 	}
-
-	function print(text:String, ?error:Bool = false)
-		Sys.println((error ? "[WARNING] " : "") + PlayState.modName + ': $text');
 
 	function typeToString(type:Int):String {
 		switch(type) {

@@ -90,6 +90,8 @@ function create()
 		sound.pitch = 1.5;
 		sound.play();
     ]]) -- Plays audio at 1.5x speed
+
+    resetWindowSize() -- sets the window size to prefs set
 end
 
 local enable = true
@@ -98,7 +100,7 @@ function update()
     setWindowName("Hello, my name is window!") -- Sets the window name next to the icon.
 
     -- time variable gets the time on how long has it ran.
-    --print(time)
+    print(time)
 
     -- Set the visibility! Beware, it cause lag.
     setMouseVisibility()

@@ -27,6 +27,7 @@ class Dummy extends FlxState
 	public var tweens:Map<String, FlxTween> = new Map<String, FlxTween>();
 	public var timers:Map<String, FlxTimer> = new Map<String, FlxTimer>();
 	public var luaArray:Array<LuaEngine> = PlayState.lolArray;
+	public static var debugger:Array<FlxText> = [];
 
 	public static var oldTime:Float = Timer.stamp(); //time
 
@@ -44,6 +45,8 @@ class Dummy extends FlxState
 	{
 		updateVars();
 
+		for (text in debugger) add(text);
+
 		callOnLuas("update", [elapsed]);
 
 		if (FlxG.keys.justPressed.ESCAPE)
@@ -56,6 +59,7 @@ class Dummy extends FlxState
 			variables = [];
 			tweens = [];
 			luaArray = [];
+			debugger = [];
 
 			PlayState.lolArray = [];
 			PlayState.lolArray.push(new LuaEngine(PlayState.modRaw + "source/main.lua"));
@@ -63,6 +67,29 @@ class Dummy extends FlxState
 		}
 		
 		super.update(elapsed);
+	}
+
+	public static function debugPrint(text:String, warn:Bool = false)
+	{
+		if (!Prefs.debugger) return;
+
+		var l:Int = debugger.length;
+
+		if (l == 36) {
+			debugger[0].destroy();
+			debugger.remove(debugger[0]);
+
+			var i:Int = 0;
+			for (text in debugger) {
+				text.y = 20 * i;
+				i++;
+			}
+
+			l--;
+		}
+
+		debugger.push(new FlxText(0, 20 * l, 1280, (warn ? "[WARN] " : "") + text, 20));
+		debugger[l].setFormat('assets/fonts/debug.ttf', 20, warn ? FlxColor.YELLOW : FlxColor.WHITE);
 	}
 
 	public function exit()
@@ -130,9 +157,8 @@ class Dummy extends FlxState
 }
 
 class Pause extends FlxSubState {
-	public function new() {
-		super(0x67000000);
-	}
+	public function new()
+		super(0x00000000);
 
 	var isMouseHidden:Bool = FlxG.mouse.enabled;
 
@@ -141,9 +167,17 @@ class Pause extends FlxSubState {
 	private var buttonTxt:Array<FlxText> = [];
 
 	private var music:FlxSound = new FlxSound();
+	private var blackBG:FlxSprite = new FlxSprite();
+
+	var isGoing:Bool = true;
 
 	override public function create() {
 		super.create();
+
+		blackBG.makeGraphic(1920, 1080, FlxColor.BLACK);
+		blackBG.alpha = 0;
+		FlxTween.tween(blackBG, {alpha: 0.6}, 0.5);
+		add(blackBG);
 
 		if (FlxG.sound.music.playing) FlxG.sound.music.pause();
 
@@ -154,6 +188,10 @@ class Pause extends FlxSubState {
 		pauseText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.GRAY, 4, 4);
 		pauseText.screenCenter();
 		pauseText.y = 26;
+		pauseText.alpha = 0;
+		FlxTween.tween(pauseText, {alpha: 1}, 0.5, {onComplete: e -> {
+			isGoing = false;
+		}});
 		add(pauseText);
 
 		var stuffies:Array<String> = ["Exit App", "Continue"];
@@ -163,6 +201,8 @@ class Pause extends FlxSubState {
 			buttonSpr[i].screenCenter();
 			buttonSpr[i].x += (-(stuffies.length*200) + (i * 400)) + 200;
 			buttonSpr[i].y = 550;
+			buttonSpr[i].alpha = 0;
+			FlxTween.tween(buttonSpr[i], {alpha: 1}, 0.5);
 			add(buttonSpr[i]);
 
 			buttonTxt.push(new FlxText(0, 0, 1280, stuff, 48));
@@ -170,6 +210,8 @@ class Pause extends FlxSubState {
 			buttonTxt[i].screenCenter();
 			buttonTxt[i].x += (-(stuffies.length*200) + (i * 400)) + 200;
 			buttonTxt[i].y = 555;
+			buttonTxt[i].alpha = 0;
+			FlxTween.tween(buttonTxt[i], {alpha: 1}, 0.5);
 			add(buttonTxt[i]);
 		}
 
@@ -205,23 +247,34 @@ class Pause extends FlxSubState {
 
 	override public function update(elapsed:Float) {
 		var i:Int = 0;
-		for (sprite in buttonSpr) {
-			if (FlxG.mouse.overlaps(sprite) && FlxG.mouse.justPressed) {
-				music.stop();
+		if (!isGoing) {
+			for (sprite in buttonSpr) {
+				if (FlxG.mouse.overlaps(sprite) && FlxG.mouse.justPressed) {
+					isGoing = true;
+					music.fadeOut(0.5);
+	
+					switch(buttonTxt[i].text) {
+						case "Continue":
+							music.stop();
+							FlxG.mouse.enabled = isMouseHidden;
+							FlxG.mouse.visible = isMouseHidden;
 
-				switch(buttonTxt[i].text) {
-					case "Continue":
-						FlxG.mouse.enabled = isMouseHidden;
-						FlxG.mouse.visible = isMouseHidden;
+							for (sprite in members)
+								FlxTween.tween(sprite, {alpha: 0}, 0.5, {onComplete: e -> {
+									close();
+								}});
+	
+						case "Exit App":
+							for (sprite in members) FlxTween.tween(sprite, {alpha: 0}, 0.5);
 
-						close();
-
-					case "Exit App":
-						FlxG.resetGame();
+							FlxTween.tween(blackBG, {alpha: 1}, 0.5, {onComplete: e -> {
+								FlxG.resetGame();
+							}});
+					}
 				}
+	
+				i++;
 			}
-
-			i++;
 		}
 	}
 }
