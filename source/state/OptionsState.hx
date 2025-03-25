@@ -82,7 +82,7 @@ class OptionsState extends FlxState
 		],
 		[
 			"Console",
-			"If ON, the console on top left will be shown if a debugPrint command is hit.",
+			"If ON, the console on top left will be shown if a print() command is hit.",
 			"Bool",
 			"debugger"
 		],
