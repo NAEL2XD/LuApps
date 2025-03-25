@@ -26,34 +26,30 @@ class Dummy extends FlxState
 	public var variables:Map<String, Dynamic> = new Map();
 	public var tweens:Map<String, FlxTween> = new Map<String, FlxTween>();
 	public var timers:Map<String, FlxTimer> = new Map<String, FlxTimer>();
-	public var luaArray:Array<LuaEngine> = PlayState.lolArray;
+	public static var luaArray:Array<LuaEngine> = [];
 	public static var debugger:Array<FlxText> = [];
 
-	public static var oldTime:Float = Timer.stamp(); //time
+	public static var oldTime:Float = 0; //time
 
-	override public function create()
-	{
+	override public function create() {
 		instance = this;
+		oldTime = Timer.stamp();
 
 		updateVars();
-
 		callOnLuas("create");
 		super.create();
 	}
 
-	override public function update(elapsed:Float)
-	{
+	override public function update(elapsed:Float) {
 		updateVars();
 
 		for (text in debugger) add(text);
 
 		callOnLuas("update", [elapsed]);
 
-		if (FlxG.keys.justPressed.ESCAPE)
-			openSubState(new Pause());
+		if (FlxG.keys.justPressed.ESCAPE) openSubState(new Pause());
 
-		// Developer Mode
-		if (FlxG.keys.justPressed.R) {
+		if (FlxG.keys.justPressed.R && Prefs.debugger) {
 			sprites = [];
 			texts = [];
 			variables = [];
@@ -61,21 +57,32 @@ class Dummy extends FlxState
 			luaArray = [];
 			debugger = [];
 
-			PlayState.lolArray = [];
-			PlayState.lolArray.push(new LuaEngine(PlayState.modRaw + "source/main.lua"));
+			luaArray.push(new LuaEngine(PlayState.modRaw + "source/main.lua"));
 			FlxG.switchState(Dummy.new);
 		}
 		
 		super.update(elapsed);
 	}
 
-	public static function debugPrint(text:String, warn:Bool = false)
-	{
+	public static function exit() {
+		try {
+			Dummy.instance.sprites.clear();
+			Dummy.instance.texts.clear();
+			Dummy.instance.variables.clear();
+			Dummy.instance.tweens.clear();
+			Dummy.instance.timers.clear();
+			Dummy.luaArray = [];
+		} catch(e:Dynamic) {} // Failed to do those, prevent a crash.
+
+		FlxG.resetGame();
+	}
+
+	public static function debugPrint(text:String, warn:Bool = false) {
 		if (!Prefs.debugger) return;
 
 		var l:Int = debugger.length;
 
-		if (l == 36) {
+		if (l == 37) {
 			debugger[0].destroy();
 			debugger.remove(debugger[0]);
 
@@ -92,32 +99,19 @@ class Dummy extends FlxState
 		debugger[l].setFormat('assets/fonts/debug.ttf', 20, warn ? FlxColor.YELLOW : FlxColor.WHITE);
 	}
 
-	public function exit()
-	{
-		sprites = [];
-		texts = [];
-		variables = [];
-		tweens = [];
-		luaArray = [];
-		
-		PlayState.lolArray = [];
-		PlayState.lolArray.push(new LuaEngine(PlayState.modRaw + "source/main.lua"));
-		FlxG.switchState(Dummy.new);
-	}
-
-	public function updateVars()
-	{
+	public function updateVars() {
 		set('author',       PlayState.author);
-		set('fullscreen',   FlxG.fullscreen);
 		set('fps',          FPSCounter.currentFPS);
+		set('fullscreen',   FlxG.fullscreen);
 		set('height',       Application.current.window.height);
 		set('lowDetail',    Prefs.lowDetail);
+		set('memory',       FPSCounter.curMemory);
+		set('mempeak',      FPSCounter.curMaxMemory);
 		set('modName',      PlayState.modName);
 		set('modRaw',       PlayState.modRaw);
 		set('mouseMoved',   FlxG.mouse.justMoved);
 		set('mouseX',       FlxG.mouse.x);
 		set('mouseY',       FlxG.mouse.y);
-		set('osName',       Application.current.window.display.name);
 		set('time',         Timer.stamp() - oldTime);
 		set('version',      Main.luversion);
 		set('width',        Application.current.window.width);
@@ -130,23 +124,16 @@ class Dummy extends FlxState
 		if(excludeValues == null) excludeValues = [];
 
 		for (script in luaArray) {
-			if(exclusions.contains(script.scriptName))
-				continue;
+			if(exclusions.contains(script.scriptName)) continue;
 
 			final myValue = script.call(event, args);
-			if(myValue == LuaEngine.Function_StopLua && !ignoreStops)
-				break;
-			
-			if(myValue != null && myValue != LuaEngine.Function_Continue)
-				returnVal = myValue;
+			if(myValue == LuaEngine.Function_StopLua && !ignoreStops) break;
+			if(myValue != null && myValue != LuaEngine.Function_Continue) returnVal = myValue;
 		}
 		return returnVal;
 	}
 
-	public function set(variable:String, arg:Dynamic) {
-		for (i in 0...luaArray.length)
-			luaArray[i].set(variable, arg);
-	}
+	public function set(variable:String, arg:Dynamic) for (i in 0...luaArray.length) luaArray[i].set(variable, arg);
 
 	public function getLuaObject(tag:String, text:Bool=true):FlxSprite {
 		if (sprites.exists(tag)) return sprites.get(tag);
@@ -157,8 +144,7 @@ class Dummy extends FlxState
 }
 
 class Pause extends FlxSubState {
-	public function new()
-		super(0x00000000);
+	public function new() super(0x00000000);
 
 	var isMouseHidden:Bool = FlxG.mouse.enabled;
 
@@ -179,7 +165,7 @@ class Pause extends FlxSubState {
 		FlxTween.tween(blackBG, {alpha: 0.6}, 0.5);
 		add(blackBG);
 
-		if (FlxG.sound.music.playing) FlxG.sound.music.pause();
+		if (FlxG.sound.music != null) FlxG.sound.music.pause();
 
 		FlxG.mouse.enabled = true;
 		FlxG.mouse.visible = true;
@@ -268,7 +254,7 @@ class Pause extends FlxSubState {
 							for (sprite in members) FlxTween.tween(sprite, {alpha: 0}, 0.5);
 
 							FlxTween.tween(blackBG, {alpha: 1}, 0.5, {onComplete: e -> {
-								FlxG.resetGame();
+								Dummy.exit();
 							}});
 					}
 				}

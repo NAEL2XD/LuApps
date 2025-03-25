@@ -3,8 +3,6 @@ package engine;
 // Will credit them later..
 
 import utils.Utils;
-import cpp.Prime;
-import debug.FPSCounter;
 import haxe.Timer;
 import lime.app.Application;
 import flixel.util.FlxTimer;
@@ -28,6 +26,7 @@ import openfl.filters.ShaderFilter;
 import state.DummyState;
 import state.PlayState;
 import utils.Prefs;
+import lime.ui.FileDialog;
 
 import hscript.Parser;
 import hscript.Interp;
@@ -155,7 +154,7 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "removeText", function(tag:String, destroy:Bool = true) {
+		Lua_helper.add_callback(lua, "removeText", function(tag:String) {
 			if(!Dummy.instance.texts.exists(tag))
 				return;
 
@@ -209,16 +208,12 @@ class LuaEngine {
 
 		Lua_helper.add_callback(lua, "setTextBorderStyle", function(tag:String, style:String, hexColor:String, ?size:Float = 1, ?quality:Float = 1) {
 			function getStyle(type:String) {
-				var r:FlxTextBorderStyle = null;
-
-				switch(type.toLowerCase()) {
-					case "shadow": r = FlxTextBorderStyle.SHADOW;
-					case "outline": r = FlxTextBorderStyle.OUTLINE;
-					case "outlinefast": r = FlxTextBorderStyle.OUTLINE_FAST;
+				return switch(type.toLowerCase()) {
+					case "shadow": FlxTextBorderStyle.SHADOW;
+					case "outline": FlxTextBorderStyle.OUTLINE;
+					case "outlinefast": FlxTextBorderStyle.OUTLINE_FAST;
 					default: FlxTextBorderStyle.NONE;
 				}
-
-				return r;
 			}
 
 			if (!Dummy.instance.texts.exists(tag)) {
@@ -226,8 +221,7 @@ class LuaEngine {
 				return;
 			}
 
-			if (!hexColor.contains("0xFF"))
-				hexColor = '0xFF$hexColor';
+			if (!hexColor.contains("0xFF")) hexColor = '0xFF$hexColor';
 
 			var text:FlxText = Dummy.instance.texts.get(tag);
 			text.setBorderStyle(getStyle(style), Std.parseInt(hexColor), size, quality);
@@ -290,7 +284,7 @@ class LuaEngine {
 				return;
 			}
 
-			Dummy.debugPrint("Cannot access DUMMY variables!", true);
+			Dummy.debugPrint("setProperty: Cannot access DUMMY variables!", true);
 		});
 
 		Lua_helper.add_callback(lua, "getProperty", function(variable:String) {
@@ -325,8 +319,7 @@ class LuaEngine {
 				switch (key) {
 					case "middle": clicked = FlxG.mouse.justPressedMiddle;
 					case "right":  clicked = FlxG.mouse.justPressedRight;
-					case "any":
-						clicked = (FlxG.mouse.justPressed ||FlxG.mouse.justPressedMiddle || FlxG.mouse.justPressedRight);
+					case "any": clicked = (FlxG.mouse.justPressed ||FlxG.mouse.justPressedMiddle || FlxG.mouse.justPressedRight);
 				}
 			}
 
@@ -341,8 +334,7 @@ class LuaEngine {
 				switch (key) {
 					case "middle": pressed = FlxG.mouse.pressedMiddle;
 					case "right":  pressed = FlxG.mouse.pressedRight;
-					case "any":
-						pressed = (FlxG.mouse.pressed ||FlxG.mouse.pressedMiddle || FlxG.mouse.pressedRight);
+					case "any": pressed = (FlxG.mouse.pressed ||FlxG.mouse.pressedMiddle || FlxG.mouse.pressedRight);
 				}
 			}
 
@@ -385,11 +377,11 @@ class LuaEngine {
 				spr.blend = blendModeFromString(blend);
 				return true;
 			}
-			Dummy.debugPrint('setBlendMode: Object $obj doesn\'t exist!', true);
+			Dummy.debugPrint('setBlend: Object $obj doesn\'t exist!', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "doTweenX", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
+		Lua_helper.add_callback(lua, "doTweenX", function(tag:String, vars:String, value:Dynamic, duration:Float, ?ease:String = 'linear') {
 			var tween:Dynamic = tweenStuff(tag, vars);
 			if(tween != null) {
 				Dummy.instance.tweens.set(tag, FlxTween.tween(tween, {x: value}, duration, {ease: getFlxEaseByString(ease),
@@ -398,8 +390,7 @@ class LuaEngine {
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
-			} else
-				Dummy.debugPrint('doTweenX: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('doTweenX: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenY", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -411,8 +402,7 @@ class LuaEngine {
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
-			} else
-				Dummy.debugPrint('doTweenY: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('doTweenY: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenAngle", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -424,8 +414,7 @@ class LuaEngine {
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
-			} else
-				Dummy.debugPrint('doTweenAngle: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('doTweenAngle: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenAlpha", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
@@ -437,8 +426,7 @@ class LuaEngine {
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
-			} else
-				Dummy.debugPrint('doTweenAlpha: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('doTweenAlpha: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "doTweenColor", function(tag:String, vars:String, targetColor:String, duration:Float, ease:String) {
@@ -455,8 +443,7 @@ class LuaEngine {
 						Dummy.instance.callOnLuas('tweenComplete', [tag]);
 					}
 				}));
-			} else
-				Dummy.debugPrint('doTweenColor: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('doTweenColor: Couldn\'t find object: $vars', true);
 		});
 
 		Lua_helper.add_callback(lua, "setMouseVisibility", function(?show:Bool = true) {
@@ -488,7 +475,7 @@ class LuaEngine {
 		Lua_helper.add_callback(lua, "sendPopup", function(?title:String = "", desc:String = "") {
 			if (title == "") title = PlayState.modName;
 
-			if (desc == "unknown description") {
+			if (desc == "") {
 				Dummy.debugPrint("sendPopup: Argument 2: Desc cannot be empty!", true);
 				return;
 			}
@@ -526,8 +513,7 @@ class LuaEngine {
 			}
 
 			var object:FlxSprite = Reflect.getProperty(Dummy.instance, obj);
-			if(object != null)
-				object.makeGraphic(width, height, colorNum);
+			if(object != null) object.makeGraphic(width, height, colorNum);
 		});
 
 		Lua_helper.add_callback(lua, "screenCenter", function(obj:String, ?pos:String = 'xy') {
@@ -579,8 +565,7 @@ class LuaEngine {
 
 			var thing3:Array<String> = obj.split('.');
 			var thing2:FlxSprite = getObjectDirectly(thing3[0]);
-			if(thing3.length > 1)
-				thing2 = getVarInArray(gpltw(thing3), thing3[thing3.length-1]);
+			if(thing3.length > 1) thing2 = getVarInArray(gpltw(thing3), thing3[thing3.length-1]);
 
 			if(thing2 != null) {
 				thing2.scale.set(x, y);
@@ -624,28 +609,24 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "getColorFromFlx", function(color:String = ''):FlxColor {
-			var col:FlxColor;
-
-			switch(color) {
-				case 'BLACK':       col = FlxColor.BLACK;
-				case 'BLUE':        col = FlxColor.BLUE;
-				case 'BROWN':       col = FlxColor.BROWN;
-				case 'CYAN':        col = FlxColor.CYAN;
-				case 'GRAY':        col = FlxColor.GRAY;
-				case 'GREEN':       col = FlxColor.GREEN;
-				case 'LIME':        col = FlxColor.LIME;
-				case 'MAGENTA':     col = FlxColor.MAGENTA;
-				case 'ORANGE' :     col = FlxColor.ORANGE;
-				case 'PINK':        col = FlxColor.PINK;
-				case 'PURPLE':      col = FlxColor.PURPLE;
-				case 'RED':         col = FlxColor.RED;
-				case 'TRANSPARENT': col = FlxColor.TRANSPARENT;
-				case 'WHITE':       col = FlxColor.WHITE;
-				case 'YELLOW':      col = FlxColor.YELLOW;
-				default:            col = FlxColor.WHITE;
+			return switch(color) {
+				case 'BLACK':       FlxColor.BLACK;
+				case 'BLUE':        FlxColor.BLUE;
+				case 'BROWN':       FlxColor.BROWN;
+				case 'CYAN':        FlxColor.CYAN;
+				case 'GRAY':        FlxColor.GRAY;
+				case 'GREEN':       FlxColor.GREEN;
+				case 'LIME':        FlxColor.LIME;
+				case 'MAGENTA':     FlxColor.MAGENTA;
+				case 'ORANGE' :     FlxColor.ORANGE;
+				case 'PINK':        FlxColor.PINK;
+				case 'PURPLE':      FlxColor.PURPLE;
+				case 'RED':         FlxColor.RED;
+				case 'TRANSPARENT': FlxColor.TRANSPARENT;
+				case 'WHITE':       FlxColor.WHITE;
+				case 'YELLOW':      FlxColor.YELLOW;
+				default:            FlxColor.WHITE;
 			}
-
-			return col;
 		});
 
 		Lua_helper.add_callback(lua, "setWindowName", function(name:String) {
@@ -655,8 +636,7 @@ class LuaEngine {
 		Lua_helper.add_callback(lua, "objectsOverlap", function(obj1:String, obj2:String) {
 			var namesArray:Array<String> = [obj1, obj2];
 			var objectsArray:Array<FlxSprite> = [];
-			for (i in 0...namesArray.length)
-			{
+			for (i in 0...namesArray.length) {
 				var thinhg = Dummy.instance.getLuaObject(namesArray[i]);
 				if(thinhg != null) objectsArray.push(thinhg); else objectsArray.push(Reflect.getProperty(Dummy.instance, namesArray[i]));
 			}
@@ -670,9 +650,7 @@ class LuaEngine {
 			initHaxeModule();
 			try {
 				retVal = hscript.execute(codeToRun);
-			} catch (e:Dynamic) {
-				Dummy.debugPrint(scriptName + ":" + lastCalledFunction + " - " + e, true);
-			}
+			} catch (e:Dynamic) Dummy.debugPrint(scriptName + ":" + lastCalledFunction + " - " + e, true);
 
 			if(retVal != null && !isOfTypes(retVal, [Bool, Int, Float, String, Array])) retVal = null;
 			return retVal;
@@ -685,9 +663,7 @@ class LuaEngine {
 				if(libPackage.length > 0) str = libPackage + '.';
 
 				hscript.variables.set(libName, Type.resolveClass(str + libName));
-			} catch (e:Dynamic) {
-				Dummy.debugPrint(scriptName + ":" + lastCalledFunction + " - " + e, true);
-			}
+			} catch (e:Dynamic) Dummy.debugPrint(scriptName + ":" + lastCalledFunction + " - " + e, true);
 		});
 
 		Lua_helper.add_callback(lua, "clearConsole", function() {
@@ -699,11 +675,25 @@ class LuaEngine {
 		Lua_helper.add_callback(lua, "resetWindowSize", function() {
 			Utils.setDefaultResolution();
 		});
+
+		Lua_helper.add_callback(lua, "exit", function() {
+			Dummy.exit();
+		});
+
+		Lua_helper.add_callback(lua, "promptFile", function(title:String = "Choose a file.", filter:String = "*") {
+			var file = new FileDialog();
+			var n:Dynamic = "";
+			file.onOpen.add(f -> {
+				n = f;
+			});
+			file.open(filter, null, title);
+
+			return n;
+		});
 	}
 
 	public function set(variable:String, data:Dynamic) {
-		if (lua == null)
-			return;
+		if (lua == null) return;
 
 		Convert.toLua(lua, data);
 		Lua.setglobal(lua, variable);

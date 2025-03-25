@@ -23,9 +23,7 @@ import state.DummyState;
 
 var luaLists:Array<Array<String>> = [];
 
-class PlayState extends FlxState
-{
-	public static var lolArray:Array<LuaEngine> = [];
+class PlayState extends FlxState {
 	public static var author:String;
 	public static var modName:String;
 	public static var modRaw:String;
@@ -60,7 +58,7 @@ class PlayState extends FlxState
 
 		if (modRaw != "") {
 			modRaw = "";
-			//if (FlxG.sound.music.playing) FlxG.sound.music.stop();
+			if (FlxG.sound.music != null) FlxG.sound.music.stop();
 			FlxG.resetState();
 		}
 
@@ -165,24 +163,28 @@ class PlayState extends FlxState
 		var done:Int = 0;
 		for (folder in checks) {
 			var fileName:String = "mods/" + folder + "/";
-			if (FileSystem.exists(fileName + "source/main.lua")) {
+			if (FileSystem.exists('${fileName}source/main.lua')) {
 				var name:String = folder;
 				var cred:String = "Unknown";
 				var type:String = "ALL";
-				var pngExist:Bool = FileSystem.exists(fileName + "pack.png");
+				var ver:String = "";
+				var pngExist:Bool = FileSystem.exists('${fileName}pack.png');
 
-				if (FileSystem.exists(fileName + "pack.json")) {
+				if (FileSystem.exists('${fileName}pack.json')) {
 					try {
-						var extract = Json.parse(File.getContent(fileName + "pack.json"));
+						var extract = Json.parse(File.getContent('${fileName}pack.json'));
 
 						name = extract.name;
 						cred = extract.author;
 						type = extract.appType;
+						ver  = extract.version;
 					} catch(e) trace('JSON for $folder is not formatted correctly.\nError: $e');
 				}
 
-				if (type != Prefs.luAppsType && Prefs.luAppsType != "ALL") continue;
-				luaLists.push([name, fileName + "source/main.lua", folder, cred, type]);
+				if ((type != Prefs.luAppsType && Prefs.luAppsType != "ALL") && File.getContent('${fileName}source/main.lua').length != 0) continue;
+				if (ver == null) ver = "Unknown";
+
+				luaLists.push([name, '${fileName}source/main.lua', folder, cred, type, ver]);
 
 				spriteIDList.push([]);
 				var l:Int = spriteIDList.length-1;
@@ -197,22 +199,27 @@ class PlayState extends FlxState
 				}
 
 				textIDList.push([]);
-				textIDList[done].push(new FlxText(-255, 75 + (160 * done), 1280, name, 24));
+				textIDList[done].push(new FlxText(-245, 75 + (160 * done), 1280, name));
 				textIDList[done][0].setFormat("assets/fonts/main.ttf", 40, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 				add(textIDList[done][0]);
 
-				textIDList[done].push(new FlxText(-255, 130 + (160 * done), 1280, cred, 24));
-				textIDList[done][1].setFormat("assets/fonts/main.ttf", 40, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+				textIDList[done].push(new FlxText(-245, 120 + (160 * done), 1280, cred));
+				textIDList[done][1].setFormat("assets/fonts/main.ttf", 32, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 				add(textIDList[done][1]);
 
+				textIDList[done].push(new FlxText(-245, 155 + (160 * done), 1280, ver));
+				textIDList[done][2].setFormat("assets/fonts/main.ttf", 22, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+				textIDList[done][2].underline = true;
+				add(textIDList[done][2]);
+
 				var image:BitmapData = null;
-				if (pngExist) image = BitmapData.fromFile(fileName + "pack.png");
+				if (pngExist) image = BitmapData.fromFile('${fileName}pack.png');
 
 				spriteIDList[l].push(new FlxSprite().loadGraphic(pngExist ? image : "assets/images/unknown.png"));
-				spriteIDList[l][sprID].y = 58 + (160 * done);
 				spriteIDList[l][sprID].scale.x = 0.75;
 				spriteIDList[l][sprID].scale.y = 0.75;
 				spriteIDList[l][sprID].x = 230;
+				spriteIDList[l][sprID].y = 58 + (160 * done);
 				add(spriteIDList[l][sprID]);
 
 				done++;
@@ -243,8 +250,7 @@ class PlayState extends FlxState
 	override public function update(elapsed:Float) {
 		super.update(elapsed);
 
-		for (sprite in members)
-		{
+		for (sprite in members) {
 			var sprite:Dynamic = sprite;
 			var sprite:FlxSprite = sprite;
 			if(sprite != null && (sprite is FlxSprite) && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
@@ -266,13 +272,8 @@ class PlayState extends FlxState
 				}
 				tickLeft--;
 			} else if (mouseScroll != 0) {
-				if (mouseScroll > 0) {
-					yPos -= mouseScroll;
-					mouseScroll -= 0.25;
-				} else {
-					yPos -= mouseScroll;
-					mouseScroll += 0.25;
-				}
+				yPos -= mouseScroll;
+				mouseScroll += mouseScroll > 0 ? -0.25 : 0.25;
 			}
 
 			if (yPos < -160 * (luaLists.length - 4)) yPos = -160 * (luaLists.length - 4);
@@ -315,7 +316,7 @@ class PlayState extends FlxState
 			var numChosen:Int = -1;
 			for (tab in textIDList) {
 				numChosen++;
-				for (i in 0...2) textIDList[numChosen][i].color = numChosen == choice ? FlxColor.YELLOW : FlxColor.WHITE;
+				for (i in 0...3) textIDList[numChosen][i].color = numChosen == choice ? FlxColor.YELLOW : FlxColor.WHITE;
 			}
 
 			if (FlxG.mouse.justReleased && choice != -1 && !disableMoving) {
@@ -327,8 +328,8 @@ class PlayState extends FlxState
 					modName = luaLists[choice][2];
 					modRaw = "mods/" + luaLists[choice][2] + "/";
 					author = luaLists[choice][3];
+					Dummy.luaArray.push(new LuaEngine(luaLists[choice][1]));
 					Main.changeWindowName('$modName - $author');
-					lolArray.push(new LuaEngine(luaLists[choice][1]));
 					FlxG.sound.destroy(true);
 					FlxG.switchState(Dummy.new);
 				}});
@@ -359,13 +360,11 @@ class PlayState extends FlxState
 				var choose:Sound = Sound.fromFile('assets/sounds/choose.ogg');
 				choose.play();
 			}
-		} else {
-			if (!allowTween) {
-				FlxTween.tween(optionsText, {alpha: 0.5}, 0.3);
-				FlxTween.tween(optionsBG,   {alpha: 0.5}, 0.3);
-				FlxTween.tween(options,     {alpha: 0.5}, 0.3);
-				allowTween = true;
-			}
+		} else if (!allowTween) {
+			FlxTween.tween(optionsText, {alpha: 0.5}, 0.3);
+			FlxTween.tween(optionsBG,   {alpha: 0.5}, 0.3);
+			FlxTween.tween(options,     {alpha: 0.5}, 0.3);
+			allowTween = true;
 		}
 
 		if (FlxG.mouse.justMoved) oldTime = Timer.stamp();

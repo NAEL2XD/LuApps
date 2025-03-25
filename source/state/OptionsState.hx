@@ -103,11 +103,12 @@ class OptionsState extends FlxState
 	var triggered:Bool = false;
 	var ticksRemain:Int = 0;
 	var curOption:Int = 0;
+	var heldProps:Array<Dynamic> = [false, 0, 0, new FlxSprite(), new FlxSprite()];
+	var heldText:FlxText = new FlxText(0, 0, 1280, "");
 
 	var mouseDistance:FlxSprite = new FlxSprite();
 
-	override public function create()
-	{
+	override public function create() {
 		Main.changeWindowName("Settings");
 
 		mouseDistance.makeGraphic(0, 0, FlxColor.RED);
@@ -119,12 +120,11 @@ class OptionsState extends FlxState
 		add(optionsBG);
 
 		// For LuApps Thingy
-		for (thing in PlayState.luaLists) if (!options[1][4].contains(thing[4])) options[1][4].push(thing[4]);
+		for (thing in PlayState.luaLists) if (!options[1][4].contains(thing[4])) options[1][4].insert(0, thing[4]);
 
 		var count:Int = 0;
 		var yDown:Float = 0;
 		for (option in options) {
-
 			spriteList.push([]);
 			textList.push([]);
 
@@ -132,7 +132,6 @@ class OptionsState extends FlxState
 			var j:Int = textList.length-1;
 
 			var n:String = option[0];
-			var d:String = option[1];
 			var t:String = option[2];
 
 			var result:Float = yDown - 280;
@@ -144,13 +143,13 @@ class OptionsState extends FlxState
 			add(previewText[i][1]);
 
 			if (t != "State") {
-				spriteList[i].push(new FlxSprite().makeGraphic(860, 130, Std.parseInt('0xFF797979')));
+				spriteList[i].push(new FlxSprite().makeGraphic(860, 105, Std.parseInt('0xFF797979')));
 				spriteList[i][0].screenCenter();
 				spriteList[i][0].y = 60 + yDown;
 				add(spriteList[i][0]);
 
 				if (!Prefs.lowDetail) {
-					spriteList[i].push(new FlxSprite().makeGraphic(845, 115, Std.parseInt('0xFF363636')));
+					spriteList[i].push(new FlxSprite().makeGraphic(845, 90, Std.parseInt('0xFF363636')));
 					spriteList[i][1].screenCenter();
 					spriteList[i][1].y = 67.5 + yDown;
 					add(spriteList[i][1]);
@@ -161,21 +160,16 @@ class OptionsState extends FlxState
 				textList[j][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 				add(textList[j][0]);
 
-				textList[j].push(new FlxText(230, 145 + yDown, 1280, d));
-				textList[j][1].setFormat('assets/fonts/main.ttf', 20, FlxColor.WHITE);
-				textList[j][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
-				add(textList[j][1]);
-
 				var value:Dynamic = Reflect.getProperty(Prefs, option[3]);
 				textList[j].push(new FlxText(-240, 77 + yDown, 1280, '$value', 60));
-				textList[j][2].setFormat('assets/fonts/consola.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
-				textList[j][2].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
-				textList[j][2].underline = true;
-				add(textList[j][2]);
+				textList[j][1].setFormat('assets/fonts/consola.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+				textList[j][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				textList[j][1].underline = true;
+				add(textList[j][1]);
 
-				if (option[2] == "Bool") textList[j][2].text = value ? "ON" : "OFF";
+				if (option[2] == "Bool") textList[j][1].text = value ? "ON" : "OFF";
 
-				yDown += 160;
+				yDown += 115;
 			} else {
 				textList[j].push(new FlxText(0, 90 + yDown, 1280, option[0]));
 				textList[j][0].setFormat('assets/fonts/main.ttf', 64, FlxColor.WHITE, FlxTextAlign.CENTER);
@@ -201,11 +195,8 @@ class OptionsState extends FlxState
 		helpText.y = 650;
 		add(helpText);
 
-		for (table in spriteList)
-			for (sprite in table) spriteYPos.push(sprite.y);
-
-		for (table in textList)
-			for (text in table) textYPos.push(text.y);
+		for (table in spriteList) for (sprite in table) spriteYPos.push(sprite.y);
+		for (table in textList) for (text in table) textYPos.push(text.y);
 
 		FlxG.sound.playMusic('assets/music/settings.ogg', 1, true);
 
@@ -214,6 +205,12 @@ class OptionsState extends FlxState
 			blackFade.destroy();
 		}});
 		add(blackFade);
+
+		add(heldProps[4]);
+		add(heldProps[3]);
+		heldText.setFormat('assets/fonts/debug.ttf', 20, FlxColor.BLACK, FlxTextAlign.LEFT);
+		heldText.screenCenter();
+		add(heldText);
 	}
 
 	var option:Int = 0;
@@ -222,8 +219,7 @@ class OptionsState extends FlxState
 	var mouseYPos:Float = 0;
 	var mouseScroll:Float = 0;
 	var colArray:Array<Int> = [0, 0];
-	override public function update(elapsed:Float)
-	{
+	override public function update(elapsed:Float) {
 		colArray[1] = -1;
 		helpText.angle = Math.sin(Timer.stamp());
 
@@ -270,7 +266,7 @@ class OptionsState extends FlxState
 					}
 					tickLeft--;
 				} else if (mouseScroll != 0) {
-					if (mouseScroll > 0) mouseScroll -= 0.25; else mouseScroll += 0.25;
+					mouseScroll += mouseScroll > 0 ? -0.25 : 0.25;
 					yPos -= mouseScroll;
 				}
 		
@@ -294,6 +290,13 @@ class OptionsState extends FlxState
 				}
 			}
 
+			heldProps[3].x = FlxG.mouse.x + 4;
+			heldProps[3].y = FlxG.mouse.y + 23;
+			heldProps[4].x = FlxG.mouse.x;
+			heldProps[4].y = FlxG.mouse.y + 19;
+			heldText.x = FlxG.mouse.x + 10;
+			heldText.y = FlxG.mouse.y + 29;
+
 			if (FlxG.mouse.justPressed && option != -1 && allowMoving) {
 				isSettingThing = true;
 				var t:String = options[option][2];
@@ -301,19 +304,13 @@ class OptionsState extends FlxState
 
 				var count:Int = 0;
 				for (spr in spriteList) {
-					if (count != option) {
-						for (i in 0...spr.length)
-							FlxTween.tween(spr[i], {alpha: 0.33}, 0.25);
-					}
+					if (count != option) for (i in 0...spr.length) FlxTween.tween(spr[i], {alpha: 0.33}, 0.25);
 					count++;
 				}
 
 				count = 0;
 				for (txt in textList) {
-					if (count != option) {
-						for (i in 0...txt.length)
-							FlxTween.tween(txt[i], {alpha: 0.33}, 0.25);
-					}
+					if (count != option) for (i in 0...txt.length) FlxTween.tween(txt[i], {alpha: 0.33}, 0.25);
 					count++;
 				}
 
@@ -330,6 +327,11 @@ class OptionsState extends FlxState
 					}
 
 					FlxTween.tween(helpText, {"scale.y": 1}, 0.1, {ease: FlxEase.linear});
+
+					heldProps[0] = false;
+					FlxTween.tween(heldText, {alpha: 0}, 0.2);
+					FlxTween.tween(heldProps[3], {alpha: 0}, 0.2);
+					FlxTween.tween(heldProps[4], {alpha: 0}, 0.2);
 				}});
 			}
 
@@ -356,19 +358,13 @@ class OptionsState extends FlxState
 
 			var count:Int = 0;
 			for (spr in spriteList) {
-				if (count != option) {
-					for (i in 0...spr.length)
-						FlxTween.tween(spr[i], {alpha: 1}, 0.25);
-				}
+				if (count != option) for (i in 0...spr.length) FlxTween.tween(spr[i], {alpha: 1}, 0.25);
 				count++;
 			}
 
 			count = 0;
 			for (txt in textList) {
-				if (count != option) {
-					for (i in 0...txt.length)
-						FlxTween.tween(txt[i], {alpha: 1}, 0.25);
-				}
+				if (count != option) for (i in 0...txt.length) FlxTween.tween(txt[i], {alpha: 1}, 0.25);
 				count++;
 			}
 
@@ -385,7 +381,7 @@ class OptionsState extends FlxState
 		var v:Dynamic = t != "string" ? Reflect.getProperty(Prefs, options[option][3]) : options[option][4][curOption];
 		var r = 0;
 		
-		var oldText:String = textList[option][2].text;
+		var oldText:String = textList[option][1].text;
 		switch(t) {
 			case 'int' | 'float':
 				var allow:Array<Int> = [for (i in 0...3) options[option][4][i]];
@@ -409,28 +405,24 @@ class OptionsState extends FlxState
 				if (FlxG.keys.anyPressed([Q, A, LEFT])) curOption--;
 				else if (FlxG.keys.anyPressed([D, RIGHT])) curOption++;
 				
-				if (curOption < 0)
-					curOption = Math.round(options[option][4].length-1);
-				else if (curOption > options[option][4].length-1)
-					curOption = 0;
+				if (curOption < 0) curOption = Math.round(options[option][4].length-1);
+				else if (curOption > options[option][4].length-1) curOption = 0;
 
 				v = options[option][4][curOption];
 		}
 
 		Reflect.setProperty(Prefs, options[option][3], v);
-		textList[option][2].text = v;
+		textList[option][1].text = v;
 
 		switch(options[option][0]) {
 			case 'Framerate':
 				FlxG.updateFramerate = v;
 				FlxG.drawFramerate = v;
 
-			case 'Show FPS':
-				Main.fpsVar.visible = v;
+			case 'Show FPS': Main.fpsVar.visible = v;
 
 			case 'Anti-Aliasing':
-				for (sprite in members)
-				{
+				for (sprite in members) {
 					var sprite:Dynamic = sprite;
 					var sprite:FlxSprite = sprite;
 					if(sprite != null && sprite is FlxSprite && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
@@ -440,10 +432,10 @@ class OptionsState extends FlxState
 				Utils.setDefaultResolution();
 		}
 
-		if (t == 'bool') textList[option][2].text = v ? "ON" : "OFF";
+		if (t == 'bool') textList[option][1].text = v ? "ON" : "OFF";
 
-		if (oldText != textList[option][2].text && Prefs.allowParticles) {
-			var sprite:FlxText = textList[option][2];
+		if (oldText != textList[option][1].text && Prefs.allowParticles) {
+			var sprite:FlxText = textList[option][1];
 			var oldPopup:FlxText = new FlxText(sprite.x, sprite.y, sprite.width, oldText);
 			oldPopup.setFormat('assets/fonts/consola.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 			oldPopup.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
@@ -476,10 +468,36 @@ class OptionsState extends FlxState
 		} else hasChosen = true;
 
 		var numChosen:Int = -1;
+		var held:Bool = false;
 		for (tab in textList) {
 			numChosen++;
-			if (options[numChosen][2] != "State")
-				for (i in 0...3) textList[numChosen][i].color = (numChosen == chosen && hasChosen) ? FlxColor.YELLOW : FlxColor.WHITE;
+			if (options[numChosen][2] != "State") for (i in 0...2) textList[numChosen][i].color = (numChosen == chosen && hasChosen) ? FlxColor.YELLOW : FlxColor.WHITE;
 		}
+
+		held = hasChosen;
+		if (held) {
+			if (!heldProps[0]) heldProps[2] = Timer.stamp();
+			heldProps[1] = Timer.stamp() - heldProps[2];
+
+			if (heldProps[1] > 0.5) {
+				heldText.text = options[chosen][1];
+				heldProps[3].makeGraphic((heldText.text.length * 11) + 16, 30, FlxColor.WHITE);
+				heldProps[4].makeGraphic((heldText.text.length * 11) + 24, 38, Std.parseInt("0xFFADADAD"));
+
+				FlxTween.tween(heldText, {alpha: 1}, 0.2);
+				FlxTween.tween(heldProps[3], {alpha: 1}, 0.2);
+				FlxTween.tween(heldProps[4], {alpha: 1}, 0.2);
+			}
+		} else {
+			FlxTween.cancelTweensOf(heldText);
+			FlxTween.cancelTweensOf(heldProps[3]);
+			FlxTween.cancelTweensOf(heldProps[4]);
+
+			FlxTween.tween(heldText, {alpha: 0}, 0.2);
+			FlxTween.tween(heldProps[3], {alpha: 0}, 0.2);
+			FlxTween.tween(heldProps[4], {alpha: 0}, 0.2);
+		}
+
+		heldProps[0] = held;
 	}
 }
