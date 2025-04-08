@@ -1,6 +1,10 @@
 package state;
 
-
+import lime.system.Clipboard;
+import haxe.Timer;
+import openfl.media.Sound;
+import openfl.media.SoundChannel;
+import openfl.media.SoundTransform;
 import flixel.sound.FlxSound;
 import flixel.util.FlxColor;
 import flixel.FlxSubState;
@@ -12,13 +16,11 @@ import flixel.FlxState;
 import flixel.text.FlxText;
 import flixel.FlxSprite;
 import flixel.FlxG;
-import haxe.Timer;
 import state.PlayState;
 import engine.LuaEngine;
 import debug.FPSCounter;
 
-class Dummy extends FlxState
-{
+class Dummy extends FlxState {
 	public static var instance:Dummy;
 
 	public var sprites:Map<String, ModchartSprite> = new Map<String, ModchartSprite>();
@@ -29,11 +31,15 @@ class Dummy extends FlxState
 	public static var luaArray:Array<LuaEngine> = [];
 	public static var debugger:Array<FlxText> = [];
 
-	public static var oldTime:Float = 0; //time
+	public static var channels:Array<SoundChannel> = [];
+	public static var positions:Array<Float> = [];
+    public static var sounds:Array<Sound> = [];
+	
+	var oldTime:Float = 0;
 
 	override public function create() {
-		instance = this;
 		oldTime = Timer.stamp();
+		instance = this;
 
 		updateVars();
 		callOnLuas("create");
@@ -41,30 +47,52 @@ class Dummy extends FlxState
 	}
 
 	override public function update(elapsed:Float) {
+		super.update(elapsed);
+
 		updateVars();
 
 		for (text in debugger) add(text);
-
 		callOnLuas("update", [elapsed]);
 
 		if (FlxG.keys.justPressed.ESCAPE) openSubState(new Pause());
 
-		if (FlxG.keys.justPressed.R && Prefs.debugger) {
+		if (FlxG.keys.justPressed.R && Prefs.restartByR) {
 			sprites = [];
 			texts = [];
 			variables = [];
 			tweens = [];
 			luaArray = [];
 			debugger = [];
+			Pause.killSounds();
 
 			luaArray.push(new LuaEngine(PlayState.modRaw + "source/main.lua"));
 			FlxG.switchState(Dummy.new);
 		}
-		
-		super.update(elapsed);
+
+		for (channel in channels) {
+            if (channel != null) {
+                var transform:SoundTransform = channel.soundTransform;
+                transform.volume = FlxG.sound.volume; // Apply new volume
+                channel.soundTransform = transform;
+            }
+        }
 	}
 
-	public static function exit() {
+	public static function playSound(path:String) {
+        var sound:Sound = Sound.fromFile(path);
+        var channel:SoundChannel = sound.play();
+        if (channel != null) {
+            var transform:SoundTransform = channel.soundTransform;
+            transform.volume = FlxG.sound.volume;
+            channel.soundTransform = transform;
+            
+            channels.push(channel);
+            positions.push(0); // Start at position 0
+            sounds.push(sound);
+        }
+    }
+
+	public static function exit(restartOnly:Bool = false) {
 		try {
 			Dummy.instance.sprites.clear();
 			Dummy.instance.texts.clear();
@@ -72,49 +100,66 @@ class Dummy extends FlxState
 			Dummy.instance.tweens.clear();
 			Dummy.instance.timers.clear();
 			Dummy.luaArray = [];
+			debugger = [];
 		} catch(e:Dynamic) {} // Failed to do those, prevent a crash.
 
-		FlxG.resetGame();
+		if (!restartOnly) FlxG.resetGame();
 	}
 
 	public static function debugPrint(text:String, warn:Bool = false) {
-		if (!Prefs.debugger) return;
-
 		var l:Int = debugger.length;
+		text = (warn ? "[WARN] " : "") + text;
 
 		if (l == 37) {
 			debugger[0].destroy();
 			debugger.remove(debugger[0]);
 
 			var i:Int = 0;
-			for (text in debugger) {
-				text.y = 20 * i;
+			for (tex in debugger) {
+				tex.y = 20 * i;
 				i++;
 			}
 
 			l--;
 		}
 
-		debugger.push(new FlxText(0, 20 * l, 1280, (warn ? "[WARN] " : "") + text, 20));
-		debugger[l].setFormat('assets/fonts/debug.ttf', 20, warn ? FlxColor.YELLOW : FlxColor.WHITE);
+		if (text.length > 91) {
+			Sys.println('${PlayState.modName}: $text');
+			text = text.substr(0, 88);
+			text += "...\n(Full Debug if the terminal is launched!)";
+		}
+
+		var curText:Array<String> = text.split("\n");
+		for (text in curText) {
+			debugger.push(new FlxText(0, 16 * l, 1280, text));
+			debugger[l].setFormat('assets/fonts/debug.ttf', 14, warn ? FlxColor.YELLOW : FlxColor.WHITE);
+			l = debugger.length;
+		}
 	}
 
 	public function updateVars() {
-		set('author',       PlayState.author);
-		set('fps',          FPSCounter.currentFPS);
-		set('fullscreen',   FlxG.fullscreen);
-		set('height',       Application.current.window.height);
-		set('lowDetail',    Prefs.lowDetail);
-		set('memory',       FPSCounter.curMemory);
-		set('mempeak',      FPSCounter.curMaxMemory);
-		set('modName',      PlayState.modName);
-		set('modRaw',       PlayState.modRaw);
-		set('mouseMoved',   FlxG.mouse.justMoved);
-		set('mouseX',       FlxG.mouse.x);
-		set('mouseY',       FlxG.mouse.y);
-		set('time',         Timer.stamp() - oldTime);
-		set('version',      Main.luversion);
-		set('width',        Application.current.window.width);
+		set('author',        PlayState.author);
+		set('clipboardItem', Clipboard.text);
+		set('fps',           FPSCounter.currentFPS);
+		set('fullscreen',    FlxG.fullscreen);
+		set('height',        Application.current.window.height);
+		set('lowDetail',     Prefs.lowDetail);
+		set('memory',        FPSCounter.curMemory);
+		set('mempeak',       FPSCounter.curMaxMemory);
+		set('modName',       PlayState.modName);
+		set('modRaw',        PlayState.modRaw);
+		set('mouseMoved',    FlxG.mouse.justMoved);
+		set('mouseX',        FlxG.mouse.x);
+		set('mouseY',        FlxG.mouse.y);
+		set('time',          Timer.stamp() - oldTime);
+		set('version',       Main.luversion);
+		set('width',         Application.current.window.width);
+	}
+
+	public static function clearLog() {
+		for (text in Dummy.debugger) text.destroy();
+			
+		Dummy.debugger = [];
 	}
 
 	public function callOnLuas(event:String, args:Array<Dynamic> = null, ignoreStops = true, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
@@ -158,8 +203,6 @@ class Pause extends FlxSubState {
 	var isGoing:Bool = true;
 
 	override public function create() {
-		super.create();
-
 		blackBG.makeGraphic(1920, 1080, FlxColor.BLACK);
 		blackBG.alpha = 0;
 		FlxTween.tween(blackBG, {alpha: 0.6}, 0.5);
@@ -229,6 +272,10 @@ class Pause extends FlxSubState {
 		music.fadeIn(8);
 		music.looped = true;
 		music.play();
+
+		killSounds();
+
+		super.create();
 	}
 
 	override public function update(elapsed:Float) {
@@ -247,6 +294,20 @@ class Pause extends FlxSubState {
 
 							for (sprite in members)
 								FlxTween.tween(sprite, {alpha: 0}, 0.5, {onComplete: e -> {
+									for (i in 0...Dummy.sounds.length) {
+										if (Dummy.sounds[i] != null) {
+											if (Dummy.channels[i] != null) Dummy.channels[i].stop();
+											var channel:SoundChannel = Dummy.sounds[i].play(Dummy.positions[i]); // Resume from saved position
+											if (channel != null) {
+												var transform:SoundTransform = channel.soundTransform;
+												transform.volume = FlxG.sound.volume;
+												channel.soundTransform = transform;
+												
+												Dummy.channels[i] = channel;
+											}
+										}
+									}
+
 									close();
 								}});
 	
@@ -262,5 +323,16 @@ class Pause extends FlxSubState {
 				i++;
 			}
 		}
+	}
+
+	public static function killSounds() {
+		for (i in 0...Dummy.channels.length) {
+            if (Dummy.channels[i] != null) {
+                Dummy.positions[i] = Dummy.channels[i].position; // Save position
+                Dummy.channels[i].stop(); // Stop the sound
+                Dummy.channels[i] = null;
+				Dummy.sounds[i] = null;
+            }
+        }
 	}
 }

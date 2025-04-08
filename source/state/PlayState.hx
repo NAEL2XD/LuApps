@@ -1,8 +1,11 @@
 package state;
 
-import flixel.FlxSubState;
+import flixel.util.FlxStringUtil;
+import flixel.FlxCamera;
+import flixel.util.FlxAxes;
+import openfl.display.BlendMode;
+import flixel.addons.display.FlxBackdrop;
 import utils.Utils;
-import flixel.sound.FlxSound;
 import haxe.Timer;
 import openfl.media.Sound;
 import flixel.util.FlxTimer;
@@ -20,6 +23,9 @@ import engine.LuaEngine;
 import utils.Prefs;
 import haxe.Json;
 import state.DummyState;
+import utils.Shaders;
+
+using StringTools;
 
 var luaLists:Array<Array<String>> = [];
 
@@ -39,21 +45,28 @@ class PlayState extends FlxState {
 	var mouseDistance:FlxSprite = new FlxSprite();
 	var sleepy:FlxSprite = new FlxSprite();
 	var noApps:FlxText = new FlxText(0, 0, 1280, "There is no applications installed! Press R to refresh the list.", 32);
+	var background:FlxBackdrop = new FlxBackdrop();
+	var GMB:GlowingMarblingBlack = new GlowingMarblingBlack();
+	var camNotifs:FlxCamera = new FlxCamera(); // i'm so pissed
+	var curNotifSpr:Array<Array<FlxSprite>> = [];
+	var curNotifTxt:Array<Array<FlxText>>   = [];
 
 	var allowTween:Bool = false;
 	var yPos:Float = -5;
+	var maxYPos:Float = 0;
 	var oldYPos:Float = 0;
 	var mouseYPos:Float = 0;
 	var mouseScroll:Float = 0;
+	var wheelSpeed:Float = 0;
 	var oldTime:Float = 0;
 	var tickLeft:Int = 5;
 	var choice:Int = 0;
 	var disableMoving:Bool = false;
 	var hasNoApps:Bool = false;
+	var notifsSent:Int = 0;
+	var notifsGone:Int = 0;
 	
 	override public function create() {
-		super.create();
-
 		Main.changeWindowName("Applications");
 
 		if (modRaw != "") {
@@ -68,13 +81,27 @@ class PlayState extends FlxState {
 		FlxG.mouse.enabled = true;
 		FlxG.mouse.visible = true;
 		FlxG.sound.playMusic("assets/music/menu.ogg", 1, true);
+		FlxG.cameras.add(camNotifs);
+		add(camNotifs);
 
 		oldTime = Timer.stamp();
 
 		if (!FileSystem.exists("mods/")) FileSystem.createDirectory("mods/");
 
 		var gray:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, Std.parseInt('0xFF222222'));
+		if (Prefs.shaders) gray.shader = GMB;
 		add(gray);
+
+		// From JS Engine.
+		if (Prefs.allowParticles) {
+			background = new FlxBackdrop("assets/images/checker.png", FlxAxes.XY);
+			background.color = 0xff467172;
+			background.blend = BlendMode.LAYER;
+			background.scrollFactor.set(0, 0.07);
+			background.alpha = 0.33;
+			background.updateHitbox();
+			add(background);
+		}
 
 		noApps.setFormat("assets/fonts/main.ttf", 36, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
 		noApps.setBorderStyle(FlxTextBorderStyle.OUTLINE, FlxColor.BLACK, 2, 4);
@@ -83,7 +110,12 @@ class PlayState extends FlxState {
 		noApps.visible = false;
 		add(noApps);
 
-		generate();
+		for (i in 0...50) {
+			var spr:FlxSprite = new FlxSprite().makeGraphic(1280, 320, FlxColor.BLACK);
+			spr.alpha = 0.0175;
+			spr.y = 460 + (5.2 * i);
+			add(spr);
+		}
 
 		optionsBG.makeGraphic(165, 60, Std.parseInt('0xFFA78080'));
 		optionsBG.x = 1080;
@@ -99,8 +131,7 @@ class PlayState extends FlxState {
 		optionsText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 		add(optionsText);
 
-		mouseDistance.makeGraphic(0, 0, FlxColor.RED);
-		add(mouseDistance);
+		generate();
 
 		var version:FlxText = new FlxText(20, 680, 1920, 'You are running v${Main.luversion}');
 		version.setFormat("assets/fonts/main.ttf", 20, Std.parseInt('0xFF4D4242'));
@@ -118,7 +149,7 @@ class PlayState extends FlxState {
 			new FlxTimer().start(Prefs.lowDetail ? 0.4 : 0.05, function(e) {
 				var sprite:FlxSprite = new FlxSprite(FlxG.random.float(-16, 1296), 720);
 				sprite.makeGraphic(16, 16, FlxColor.WHITE);
-				sprite.alpha = 0.6;
+				sprite.alpha = Math.abs(-0.6 + (sleepy.alpha / 1.9));
 				FlxTween.tween(sprite, {
 					x: sprite.x + FlxG.random.float(-50, 50),
 					y: sprite.y - FlxG.random.float(200, 250),
@@ -131,15 +162,15 @@ class PlayState extends FlxState {
 			}, 0);
 		}
 
+		sendNotification("This is a alpha state, changes won't be this but something else.");
+		
 		var funny:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
 		FlxTween.tween(funny, {alpha: 0}, 0.5, {onComplete: function(e) {
 			funny.destroy();
 		}});
 		add(funny);
 
-		sleepy.makeGraphic(1920, 1080, FlxColor.BLACK);
-		sleepy.alpha = 0;
-		add(sleepy);
+		super.create();
 	}
 
 	function generate() {
@@ -181,10 +212,9 @@ class PlayState extends FlxState {
 					} catch(e) trace('JSON for $folder is not formatted correctly.\nError: $e');
 				}
 
-				if ((type != Prefs.luAppsType && Prefs.luAppsType != "ALL") && File.getContent('${fileName}source/main.lua').length != 0) continue;
 				if (ver == null) ver = "Unknown";
-
 				luaLists.push([name, '${fileName}source/main.lua', folder, cred, type, ver]);
+				if ((!Prefs.luAppsType.startsWith(type) && Prefs.luAppsType != "ALL") && File.getContent('${fileName}source/main.lua').length != 0) continue;
 
 				spriteIDList.push([]);
 				var l:Int = spriteIDList.length-1;
@@ -203,11 +233,11 @@ class PlayState extends FlxState {
 				textIDList[done][0].setFormat("assets/fonts/main.ttf", 40, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 				add(textIDList[done][0]);
 
-				textIDList[done].push(new FlxText(-245, 120 + (160 * done), 1280, cred));
+				textIDList[done].push(new FlxText(-245, 116 + (160 * done), 1280, cred));
 				textIDList[done][1].setFormat("assets/fonts/main.ttf", 32, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 				add(textIDList[done][1]);
 
-				textIDList[done].push(new FlxText(-245, 155 + (160 * done), 1280, ver));
+				textIDList[done].push(new FlxText(-245, 155 + (160 * done), 1280, '$ver - ${FlxStringUtil.formatBytes(Utils.getDirectorySize(fileName))}'));
 				textIDList[done][2].setFormat("assets/fonts/main.ttf", 22, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 				textIDList[done][2].underline = true;
 				add(textIDList[done][2]);
@@ -226,13 +256,17 @@ class PlayState extends FlxState {
 			}
 		}
 
+		maxYPos = 0;
+		if (done >= 4) maxYPos = -160 * (done - 4);
+
 		hasNoApps = done == 0;
 		noApps.visible = done == 0;
 
 		for (table in spriteIDList) for (sprite in table) spriteYPos.push(sprite.y);
 		for (table in textIDList) for (text in table) textYPos.push(text.y);
 
-		var text:FlxText = new FlxText(20, 20, 1920, 'Fetched $done app(s).', 16);
+		sendNotification('Fetched $done app(s).');
+		/*var text:FlxText = new FlxText(20, 20, 1920, 'Fetched $done app(s).', 16);
 		text.setFormat("assets/fonts/main.ttf", 20, FlxColor.GREEN);
 		text.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 		text.alpha = 0;
@@ -242,13 +276,19 @@ class PlayState extends FlxState {
 				text.destroy();
 			}});
 		});
-		add(text);
+		add(text);*/
+
+		sleepy.makeGraphic(1920, 1080, FlxColor.BLACK);
+		sleepy.alpha = 0;
+		add(sleepy);
 
 		choice = 0;
 	}
 
 	override public function update(elapsed:Float) {
-		super.update(elapsed);
+		if (Prefs.shaders) GMB.update(elapsed);
+
+		if (Math.abs(wheelSpeed) > .0001) wheelSpeed = wheelSpeed/(1 + (0.2 / (Prefs.framerate / 60)));
 
 		for (sprite in members) {
 			var sprite:Dynamic = sprite;
@@ -256,14 +296,15 @@ class PlayState extends FlxState {
 			if(sprite != null && (sprite is FlxSprite) && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
 		}
 
-		if (!disableMoving) {
-			if (FlxG.mouse.justPressed) {
+		if (!disableMoving && maxYPos != 0) {
+			if (FlxG.mouse.justPressed || FlxG.mouse.wheel != 0) {
 				mouseYPos = FlxG.mouse.y;
 				oldYPos = yPos;
 			}
 
-			if (FlxG.mouse.pressed) {
+			if (FlxG.mouse.pressed || FlxG.mouse.wheel != 0) {
 				var y:Int = FlxG.mouse.y;
+				wheelSpeed += FlxG.mouse.wheel * 10;
 				yPos = oldYPos + (y - mouseYPos);
 				if (tickLeft == 0) {
 					tickLeft = 5;
@@ -275,9 +316,15 @@ class PlayState extends FlxState {
 				yPos -= mouseScroll;
 				mouseScroll += mouseScroll > 0 ? -0.25 : 0.25;
 			}
+			yPos += wheelSpeed;
 
-			if (yPos < -160 * (luaLists.length - 4)) yPos = -160 * (luaLists.length - 4);
-			if (yPos > -5) yPos = -5;
+			if (yPos < maxYPos) {
+				yPos = maxYPos;
+				mouseScroll = 0;
+			} else if (yPos > -5) {
+				yPos = -5;
+				mouseScroll = 0;
+			}
 		}
 
 		if (!hasNoApps) {
@@ -300,10 +347,6 @@ class PlayState extends FlxState {
 					id++;
 				}
 			}
-			
-			var sound:FlxSound = FlxG.sound.load('mods/test/assets/music/Inst.ogg');
-			sound.pitch = 1.5;
-			sound.play();
 
 			id = 0;
 			for (table in textIDList) {
@@ -316,7 +359,7 @@ class PlayState extends FlxState {
 			var numChosen:Int = -1;
 			for (tab in textIDList) {
 				numChosen++;
-				for (i in 0...3) textIDList[numChosen][i].color = numChosen == choice ? FlxColor.YELLOW : FlxColor.WHITE;
+				for (i in 0...3) tab[i].color = numChosen == choice ? FlxColor.YELLOW : FlxColor.WHITE;
 			}
 
 			if (FlxG.mouse.justReleased && choice != -1 && !disableMoving) {
@@ -326,7 +369,7 @@ class PlayState extends FlxState {
 				FlxG.sound.music.fadeOut(0.5, 0);
 				FlxTween.tween(sprite, {alpha: 1}, 1, {onComplete: function(e) {
 					modName = luaLists[choice][2];
-					modRaw = "mods/" + luaLists[choice][2] + "/";
+					modRaw = 'mods/${luaLists[choice][2]}/';
 					author = luaLists[choice][3];
 					Dummy.luaArray.push(new LuaEngine(luaLists[choice][1]));
 					Main.changeWindowName('$modName - $author');
@@ -370,9 +413,64 @@ class PlayState extends FlxState {
 		if (FlxG.mouse.justMoved) oldTime = Timer.stamp();
 
 		FlxTween.globalManager.cancelTweensOf(sleepy);
-		if (Timer.stamp() > oldTime + 30) FlxTween.tween(sleepy, {alpha: 0.66}, 2);
-		else FlxTween.tween(sleepy, {alpha: 0}, 0.25);
+		if (Timer.stamp() > oldTime + 30) FlxTween.tween(sleepy, {alpha: 0.66}, 2); else FlxTween.tween(sleepy, {alpha: 0}, 0.25);
 
 		if (FlxG.keys.justPressed.R) generate();
+
+		background.x += 0.45 / (Prefs.framerate / 60);
+		background.y += (0.45 / (Prefs.framerate / 60)) - ((mouseScroll + -wheelSpeed)/2);
+
+		super.update(elapsed);
+	}
+
+	function sendNotification(title:String) {
+		if (!Prefs.notification) return;
+
+		var l:Int = curNotifTxt.length;
+		curNotifSpr.push([new FlxSprite(1276, 636 - (88 * notifsSent)).makeGraphic(303, 76, 0xff7e7e7e)]);
+		curNotifSpr[l][0].alpha = 0;
+		curNotifSpr[l][0].camera = camNotifs;
+		FlxTween.tween(curNotifSpr[l][0], {alpha: 1, x: 956}, 2, {ease: FlxEase.elasticOut});
+		add(curNotifSpr[l][0]);
+
+		if (!Prefs.lowDetail) {
+			curNotifSpr[l].push(new FlxSprite(1280, 640 - (88 * notifsSent)).makeGraphic(295, 68, 0xff585858));
+			curNotifSpr[l][1].alpha = 0;
+			curNotifSpr[l][1].camera = camNotifs;
+			FlxTween.tween(curNotifSpr[l][1], {alpha: 1, x: 960}, 2, {ease: FlxEase.elasticOut});
+			add(curNotifSpr[l][1]);
+	
+			/*curNotifSpr[l].push(new FlxSprite(1276, 708 - (88 * notifsSent)).makeGraphic(303, 4, 0xff000000));
+			curNotifSpr[l][2].alpha = 0;
+			curNotifSpr[l][2].camera = camNotifs;
+			FlxTween.tween(curNotifSpr[l][2], {alpha: 1, x: 956}, 2, {ease: FlxEase.elasticOut});
+			add(curNotifSpr[l][2]);*/
+			// no idea how i'm suppose to do this
+		}
+
+		curNotifTxt.push([new FlxText(1290, 648 - (88 * notifsSent), 275, title)]);
+		curNotifTxt[l][0].setFormat('assets/fonts/main.ttf', 16, FlxColor.WHITE);
+		curNotifTxt[l][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+		curNotifTxt[l][0].alpha = 0;
+		curNotifTxt[l][0].camera = camNotifs;
+		FlxTween.tween(curNotifTxt[l][0], {alpha: 1, x: 970}, 2, {ease: FlxEase.elasticOut});
+		add(curNotifTxt[l][0]);
+
+		new FlxTimer().start(5, {e -> {
+			for (i in 0...curNotifSpr[l].length) FlxTween.tween(curNotifSpr[l][i], {alpha: 0}, 0.5, {onComplete: e -> curNotifSpr[l][i].destroy()});
+			FlxTween.tween(curNotifTxt[l][0], {alpha: 0}, 0.5, {onComplete: e -> {
+				curNotifTxt[l][0].destroy();
+				notifsGone++;
+				notifsSent--;
+
+				var nums:Array<Int> = [636, 640, 648];
+				for (i in 0...curNotifSpr.length) {
+					for (j in 0...curNotifSpr[i].length) FlxTween.tween(curNotifSpr[i][j], {y: nums[j] - (88 * (i - notifsGone))}, .66, {ease: FlxEase.backOut});
+					FlxTween.tween(curNotifTxt[i][0], {y: nums[2] - (88 * (i - notifsGone))}, .66, {ease: FlxEase.backOut});
+				}
+			}});
+		}});
+
+		notifsSent++;
 	}
 }

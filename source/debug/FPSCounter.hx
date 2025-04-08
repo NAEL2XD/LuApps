@@ -47,8 +47,7 @@ class FPSCounter extends TextField
 	public var timeoutDelay:Float = 50;
 	var now:Float = 0;
 	// Event Handlers
-	override function __enterFrame(deltaTime:Float):Void
-	{
+	override function __enterFrame(deltaTime:Float):Void {
 		now = haxe.Timer.stamp() * 1000;
 		times.push(now);
 		while (times[0] < now - 1000) times.shift();

@@ -1,5 +1,6 @@
 package;
 
+import flixel.FlxG;
 import lime.app.Application;
 import flixel.FlxGame;
 import openfl.display.Sprite;
@@ -9,11 +10,12 @@ import utils.Prefs;
 
 class Main extends Sprite {
 	// Main Settings
-	public static var luversion:String = "DEV 0.0.1"; // fart version
+	public static var luversion:String = "0.0.1"; // fart version
 	public static var sentenceCrash:Array<String> = [
 		"Report to github!",
 		"Hey world, i smashed his thingie ma bob!",
-		"Hope you at least tried to fix it."
+		"Hope you at least tried to fix it.",
+		"Some stuff are inspired from other engines, or even DevKitPro"
 	];
 
 	public static var fpsVar:FPSCounter;
@@ -22,11 +24,12 @@ class Main extends Sprite {
 		super();
 		CrashHandler.init();
 
-		addChild(new FlxGame(0, 0, state.PlayState));
+		addChild(new FlxGame(0, 0, state.PlayState, 120, 120, true));
 
-		fpsVar = new FPSCounter(3, 3, 0x00FFFFFF);
+		fpsVar = new FPSCounter(3, 698, 0x00FFFFFF);
 		addChild(fpsVar);
-		fpsVar.visible = false;
+
+		FlxG.mouse.useSystemCursor = true;
 
 		Prefs.loadPrefs();
 	}

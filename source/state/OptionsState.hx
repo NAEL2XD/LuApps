@@ -1,91 +1,37 @@
 package state;
 
-import utils.Utils;
-import flixel.sound.FlxSound;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
 import flixel.FlxG;
-import flixel.util.FlxColor;
-import flixel.text.FlxText;
 import flixel.FlxSprite;
 import flixel.FlxState;
+import flixel.sound.FlxSound;
+import flixel.text.FlxText;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
 import haxe.Timer;
 import utils.Prefs;
+import utils.Utils;
 
 class OptionsState extends FlxState
 {
 	var options:Array<Array<Dynamic>> = [
-		[
-			"LuApps Settings",
-			"Have too many LuApps but want to show to something else? Now you can set them here.",
-			"State"
-		],
-		[
-			"Show Type",
-			"What type of LuApps you want it to show?",
-			"String",
-			"luAppsType",
-			["ALL"]
-		],
-		[
-			"Graphics",
-			"Setting your graphic to whatever's beautiful or just plain toaster.",
-			"State"
-		],
-		[
-			"Anti-Aliasing",
-			"If ON, most of the objects (especially images) will be sharped and clean.",
-			"Bool",
-			"antiAliasing"
-		],
-		[
-			"Low Detail",
-			"If ON, most details such as 2 overlapping objects on PlayState will be removed.",
-			"Bool",
-			"lowDetail"
-		],
-		[
-			"Framerate",
-			"How low or high do you want for the framerate?",
-			"Int",
-			"framerate",
-			[60, 240, 1] // Min, Max, Times per Change
-		],
-		[
-			"Resolution",
-			"How little or much quality do you want? Will resize if it's changed.",
-			"String",
-			"screenSize",
-			["640x360", "1280x720", "1920x1080"]
-		],
-		[
-			"Visuals",
-			"For the people who wants to disable something distracting or etc.",
-			"State"
-		],
-		[
-			"Allow Particles.",
-			"If ON, particles will be used. This will likely increase CPU loads.",
-			"Bool",
-			"allowParticles"
-		],
-		[
-			"Show FPS",
-			"If ON, the FPS (with memory count) will be shown in the top left of this program.",
-			"Bool",
-			"showFPS"
-		],
-		[
-			"Debugging",
-			"For Developers debugging their application or this program.",
-			"State"
-		],
-		[
-			"Console",
-			"If ON, the console on top left will be shown if a print() command is hit.",
-			"Bool",
-			"debugger"
-		],
+		["LuApps Settings",  "Have too many LuApps but want to show to something else? Now you can set them here.", "State"],
+		["Show Type",        "What type of LuApps you want it to show?",                                            "String", "luAppsType",   ["ALL"]],
+
+		["Graphics",         "Setting your graphic to whatever's beautiful or just plain toaster.",                 "State"],
+		["Anti-Aliasing",    "If ON, most of the objects (especially images) will be sharped and clean.",           "Bool",   "antiAliasing"],
+		["Low Detail",       "If ON, most details such as 2 overlapping objects on PlayState will be removed.",     "Bool",   "lowDetail"],
+		["Framerate",        "How low or high do you want for the framerate?",                                      "Int",    "framerate",    [60, 240, 1]], // Min, Max, Times per Change
+		["Resolution",       "How little or much quality do you want? Will resize if it's changed.",                "String", "screenSize",   ["640x360", "1280x720", "1920x1080"]],
+		["Shaders",          "If ON, shaders will be active. (Will cause stutters if it's a weak PC.)",             "Bool",   "shaders"],
+
+		["Visuals",          "For the people who wants to disable something distracting or etc.",                   "State"],
+		["Allow Particles.", "If ON, particles will be used. This will likely increase CPU loads.",                 "Bool",   "allowParticles"],
+		["Show FPS",         "If ON, the FPS (with memory count) will be shown in the top left of this program.",   "Bool",   "showFPS"],
+		["Notifications",    "If ON, notifications will be shown on the Application State",                         "Bool",   "notification"],
+
+		["Debugging",        "For Developers debugging their application or this program.",                         "State"],
+		["Restart by [R]",   "If ON, pressing [R] will restart the LuApps. Only intended for developers!",          "Bool",   "restartByR"],
 	];
 
 	var helpText:FlxText = new FlxText(0, 0, 1280, "Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.");
@@ -119,26 +65,48 @@ class OptionsState extends FlxState
 		FlxTween.tween(optionsBG, {alpha: 1}, 0.5);
 		add(optionsBG);
 
+		function sortLists(stringList:Array<String>):Array<String> {
+			// Ai generated (sorry!)
+			// Step 1: Count occurrences
+			var map:Map<String, Int> = new Map();
+			for (s in stringList) if (map.exists(s)) map.set(s, map.get(s) + 1); else map.set(s, 1);
+
+			// Step 2: Format the result
+			var returns:Array<String> = ["ALL"];
+			for (key in map.keys()) returns.push('${key} [${map.get(key)}]');
+
+			// Optional: Sort by count (descending)
+			returns.sort(function(a, b) {
+			    var aCount = Std.parseInt(a.split("[")[1].split("]")[0]);
+			    var bCount = Std.parseInt(b.split("[")[1].split("]")[0]);
+			    return bCount - aCount;
+			});
+
+			return returns;
+		}
+
 		// For LuApps Thingy
-		for (thing in PlayState.luaLists) if (!options[1][4].contains(thing[4])) options[1][4].insert(0, thing[4]);
+		options[1][4] = sortLists([for (thing in PlayState.luaLists) thing[4]]);
 
 		var count:Int = 0;
 		var yDown:Float = 0;
+		var PTY:Int = -24;
 		for (option in options) {
 			spriteList.push([]);
 			textList.push([]);
 
 			var i:Int = count;
 			var j:Int = textList.length-1;
-
 			var n:String = option[0];
 			var t:String = option[2];
 
 			var result:Float = yDown - 280;
 			if (result < 0) result = 0;
 
-			previewText.push([result, new FlxText(12, 22 + (24 * count), n.length * 18, n, 20)]);
-			previewText[i][1].setFormat('assets/fonts/main.ttf', 20, FlxColor.WHITE);
+			PTY += 20;
+			if (t == "State") PTY += 16;
+			previewText.push([result, new FlxText(12, PTY, n.length * 15, n)]);
+			previewText[i][1].setFormat('assets/fonts/debug.ttf', 14, FlxColor.WHITE);
 			previewText[i][1].x += t != "State" ? 24 : 0;
 			add(previewText[i][1]);
 
@@ -162,7 +130,7 @@ class OptionsState extends FlxState
 
 				var value:Dynamic = Reflect.getProperty(Prefs, option[3]);
 				textList[j].push(new FlxText(-240, 77 + yDown, 1280, '$value', 60));
-				textList[j][1].setFormat('assets/fonts/consola.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+				textList[j][1].setFormat('assets/fonts/settings.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 				textList[j][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 				textList[j][1].underline = true;
 				add(textList[j][1]);
@@ -208,9 +176,13 @@ class OptionsState extends FlxState
 
 		add(heldProps[4]);
 		add(heldProps[3]);
-		heldText.setFormat('assets/fonts/debug.ttf', 20, FlxColor.BLACK, FlxTextAlign.LEFT);
+		heldText.setFormat('assets/fonts/settings.ttf', 20, FlxColor.BLACK, FlxTextAlign.LEFT);
 		heldText.screenCenter();
 		add(heldText);
+
+		heldProps[4].alpha = 0;
+		heldProps[3].alpha = 0;
+		heldText.alpha = 0;
 	}
 
 	var option:Int = 0;
@@ -320,9 +292,7 @@ class OptionsState extends FlxState
 					switch(options[option][2]) {
 						case 'Int':    helpText.text += "A/Q/LEFT to decrement, D/RIGHT to increment.";
 						case 'Bool':   helpText.text += "Enter to Switch";
-						case 'String':
-							helpText.text += "A/Q/LEFT to switch left, D/RIGHT to switch right.";
-							
+						case 'String': helpText.text += "A/Q/LEFT to switch left, D/RIGHT to switch right.";
 							curOption = options[option][4].indexOf(Reflect.getProperty(Prefs, options[option][3]));
 					}
 
@@ -428,8 +398,7 @@ class OptionsState extends FlxState
 					if(sprite != null && sprite is FlxSprite && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
 				}
 
-			case 'Resolution':
-				Utils.setDefaultResolution();
+			case 'Resolution': Utils.setDefaultResolution();
 		}
 
 		if (t == 'bool') textList[option][1].text = v ? "ON" : "OFF";
@@ -437,7 +406,7 @@ class OptionsState extends FlxState
 		if (oldText != textList[option][1].text && Prefs.allowParticles) {
 			var sprite:FlxText = textList[option][1];
 			var oldPopup:FlxText = new FlxText(sprite.x, sprite.y, sprite.width, oldText);
-			oldPopup.setFormat('assets/fonts/consola.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+			oldPopup.setFormat('assets/fonts/settings.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 			oldPopup.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 			oldPopup.underline = true;
 			FlxTween.tween(oldPopup, {
@@ -475,7 +444,7 @@ class OptionsState extends FlxState
 		}
 
 		held = hasChosen;
-		if (held) {
+		if (held && allowMoving) {
 			if (!heldProps[0]) heldProps[2] = Timer.stamp();
 			heldProps[1] = Timer.stamp() - heldProps[2];
 
@@ -489,10 +458,6 @@ class OptionsState extends FlxState
 				FlxTween.tween(heldProps[4], {alpha: 1}, 0.2);
 			}
 		} else {
-			FlxTween.cancelTweensOf(heldText);
-			FlxTween.cancelTweensOf(heldProps[3]);
-			FlxTween.cancelTweensOf(heldProps[4]);
-
 			FlxTween.tween(heldText, {alpha: 0}, 0.2);
 			FlxTween.tween(heldProps[3], {alpha: 0}, 0.2);
 			FlxTween.tween(heldProps[4], {alpha: 0}, 0.2);
