@@ -20,7 +20,7 @@ LuApps is a game engine intended for homebrew developers.
 <img src="https://img.shields.io/badge/-HAXE-262626.svg?logo=haxe&style=for-the-badge">
 
 #### Moddable With
-<img src="https://img.shields.io/badge/LUA-262626?style=for-the-badge&logo=lua"> <img src="https://img.shields.io/badge/-HAXE-262626.svg?logo=haxe&style=for-the-badge">
+<img src="https://img.shields.io/badge/LUA-262626?style=for-the-badge&logo=lua">
 
 [Read the official LUAPI Here!](<https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.)>)
 
