@@ -8,6 +8,12 @@
   <br>
 </h1>
 
+<h1 align="center">
+<br>
+<b><h6>Yet Another 2D Engine for Lua Support</h6><b>
+<br>
+</h1>
+
 LuApps is an Application to play games made for LuApps, It is written in Haxe and it's sole purpose is to make and play homebrew apps for developers and players.
 
 [Read the official LUAPI Here!](<https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.)>)
