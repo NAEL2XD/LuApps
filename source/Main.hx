@@ -1,11 +1,11 @@
 package;
 
-import flixel.FlxG;
-import lime.app.Application;
-import flixel.FlxGame;
-import openfl.display.Sprite;
-import debug.FPSCounter;
 import debug.CrashHandler;
+import debug.FPSCounter;
+import flixel.FlxG;
+import flixel.FlxGame;
+import lime.app.Application;
+import openfl.display.Sprite;
 import utils.Prefs;
 
 class Main extends Sprite {
@@ -15,7 +15,11 @@ class Main extends Sprite {
 		"Report to github!",
 		"Hey world, i smashed his thingie ma bob!",
 		"Hope you at least tried to fix it.",
-		"Some stuff are inspired from other engines, or even DevKitPro"
+		"Some stuff are inspired from other engines, or even DevKitPro",
+		"null",
+		"Engine used Crash, It's very effective!",
+		"oops",
+		"No way dude! You Really Crashed The Game!? How Dare You!"
 	];
 
 	public static var fpsVar:FPSCounter;
