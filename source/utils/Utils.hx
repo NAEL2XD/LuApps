@@ -1,7 +1,7 @@
 package utils;
 
-import sys.FileSystem;
 import flixel.FlxG;
+import sys.FileSystem;
 
 class Utils {
 	public static function setDefaultResolution() {

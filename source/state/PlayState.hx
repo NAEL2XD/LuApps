@@ -1,5 +1,11 @@
 package state;
 
+import haxe.io.BytesInput;
+import haxe.zip.Reader;
+import haxe.io.Bytes;
+import haxe.zip.Uncompress;
+import lime.ui.FileDialog;
+import lime.ui.FileDialogType;
 import flixel.util.FlxStringUtil;
 import flixel.FlxCamera;
 import flixel.util.FlxAxes;
@@ -44,12 +50,13 @@ class PlayState extends FlxState {
 	var options:FlxSprite = new FlxSprite();
 	var mouseDistance:FlxSprite = new FlxSprite();
 	var sleepy:FlxSprite = new FlxSprite();
-	var noApps:FlxText = new FlxText(0, 0, 1280, "There is no applications installed! Press R to refresh the list.", 32);
+	var noApps:FlxText = new FlxText(0, 0, 1280, "There are no applications installed!\nPress R to refresh the list.", 32);
 	var background:FlxBackdrop = new FlxBackdrop();
 	var GMB:GlowingMarblingBlack = new GlowingMarblingBlack();
 	var camNotifs:FlxCamera = new FlxCamera(); // i'm so pissed
 	var curNotifSpr:Array<Array<FlxSprite>> = [];
 	var curNotifTxt:Array<Array<FlxText>>   = [];
+	var file:FileDialog = new FileDialog();
 
 	var allowTween:Bool = false;
 	var yPos:Float = -5;
@@ -162,7 +169,16 @@ class PlayState extends FlxState {
 			}, 0);
 		}
 
-		sendNotification("This is a alpha state, changes won't be this but something else.");
+		var tip:Array<String> = [
+			"Pressing \"I\" will allow you to import .luapp file!",
+			"Did you know that it's open source?",
+			"LUAPI Documentation are from the GitHub!",
+			"You can also scroll with the mouse cursor!",
+			"Get a Auto Completer, increase the speed of programming!",
+			"It took 1 month to make this."
+		];
+		sendNotification(tip[FlxG.random.int(0, tip.length-1)]);
+		sendNotification("This is on a alpha state, changes will be made.");
 		
 		var funny:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
 		FlxTween.tween(funny, {alpha: 0}, 0.5, {onComplete: function(e) {
@@ -170,10 +186,63 @@ class PlayState extends FlxState {
 		}});
 		add(funny);
 
+		file.onSelect.add(file -> {
+			var error:Bool = false;
+			var temp:String = "mods/temp/";
+			trace(FileSystem.exists(temp));
+			function del() if (FileSystem.exists(temp)) deleteDirectoryRecursive(temp);
+
+			if (!file.endsWith('.luapp')) {
+				sendNotification("Not a .luapp compressed file!");
+				return;
+			}
+
+			try {
+				var entries = Reader.readZip(new BytesInput(File.getBytes(file)));
+				var folderName:String = "";
+				var luappName:String = "";
+				var first:Bool = true;
+				if (!FileSystem.exists(temp)) FileSystem.createDirectory(temp);
+
+				for (file in entries) {
+					if (first) {
+						folderName = file.fileName;
+						first = false;
+						luappName = file.fileName.substr(0, file.fileName.length-1);
+						if (FileSystem.exists('mods/$folderName')) {
+							sendNotification('$luappName already exists!');
+							error = true;
+							del();
+							return;
+						}
+					}
+					if (file.fileName.endsWith("/")) FileSystem.createDirectory('${temp}${file.fileName}'); else File.saveBytes('${temp}${file.fileName}', file.data);
+				}
+
+				var path:String = '${temp}${folderName}';
+				if (FileSystem.exists('${path}source/main.lua')) {
+					try Json.parse(File.getContent('${path}pack.json')) catch(e) {
+						sendNotification('pack.json is invalid, cannot install.');
+						error = true;
+						del();
+						return;
+					}
+
+					FileSystem.rename(path, 'mods/$folderName');
+					generate(false);
+					sendNotification('Successfully installed $luappName!');
+				} else sendNotification('source/main.lua not found, cannot install.');
+				del();
+			} catch(e) {
+				if (!error) sendNotification('Unknown Error!\n$e');
+				del();
+			};
+		});
+
 		super.create();
 	}
 
-	function generate() {
+	function generate(send:Bool = true) {
 		for (table in spriteIDList) for (sprite in table) sprite.destroy();
 		for (table in textIDList) for (text in table) text.destroy();
 
@@ -265,7 +334,7 @@ class PlayState extends FlxState {
 		for (table in spriteIDList) for (sprite in table) spriteYPos.push(sprite.y);
 		for (table in textIDList) for (text in table) textYPos.push(text.y);
 
-		sendNotification('Fetched $done app(s).');
+		if (send) sendNotification('Fetched $done app(s).');
 		/*var text:FlxText = new FlxText(20, 20, 1920, 'Fetched $done app(s).', 16);
 		text.setFormat("assets/fonts/main.ttf", 20, FlxColor.GREEN);
 		text.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
@@ -410,12 +479,14 @@ class PlayState extends FlxState {
 			allowTween = true;
 		}
 
-		if (FlxG.mouse.justMoved) oldTime = Timer.stamp();
+		if (FlxG.mouse.justMoved || FlxG.keys.justPressed.ANY) oldTime = Timer.stamp();
 
 		FlxTween.globalManager.cancelTweensOf(sleepy);
 		if (Timer.stamp() > oldTime + 30) FlxTween.tween(sleepy, {alpha: 0.66}, 2); else FlxTween.tween(sleepy, {alpha: 0}, 0.25);
 
 		if (FlxG.keys.justPressed.R) generate();
+
+		if (FlxG.keys.justPressed.I) file.browse(FileDialogType.OPEN, "luapp", null, "LuApplication Path.");
 
 		background.x += 0.45 / (Prefs.framerate / 60);
 		background.y += (0.45 / (Prefs.framerate / 60)) - ((mouseScroll + -wheelSpeed)/2);
@@ -472,5 +543,16 @@ class PlayState extends FlxState {
 		}});
 
 		notifsSent++;
+	}
+
+	function deleteDirectoryRecursive(path:String):Void {
+		if (!FileSystem.exists(path)) return;
+	
+		for (file in FileSystem.readDirectory(path)) {
+			var full = path + "/" + file;
+			if (FileSystem.isDirectory(full)) deleteDirectoryRecursive(full); else try FileSystem.deleteFile(full) catch(e) sendNotification('Failed to delete file $full: $e');
+		}
+	
+		try FileSystem.deleteDirectory(path) catch(e) sendNotification('Directory cannot be deleted.\n$e');
 	}
 }

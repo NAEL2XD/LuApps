@@ -10,7 +10,7 @@ import utils.Prefs;
 
 class Main extends Sprite {
 	// Main Settings
-	public static var luversion:String = "0.0.1"; // fart version
+	public static var luversion:String = "0.0.2"; // fart version
 	public static var sentenceCrash:Array<String> = [
 		"Report to github!",
 		"Hey world, i smashed his thingie ma bob!",
