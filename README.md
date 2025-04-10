@@ -4,7 +4,7 @@
     <img src="/projIcons/iconOG.png" alt="LuApps" width="150">
   </a>
   <br>
-  <b>Yet Another Engine for Lua Support</b>
+  <b>LuApps</b>
   <br>
 </h1>
 
