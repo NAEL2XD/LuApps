@@ -14,7 +14,7 @@
 <br>
 </h3>
 
-LuApps is a game engine intended for homebrew developers.
+LuApps is a game engine intended for homebrew developers and easier for Lua newcomers.
 
 #### Made With
 <img src="https://img.shields.io/badge/-HAXE-262626.svg?logo=haxe&style=for-the-badge">
