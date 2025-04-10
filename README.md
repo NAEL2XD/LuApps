@@ -22,4 +22,7 @@ To install a luapp mod, follow this:
 ### FAQs.
 
 [View here.](https://github.com/NAEL2XD/LuApps/wiki)
+
 [Want LuApp examples? See here.](https://github.com/NAEL2XD/LuApps/wiki/LuApp-Examples)
+
+[State Keybinds](https://github.com/NAEL2XD/LuApps/wiki/State-Keybinds)

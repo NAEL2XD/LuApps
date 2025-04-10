@@ -342,7 +342,6 @@ class OptionsState extends FlxState
 				helpText.text = 'Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.';
 				FlxTween.tween(helpText, {"scale.y": 1}, 0.1, {ease: FlxEase.linear});
 			}});
-			
 		}
 
 		if (!FlxG.keys.justPressed.ANY) return;
