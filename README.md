@@ -8,11 +8,11 @@
   <br>
 </h1>
 
-<h2 align="center">
+<h4 align="center">
 <br>
 <b><h6>Yet Another 2D Engine for Lua Support</h6><b>
 <br>
-</h2>
+</h4>
 
 LuApps is a game engine intended for homebrew developers.
 
