@@ -2,11 +2,8 @@ package engine;
 
 // Will credit them later..
 
-<<<<<<< HEAD
 import flixel.util.FlxSpriteUtil;
 import flixel.util.FlxStringUtil;
-=======
->>>>>>> 73d5b1f2c6ac9721615e59f988a081b5ad6c396c
 import lime.system.Clipboard;
 import lime.graphics.Image;
 import haxe.Json;
@@ -418,11 +415,7 @@ class LuaEngine {
 			Dummy.playSound(n);
 		});
 
-<<<<<<< HEAD
 		Lua_helper.add_callback(lua, "moveTowardsMouse", function(tag:String, ?speed:Int = 60) {
-=======
-		Lua_helper.add_callback(lua, "moveTowardsMouse", function(tag:String, speed:Int = 60) {
->>>>>>> 73d5b1f2c6ac9721615e59f988a081b5ad6c396c
 			if (Dummy.instance.sprites.exists(tag) || Dummy.instance.texts.exists(tag)){
 				FlxVelocity.moveTowardsMouse(Dummy.instance.getLuaObject(tag), speed);
 				return;
@@ -431,11 +424,7 @@ class LuaEngine {
 			Dummy.debugPrint("moveTowardsMouse: Sprite does not exist, did you make a typo?", true);
 		});
 
-<<<<<<< HEAD
 		Lua_helper.add_callback(lua, "sendPopup", function(desc:String = "", ?title:String = "") {
-=======
-		Lua_helper.add_callback(lua, "sendPopup", function(?title:String = "", desc:String = "") {
->>>>>>> 73d5b1f2c6ac9721615e59f988a081b5ad6c396c
 			if (title == "") title = PlayState.modName;
 
 			if (desc == "") {
@@ -495,8 +484,11 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "stringStartsWith", function(str:String, start:String) return str.startsWith(start));
+
 		Lua_helper.add_callback(lua, "stringEndsWith", function(str:String, end:String) return str.endsWith(end));
+
 		Lua_helper.add_callback(lua, "stringSplit", function(str:String, split:String) return str.split(split));
+
 		Lua_helper.add_callback(lua, "stringTrim", function(str:String) return str.trim());
 
 		Lua_helper.add_callback(lua, "scaleObject", function(obj:String, x:Float, y:Float) {
@@ -556,11 +548,7 @@ class LuaEngine {
 				case 'GREEN':       FlxColor.GREEN;
 				case 'LIME':        FlxColor.LIME;
 				case 'MAGENTA':     FlxColor.MAGENTA;
-<<<<<<< HEAD
 				case 'ORANGE':      FlxColor.ORANGE;
-=======
-				case 'ORANGE':     FlxColor.ORANGE;
->>>>>>> 73d5b1f2c6ac9721615e59f988a081b5ad6c396c
 				case 'PINK':        FlxColor.PINK;
 				case 'PURPLE':      FlxColor.PURPLE;
 				case 'RED':         FlxColor.RED;
