@@ -1,7 +1,7 @@
 <h1 align="center">
   <br>
   <a href="https://github.com/NAEL2XD/LuApps">
-    <img src="/projIcons/iconOG.png" alt="LuApps" width="150">
+    <img src="assets/images/icons/iconOG.png" alt="LuApps" width="150">
   </a>
   <br>
   <b>LuApps</b>
