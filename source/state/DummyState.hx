@@ -95,7 +95,6 @@ class Dummy extends FlxState {
 
 	public static function exit(restartOnly:Bool = false) {
 		try {
-			Application.current.window.setIcon(Image.fromFile("assets/images/icons/iconOG.png"));
 			Dummy.instance.sprites.clear();
 			Dummy.instance.texts.clear();
 			Dummy.instance.variables.clear();
@@ -103,6 +102,7 @@ class Dummy extends FlxState {
 			Dummy.instance.timers.clear();
 			Dummy.luaArray = [];
 			debugger = [];
+			Application.current.window.setIcon(Image.fromFile("assets/images/icons/iconOG.png"));
 		} catch(e:Dynamic) {} // Failed to do those, prevent a crash.
 
 		if (!restartOnly) FlxG.resetGame();

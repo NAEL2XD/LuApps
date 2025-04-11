@@ -114,11 +114,11 @@ class Crashie extends FlxState {
 		for (line in stripClub) {
 			i++;
 			crash.push(new FlxText(180, 0, 1280, line));
-			crash[i].setFormat('assets/fonts/settings.ttf', 16, FlxColor.WHITE, FlxTextAlign.LEFT);
+			crash[i].setFormat('assets/fonts/settings.ttf', 24, FlxColor.WHITE, FlxTextAlign.LEFT);
 			crash[i].alpha = 0;
 			crash[i].screenCenter();
 			crash[i].x = 70;
-			crash[i].y = 120 + (16 * i);
+			crash[i].y = 120 + (24 * i);
 			add(crash[i]);
 		}
 		

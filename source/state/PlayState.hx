@@ -1,14 +1,13 @@
 package state;
 
+import flixel.addons.effects.FlxTrail;
+import flixel.group.FlxGroup;
+import flixel.util.FlxGradient;
 import haxe.io.BytesInput;
 import haxe.zip.Reader;
-import haxe.io.Bytes;
-import haxe.zip.Uncompress;
 import lime.ui.FileDialog;
 import lime.ui.FileDialogType;
 import flixel.util.FlxStringUtil;
-import flixel.FlxCamera;
-import flixel.util.FlxAxes;
 import openfl.display.BlendMode;
 import flixel.addons.display.FlxBackdrop;
 import flixel.addons.display.FlxGridOverlay;
@@ -29,8 +28,8 @@ import openfl.display.BitmapData;
 import engine.LuaEngine;
 import utils.Prefs;
 import haxe.Json;
-import state.DummyState;
 import utils.Shaders;
+import state.DummyState;
 
 using StringTools;
 
@@ -41,8 +40,13 @@ class PlayState extends FlxState {
 	public static var modName:String;
 	public static var modRaw:String;
 
+	var bgGroup:FlxGroup = new FlxGroup();
+	var appGroup:FlxGroup = new FlxGroup();
+	var utilGroup:FlxGroup = new FlxGroup();
+
 	var spriteIDList:Array<Array<FlxSprite>> = [];
 	var spriteYPos:Array<Float> = [];
+	var spriteTrail:Array<FlxTrail> = [];
 	var textIDList:Array<Array<FlxText>> = [];
 	var textYPos:Array<Float> = [];
 
@@ -54,7 +58,6 @@ class PlayState extends FlxState {
 	var noApps:FlxText = new FlxText(0, 0, 1280, "There are no applications installed!\nPress R to refresh the list.", 32);
 	var background:FlxBackdrop = new FlxBackdrop(FlxGridOverlay.createGrid(60, 60, 120, 120, true, 0xffa3a3a3, 0x0));
 	var GMB:GlowingMarblingBlack = new GlowingMarblingBlack();
-	var camNotifs:FlxCamera = new FlxCamera(); // i'm so pissed
 	var curNotifSpr:Array<Array<FlxSprite>> = [];
 	var curNotifTxt:Array<Array<FlxText>>   = [];
 	var file:FileDialog = new FileDialog();
@@ -89,8 +92,10 @@ class PlayState extends FlxState {
 		FlxG.mouse.enabled = true;
 		FlxG.mouse.visible = true;
 		FlxG.sound.playMusic("assets/music/menu.ogg", 1, true);
-		FlxG.cameras.add(camNotifs);
-		add(camNotifs);
+		FlxG.camera.pixelPerfectRender = true;
+		add(bgGroup);
+		add(appGroup);
+		add(utilGroup);
 
 		oldTime = Timer.stamp();
 
@@ -98,16 +103,15 @@ class PlayState extends FlxState {
 
 		var gray:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, 0xFF222222);
 		if (Prefs.shaders) gray.shader = GMB;
-		add(gray);
+		bgGroup.add(gray);
 
 		// From JS Engine.
 		if (Prefs.allowParticles) {
 			background.color = 0xff467172;
 			background.blend = BlendMode.LAYER;
-			background.scrollFactor.set(0, 0.07);
 			background.alpha = 0.33;
 			background.updateHitbox();
-			add(background);
+			bgGroup.add(background);
 		}
 
 		noApps.setFormat("assets/fonts/main.ttf", 36, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
@@ -115,26 +119,23 @@ class PlayState extends FlxState {
 		noApps.screenCenter();
 		FlxTween.tween(noApps, {alpha: 0}, 1.5, {type: PINGPONG});
 		noApps.visible = false;
-		add(noApps);
+		utilGroup.add(noApps);
 
-		for (i in 0...50) {
-			var spr:FlxSprite = new FlxSprite().makeGraphic(1280, 320, FlxColor.BLACK);
-			spr.alpha = 0.0175;
-			spr.y = 460 + (5.2 * i);
-			add(spr);
-		}
+		var gradSprite:FlxSprite = FlxGradient.createGradientFlxSprite(1280, 240, [0x00000000, 0xff000000], Prefs.lowDetail ? 16 : 1);
+		gradSprite.y = 480;
+		utilGroup.add(gradSprite);
 
 		optionsBG.x = 1080;
 		optionsBG.y = 635;
-		add(optionsBG);
+		utilGroup.add(optionsBG);
 
 		options.x = 1085;
 		options.y = 640;
-		add(options);
+		utilGroup.add(options);
 
 		optionsText.setFormat("assets/fonts/main.ttf", 32, FlxColor.WHITE);
 		optionsText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
-		add(optionsText);
+		utilGroup.add(optionsText);
 
 		generate();
 
@@ -144,7 +145,7 @@ class PlayState extends FlxState {
 		version.bold = true;
 		version.underline = true;
 		new FlxTimer().start(5, e -> FlxTween.tween(version, {y: 720, alpha: 0, "scale.y": 0.6}, 2, {ease: FlxEase.circIn, onComplete: e -> version.destroy()}));
-		add(version);
+		utilGroup.add(version);
 
 		if (Prefs.allowParticles) {
 			new FlxTimer().start(Prefs.lowDetail ? 0.4 : 0.05, e -> {
@@ -157,7 +158,7 @@ class PlayState extends FlxState {
 					alpha: 0,
 					angle: FlxG.random.float(-90, 90)
 				}, FlxG.random.float(1, 5), {onComplete: e -> sprite.destroy()});
-				add(sprite);
+				bgGroup.add(sprite);
 			}, 0);
 		}
 
@@ -236,6 +237,7 @@ class PlayState extends FlxState {
 	function generate(send:Bool = true) {
 		for (table in spriteIDList) for (sprite in table) sprite.destroy();
 		for (table in textIDList) for (text in table) text.destroy();
+		for (table in spriteTrail) table.destroy();
 
 		function dumb(Value:Float):Void yPos = Value;
 
@@ -246,6 +248,7 @@ class PlayState extends FlxState {
 		textYPos = [];
 		spriteIDList = [];
 		spriteYPos = [];
+		spriteTrail = [];
 		luaLists = [];
 
 		var checks:Array<String> = FileSystem.readDirectory('mods/');
@@ -258,16 +261,27 @@ class PlayState extends FlxState {
 				var type:String = "ALL";
 				var ver:String = "";
 				var pngExist:Bool = FileSystem.exists('${fileName}pack.png');
+				var gradient:Array<String> = ["0xFF292929", "0xFFCCCCCC", "0x24FFFFFF"];
 
 				if (FileSystem.exists('${fileName}pack.json')) {
 					try {
 						var extract = Json.parse(File.getContent('${fileName}pack.json'));
+						var skip:Bool = false;
 
-						name = extract.name;
-						cred = extract.author;
-						type = extract.appType;
-						ver  = extract.version;
-					} catch(e) trace('JSON for $folder is not formatted correctly.\nError: $e');
+						name     = extract.name;
+						cred     = extract.author;
+						type     = extract.appType;
+						ver      = extract.version;
+						if (extract.gradient != null) gradient = extract.gradient;
+						for (hex in gradient) {
+							if (hex.toLowerCase().startsWith("0x") && gradient.length == 3 && hex.length == 10) continue; else {
+								sendNotification('$name\'s gradient JSON is not correct.');
+								skip = true;
+							}
+						}
+
+						if(skip) continue;
+					} catch(e) sendNotification('$folder: $e');
 				}
 
 				if (ver == null) ver = "Unknown";
@@ -278,27 +292,33 @@ class PlayState extends FlxState {
 				var l:Int = spriteIDList.length-1;
 				var sprID:Int = 0;
 				for (i in 0...(Prefs.lowDetail ? 1 : 2)) {
-					spriteIDList[l].push(new FlxSprite().makeGraphic(816 + (14 * i), 126 + (14 * i), (i == 0 ? 0xFF454545 : 0xFF777777)));
+					spriteIDList[l].push(FlxGradient.createGradientFlxSprite(816 + (14 * i), 126 + (14 * i), [Std.parseInt(gradient[2]), Std.parseInt(gradient[i])], Prefs.lowDetail ? 16 : 1));
+
+					if (i == 1) {
+						spriteTrail.push(new FlxTrail(spriteIDList[l][i], null, Prefs.lowDetail ? 4 : 32, 0, 0.2, 0.033));
+						appGroup.add(spriteTrail[l]);
+					}
+
 					spriteIDList[l][i].screenCenter();
-					spriteIDList[l][i].alpha = 0.25;
+					spriteIDList[l][i].alpha = i == 1 ? 0.1 : 0.6;
 					spriteIDList[l][i].y = 70 + (160 * done) - (i == 1 ? 7 : 0);
-					add(spriteIDList[l][i]);
+					appGroup.add(spriteIDList[l][i]);
 					sprID++;
 				}
 
 				textIDList.push([]);
 				textIDList[done].push(new FlxText(-245, 75 + (160 * done), 1280, name));
 				textIDList[done][0].setFormat("assets/fonts/main.ttf", 40, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
-				add(textIDList[done][0]);
+				appGroup.add(textIDList[done][0]);
 
 				textIDList[done].push(new FlxText(-245, 116 + (160 * done), 1280, cred));
 				textIDList[done][1].setFormat("assets/fonts/main.ttf", 32, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
-				add(textIDList[done][1]);
+				appGroup.add(textIDList[done][1]);
 
 				textIDList[done].push(new FlxText(-245, 155 + (160 * done), 1280, '$ver - ${FlxStringUtil.formatBytes(Utils.getDirectorySize(fileName))}'));
 				textIDList[done][2].setFormat("assets/fonts/main.ttf", 22, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 				textIDList[done][2].underline = true;
-				add(textIDList[done][2]);
+				appGroup.add(textIDList[done][2]);
 
 				var image:BitmapData = null;
 				if (pngExist) image = BitmapData.fromFile('${fileName}pack.png');
@@ -308,14 +328,14 @@ class PlayState extends FlxState {
 				spriteIDList[l][sprID].scale.y = 0.75;
 				spriteIDList[l][sprID].x = 230;
 				spriteIDList[l][sprID].y = 58 + (160 * done);
-				add(spriteIDList[l][sprID]);
+				appGroup.add(spriteIDList[l][sprID]);
 
 				done++;
 			}
 		}
 
 		maxYPos = 0;
-		if (done >= 4) maxYPos = -160 * (done - 4);
+		if (done >= 4) maxYPos = (-160 * (done - 4)) - 20;
 
 		hasNoApps = done == 0;
 		noApps.visible = done == 0;
@@ -373,12 +393,18 @@ class PlayState extends FlxState {
 			}
 			yPos += wheelSpeed;
 
+			var hit:Bool = false;
 			if (yPos < maxYPos) {
 				yPos = maxYPos;
-				mouseScroll = 0;
+				hit = true;
 			} else if (yPos > -5) {
 				yPos = -5;
+				hit = true;
+			}
+			
+			if (hit) {
 				mouseScroll = 0;
+				wheelSpeed = 0;
 			}
 		}
 
@@ -484,22 +510,19 @@ class PlayState extends FlxState {
 		var l:Int = curNotifTxt.length;
 		curNotifSpr.push([new FlxSprite(1276, 636 - (88 * notifsSent)).makeGraphic(303, 76, 0xff7e7e7e)]);
 		curNotifSpr[l][0].alpha = 0;
-		curNotifSpr[l][0].camera = camNotifs;
 		FlxTween.tween(curNotifSpr[l][0], {alpha: 1, x: 956}, 2, {ease: FlxEase.elasticOut});
-		add(curNotifSpr[l][0]);
+		utilGroup.add(curNotifSpr[l][0]);
 
 		if (!Prefs.lowDetail) {
 			curNotifSpr[l].push(new FlxSprite(1280, 640 - (88 * notifsSent)).makeGraphic(295, 68, 0xff585858));
 			curNotifSpr[l][1].alpha = 0;
-			curNotifSpr[l][1].camera = camNotifs;
 			FlxTween.tween(curNotifSpr[l][1], {alpha: 1, x: 960}, 2, {ease: FlxEase.elasticOut});
-			add(curNotifSpr[l][1]);
+			utilGroup.add(curNotifSpr[l][1]);
 	
 			/*curNotifSpr[l].push(new FlxSprite(1276, 708 - (88 * notifsSent)).makeGraphic(303, 4, 0xff000000));
 			curNotifSpr[l][2].alpha = 0;
-			curNotifSpr[l][2].camera = camNotifs;
 			FlxTween.tween(curNotifSpr[l][2], {alpha: 1, x: 956}, 2, {ease: FlxEase.elasticOut});
-			add(curNotifSpr[l][2]);*/
+			utilGroup.add(curNotifSpr[l][2]);*/
 			// no idea how i'm suppose to do this
 		}
 
@@ -507,9 +530,8 @@ class PlayState extends FlxState {
 		curNotifTxt[l][0].setFormat('assets/fonts/main.ttf', 16, FlxColor.WHITE);
 		curNotifTxt[l][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 		curNotifTxt[l][0].alpha = 0;
-		curNotifTxt[l][0].camera = camNotifs;
 		FlxTween.tween(curNotifTxt[l][0], {alpha: 1, x: 970}, 2, {ease: FlxEase.elasticOut});
-		add(curNotifTxt[l][0]);
+		utilGroup.add(curNotifTxt[l][0]);
 
 		new FlxTimer().start(5, {e -> {
 			for (i in 0...curNotifSpr[l].length) FlxTween.tween(curNotifSpr[l][i], {alpha: 0}, 0.5, {onComplete: e -> curNotifSpr[l][i].destroy()});

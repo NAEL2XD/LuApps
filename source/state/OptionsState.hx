@@ -1,5 +1,6 @@
 package state;
 
+import flixel.group.FlxGroup;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.FlxState;
@@ -35,7 +36,6 @@ class OptionsState extends FlxState
 	];
 
 	var helpText:FlxText = new FlxText(0, 0, 1280, "Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.");
-
 	var spriteList:Array<Array<FlxSprite>> = [];
 	var spriteYPos:Array<Float> = [];
 	var textList:Array<Array<FlxText>> = [];
@@ -43,6 +43,8 @@ class OptionsState extends FlxState
 	var previewText:Array<Array<Dynamic>> = [];
 	var heldText:FlxText = new FlxText(0, 0, 1280, "");
 	var mouseDistance:FlxSprite = new FlxSprite().makeGraphic(0, 0, FlxColor.RED);
+	var optionGroup:FlxGroup = new FlxGroup();
+	var jumpGroup:FlxGroup = new FlxGroup();
 
 	var yPos:Float = 0;
 	var maxYPos:Float = 0;
@@ -56,10 +58,13 @@ class OptionsState extends FlxState
 	override public function create() {
 		Main.changeWindowName("Settings");
 
+		add(optionGroup);
+		add(jumpGroup);
+
 		var optionsBG:FlxSprite = new FlxSprite().makeGraphic(1280, 720, 0xFF756C6C);
 		optionsBG.alpha = 0;
 		FlxTween.tween(optionsBG, {alpha: 1}, 0.5);
-		add(optionsBG);
+		optionGroup.add(optionsBG);
 
 		function sortLists(stringList:Array<String>):Array<String> {
 			// Ai generated (sorry!)
@@ -101,35 +106,35 @@ class OptionsState extends FlxState
 
 			PTY += 16;
 			if (t == "State") PTY += 13;
-			previewText.push([result, new FlxText(10, PTY, n.length * 12, n)]);
-			previewText[i][1].setFormat('assets/fonts/debug.ttf', 11, FlxColor.WHITE);
+			previewText.push([result, new FlxText(10, PTY, n.length * 13.75, n)]);
+			previewText[i][1].setFormat('assets/fonts/debug.ttf', 13, FlxColor.WHITE);
 			previewText[i][1].x += t != "State" ? 20 : 0;
-			add(previewText[i][1]);
+			jumpGroup.add(previewText[i][1]);
 
 			if (t != "State") {
 				spriteList[i].push(new FlxSprite().makeGraphic(860, 105, 0xFF797979));
 				spriteList[i][0].screenCenter();
 				spriteList[i][0].y = 60 + yDown;
-				add(spriteList[i][0]);
+				optionGroup.add(spriteList[i][0]);
 
 				if (!Prefs.lowDetail) {
 					spriteList[i].push(new FlxSprite().makeGraphic(845, 90, 0xFF363636));
 					spriteList[i][1].screenCenter();
 					spriteList[i][1].y = 67.5 + yDown;
-					add(spriteList[i][1]);
+					optionGroup.add(spriteList[i][1]);
 				}
 
 				textList[j].push(new FlxText(230, 75 + yDown, 1280, n));
 				textList[j][0].setFormat('assets/fonts/main.ttf', 56, FlxColor.WHITE);
 				textList[j][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
-				add(textList[j][0]);
+				optionGroup.add(textList[j][0]);
 
 				var value:Dynamic = Reflect.getProperty(Prefs, option[3]);
 				textList[j].push(new FlxText(-240, 77 + yDown, 1280, '$value', 60));
 				textList[j][1].setFormat('assets/fonts/settings.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
 				textList[j][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 				textList[j][1].underline = true;
-				add(textList[j][1]);
+				optionGroup.add(textList[j][1]);
 
 				if (option[2] == "Bool") textList[j][1].text = value ? "ON" : "OFF";
 
@@ -138,12 +143,12 @@ class OptionsState extends FlxState
 				textList[j].push(new FlxText(0, 90 + yDown, 1280, option[0]));
 				textList[j][0].setFormat('assets/fonts/main.ttf', 64, FlxColor.WHITE, FlxTextAlign.CENTER);
 				textList[j][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
-				add(textList[j][0]);
+				optionGroup.add(textList[j][0]);
 
 				textList[j].push(new FlxText(0, 164 + yDown, 1280, option[1]));
 				textList[j][1].setFormat('assets/fonts/main.ttf', 24, FlxColor.GRAY, FlxTextAlign.CENTER);
 				textList[j][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
-				add(textList[j][1]);
+				optionGroup.add(textList[j][1]);
 
 				yDown += 160;
 			}
@@ -157,7 +162,7 @@ class OptionsState extends FlxState
 		helpText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 		helpText.screenCenter();
 		helpText.y = 650;
-		add(helpText);
+		jumpGroup.add(helpText);
 
 		for (table in spriteList) for (sprite in table) spriteYPos.push(sprite.y);
 		for (table in textList) for (text in table) textYPos.push(text.y);
@@ -168,11 +173,11 @@ class OptionsState extends FlxState
 		FlxTween.tween(blackFade, {alpha: 0}, 0.5, {onComplete: e -> blackFade.destroy()});
 		add(blackFade);
 
-		add(heldProps[4]);
-		add(heldProps[3]);
+		jumpGroup.add(heldProps[4]);
+		jumpGroup.add(heldProps[3]);
 		heldText.setFormat('assets/fonts/settings.ttf', 20, FlxColor.BLACK, FlxTextAlign.LEFT);
 		heldText.screenCenter();
-		add(heldText);
+		jumpGroup.add(heldText);
 
 		heldProps[4].alpha = 0;
 		heldProps[3].alpha = 0;
@@ -406,7 +411,7 @@ class OptionsState extends FlxState
 				angle: FlxG.random.float(-50, 50),
 				alpha: 0
 			}, 0.66, {ease: FlxEase.cubeOut, onComplete: e -> oldPopup.destroy()});
-			add(oldPopup);
+			optionGroup.add(oldPopup);
 		}
 	}
 
@@ -427,7 +432,7 @@ class OptionsState extends FlxState
 
 		var numChosen:Int = -1;
 		var held:Bool = false;
-		for (tab in textList) {
+		for (_ in textList) {
 			numChosen++;
 			if (options[numChosen][2] != "State") for (i in 0...2) textList[numChosen][i].color = (numChosen == chosen && hasChosen) ? FlxColor.YELLOW : FlxColor.WHITE;
 		}

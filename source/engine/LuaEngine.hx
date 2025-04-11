@@ -2,6 +2,8 @@ package engine;
 
 // Will credit them later..
 
+import flixel.util.FlxSpriteUtil;
+import flixel.util.FlxStringUtil;
 import lime.system.Clipboard;
 import lime.graphics.Image;
 import haxe.Json;
@@ -275,8 +277,8 @@ class LuaEngine {
 			return Reflect.getProperty(FlxG.keys.pressed, key);
 		});
 
-		Lua_helper.add_callback(lua, "mouseClicked", function(?key:String) {
-			return switch (key.toLowerCase()) {
+		Lua_helper.add_callback(lua, "mouseClicked", function(?button:String) {
+			return switch (button.toLowerCase()) {
 				case "middle": FlxG.mouse.justPressedMiddle;
 				case "right": FlxG.mouse.justPressedRight;
 				case "any": (FlxG.mouse.justPressed ||FlxG.mouse.justPressedMiddle || FlxG.mouse.justPressedRight);
@@ -284,8 +286,8 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "mousePressed", function(?key:String) {
-			return switch (key.toLowerCase()) {
+		Lua_helper.add_callback(lua, "mousePressed", function(?button:String) {
+			return switch (button.toLowerCase()) {
 				case "middle": FlxG.mouse.pressedMiddle;
 				case "right": FlxG.mouse.pressedRight;
 				case "any": (FlxG.mouse.pressed ||FlxG.mouse.pressedMiddle || FlxG.mouse.pressedRight);
@@ -413,7 +415,7 @@ class LuaEngine {
 			Dummy.playSound(n);
 		});
 
-		Lua_helper.add_callback(lua, "moveTowardsMouse", function(tag:String, speed:Int = 60) {
+		Lua_helper.add_callback(lua, "moveTowardsMouse", function(tag:String, ?speed:Int = 60) {
 			if (Dummy.instance.sprites.exists(tag) || Dummy.instance.texts.exists(tag)){
 				FlxVelocity.moveTowardsMouse(Dummy.instance.getLuaObject(tag), speed);
 				return;
@@ -422,7 +424,7 @@ class LuaEngine {
 			Dummy.debugPrint("moveTowardsMouse: Sprite does not exist, did you make a typo?", true);
 		});
 
-		Lua_helper.add_callback(lua, "sendPopup", function(?title:String = "", desc:String = "") {
+		Lua_helper.add_callback(lua, "sendPopup", function(desc:String = "", ?title:String = "") {
 			if (title == "") title = PlayState.modName;
 
 			if (desc == "") {
@@ -509,7 +511,7 @@ class LuaEngine {
 			Dummy.debugPrint('scaleObject: Couldnt find object: $obj', true);
 		});
 
-		Lua_helper.add_callback(lua, "runTimer", function(tag:String, time:Float = 1, loops:Int = 1) {
+		Lua_helper.add_callback(lua, "runTimer", function(tag:String, ?time:Float = 1, ?loops:Int = 1) {
 			cancelTimer(tag);
 			Dummy.instance.timers.set(tag, new FlxTimer().start(time, function(tmr:FlxTimer) {
 				if(tmr.finished) Dummy.instance.timers.remove(tag);
@@ -546,7 +548,7 @@ class LuaEngine {
 				case 'GREEN':       FlxColor.GREEN;
 				case 'LIME':        FlxColor.LIME;
 				case 'MAGENTA':     FlxColor.MAGENTA;
-				case 'ORANGE':     FlxColor.ORANGE;
+				case 'ORANGE':      FlxColor.ORANGE;
 				case 'PINK':        FlxColor.PINK;
 				case 'PURPLE':      FlxColor.PURPLE;
 				case 'RED':         FlxColor.RED;
@@ -576,7 +578,7 @@ class LuaEngine {
 
 		Lua_helper.add_callback(lua, "exit", function() Dummy.exit());
 
-		Lua_helper.add_callback(lua, "move", function(tag:String, xy:String = "xy", px:Float = 10) {
+		Lua_helper.add_callback(lua, "move", function(tag:String, ?xy:String = "xy", ?px:Float = 10) {
 			var spr = Dummy.instance.getLuaObject(tag);
 			if (spr == null) {
 				Dummy.debugPrint('move (argument #1): Couldn\'t find tag: $tag', true);
@@ -615,6 +617,49 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "setClipboardText", function(text:String) Clipboard.text = text);
+
+		Lua_helper.add_callback(lua, "mouseReleased", function(?button:String) {
+			return switch (button.toLowerCase()) {
+				case "middle": FlxG.mouse.releasedMiddle;
+				case "right": FlxG.mouse.releasedRight;
+				case "any": (FlxG.mouse.released ||FlxG.mouse.releasedMiddle || FlxG.mouse.releasedRight);
+				default: FlxG.mouse.released;
+			}
+		});
+
+		Lua_helper.add_callback(lua, "mouseJustReleased", function(?button:String) {
+			return switch (button.toLowerCase()) {
+				case "middle": FlxG.mouse.justReleasedMiddle;
+				case "right": FlxG.mouse.justReleasedRight;
+				case "any": (FlxG.mouse.justReleased ||FlxG.mouse.justReleasedMiddle || FlxG.mouse.justReleasedRight);
+				default: FlxG.mouse.justReleased;
+			}
+		});
+
+		Lua_helper.add_callback(lua, "keyReleased", function(?key:String) {
+			if (key == null) return FlxG.keys.released.ANY;
+			return Reflect.getProperty(FlxG.keys.released, key);
+		});
+
+		Lua_helper.add_callback(lua, "keyJustReleased", function(?key:String) {
+			if (key == null) return FlxG.keys.justReleased.ANY;
+			return Reflect.getProperty(FlxG.keys.justReleased, key);
+		});
+
+		Lua_helper.add_callback(lua, "formatBytes", function(bytes:Float, precision:Int = 2):String return FlxStringUtil.formatBytes(bytes, precision));
+		Lua_helper.add_callback(lua, "formatMoney", function(amount:Float, showDecimal:Bool = true, englishStyle:Bool = true):String return FlxStringUtil.formatMoney(amount, showDecimal, englishStyle));
+		Lua_helper.add_callback(lua, "formatTime",  function(seconds:Float, showMS:Bool = false):String return FlxStringUtil.formatTime(seconds, showMS));
+
+		Lua_helper.add_callback(lua, "setBrightness", function(tag:String, ?brightness:Float = 0) {
+			var spr = Dummy.instance.getLuaObject(tag);
+
+			if (spr == null) {
+				Dummy.debugPrint('setBrightness: Sprite tag "$tag" does not exist, did you make a typo?', true);
+				return;
+			}
+
+			FlxSpriteUtil.setBrightness(spr, brightness);
+		});
 	}
 
 	public function set(variable:String, data:Dynamic) {
