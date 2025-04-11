@@ -1,37 +1,36 @@
 package state;
 
-import backend.VideoSprite;
-import engine.LuaEngine;
-import flixel.FlxCamera;
-import flixel.FlxG;
-import flixel.FlxSprite;
-import flixel.FlxState;
-import flixel.addons.display.FlxBackdrop;
-import flixel.addons.display.FlxGridOverlay;
-import flixel.text.FlxText;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
-import flixel.util.FlxAxes;
-import flixel.util.FlxColor;
-import flixel.util.FlxStringUtil;
-import flixel.util.FlxTimer;
-import haxe.Json;
-import haxe.Timer;
-import haxe.io.Bytes;
 import haxe.io.BytesInput;
 import haxe.zip.Reader;
+import haxe.io.Bytes;
 import haxe.zip.Uncompress;
 import lime.ui.FileDialog;
 import lime.ui.FileDialogType;
-import openfl.display.BitmapData;
+import flixel.util.FlxStringUtil;
+import flixel.FlxCamera;
+import flixel.util.FlxAxes;
 import openfl.display.BlendMode;
+import flixel.addons.display.FlxBackdrop;
+import flixel.addons.display.FlxGridOverlay;
+import utils.Utils;
+import haxe.Timer;
 import openfl.media.Sound;
-import state.DummyState;
+import flixel.util.FlxTimer;
+import flixel.tweens.FlxEase;
+import flixel.tweens.FlxTween;
+import flixel.FlxSprite;
 import sys.FileSystem;
 import sys.io.File;
+import flixel.FlxState;
+import flixel.text.FlxText;
+import flixel.util.FlxColor;
+import flixel.FlxG;
+import openfl.display.BitmapData;
+import engine.LuaEngine;
 import utils.Prefs;
+import haxe.Json;
+import state.DummyState;
 import utils.Shaders;
-import utils.Utils;
 
 using StringTools;
 
@@ -59,15 +58,6 @@ class PlayState extends FlxState {
 	var curNotifSpr:Array<Array<FlxSprite>> = [];
 	var curNotifTxt:Array<Array<FlxText>>   = [];
 	var file:FileDialog = new FileDialog();
-
-	public static var videoModded:Bool = false;
-
-	public static var inCutscene:Bool = false;
-
-	/**
-	 * For lua stuff.
-	 */
-	public static var instance:PlayState;
 
 	var allowTween:Bool = false;
 	var yPos:Float = -5;
@@ -537,21 +527,6 @@ class PlayState extends FlxState {
 		}});
 
 		notifsSent++;
-	}
-
-	public function addTextToDebug(text:String, color:FlxColor) {
-		#if LUA_ALLOWED
-		luaDebugGroup.forEachAlive(function(spr:DebugLuaText) {
-			spr.y += 20;
-		});
-
-		if(luaDebugGroup.members.length > 34) {
-			var blah = luaDebugGroup.members[34];
-			blah.destroy();
-			luaDebugGroup.remove(blah);
-		}
-		luaDebugGroup.insert(0, new DebugLuaText(text, luaDebugGroup, color));
-		#end
 	}
 
 	function deleteDirectoryRecursive(path:String):Void {
