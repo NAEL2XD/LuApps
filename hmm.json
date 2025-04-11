@@ -21,11 +21,6 @@
       "version": "3.3.2"
     },
     {
-      "name": "hxvlc",
-      "type": "haxelib",
-      "version": "1.9.2"
-    },
-    {
       "name": "hxcpp",
       "type": "git",
       "dir": null,

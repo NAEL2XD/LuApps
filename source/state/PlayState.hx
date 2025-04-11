@@ -46,11 +46,11 @@ class PlayState extends FlxState {
 	var textIDList:Array<Array<FlxText>> = [];
 	var textYPos:Array<Float> = [];
 
-	var optionsBG:FlxSprite = new FlxSprite();
+	var optionsBG:FlxSprite = new FlxSprite().makeGraphic(165, 60, 0xFFA78080);
 	var optionsText:FlxText = new FlxText(1095, 642, 1920, "Options", 16);
-	var options:FlxSprite = new FlxSprite();
+	var options:FlxSprite = new FlxSprite().makeGraphic(155, 50, 0xFF534040);
 	var mouseDistance:FlxSprite = new FlxSprite();
-	var sleepy:FlxSprite = new FlxSprite();
+	var sleepy:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
 	var noApps:FlxText = new FlxText(0, 0, 1280, "There are no applications installed!\nPress R to refresh the list.", 32);
 	var background:FlxBackdrop = new FlxBackdrop(FlxGridOverlay.createGrid(60, 60, 120, 120, true, 0xffa3a3a3, 0x0));
 	var GMB:GlowingMarblingBlack = new GlowingMarblingBlack();
@@ -96,7 +96,7 @@ class PlayState extends FlxState {
 
 		if (!FileSystem.exists("mods/")) FileSystem.createDirectory("mods/");
 
-		var gray:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, Std.parseInt('0xFF222222'));
+		var gray:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, 0xFF222222);
 		if (Prefs.shaders) gray.shader = GMB;
 		add(gray);
 
@@ -124,12 +124,10 @@ class PlayState extends FlxState {
 			add(spr);
 		}
 
-		optionsBG.makeGraphic(165, 60, Std.parseInt('0xFFA78080'));
 		optionsBG.x = 1080;
 		optionsBG.y = 635;
 		add(optionsBG);
 
-		options.makeGraphic(155, 50, Std.parseInt('0xFF534040'));
 		options.x = 1085;
 		options.y = 640;
 		add(options);
@@ -141,19 +139,15 @@ class PlayState extends FlxState {
 		generate();
 
 		var version:FlxText = new FlxText(20, 680, 1920, 'You are running v${Main.luversion}');
-		version.setFormat("assets/fonts/main.ttf", 20, Std.parseInt('0xFF4D4242'));
+		version.setFormat("assets/fonts/main.ttf", 20, 0xFF4D4242);
 		version.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 		version.bold = true;
 		version.underline = true;
-		new FlxTimer().start(5, function(e) {
-			FlxTween.tween(version, {y: 720, alpha: 0, "scale.y": 0.6}, 2, {ease: FlxEase.circIn, onComplete: function(e) {
-				version.destroy();
-			}});
-		});
+		new FlxTimer().start(5, e -> FlxTween.tween(version, {y: 720, alpha: 0, "scale.y": 0.6}, 2, {ease: FlxEase.circIn, onComplete: e -> version.destroy()}));
 		add(version);
 
 		if (Prefs.allowParticles) {
-			new FlxTimer().start(Prefs.lowDetail ? 0.4 : 0.05, function(e) {
+			new FlxTimer().start(Prefs.lowDetail ? 0.4 : 0.05, e -> {
 				var sprite:FlxSprite = new FlxSprite(FlxG.random.float(-16, 1296), 720);
 				sprite.makeGraphic(16, 16, FlxColor.WHITE);
 				sprite.alpha = Math.abs(-0.6 + (sleepy.alpha / 1.9));
@@ -162,9 +156,7 @@ class PlayState extends FlxState {
 					y: sprite.y - FlxG.random.float(200, 250),
 					alpha: 0,
 					angle: FlxG.random.float(-90, 90)
-				}, FlxG.random.float(1, 5), {onComplete: function(e) {
-					sprite.destroy();
-				}});
+				}, FlxG.random.float(1, 5), {onComplete: e -> sprite.destroy()});
 				add(sprite);
 			}, 0);
 		}
@@ -175,15 +167,14 @@ class PlayState extends FlxState {
 			"LUAPI Documentation are from the GitHub!",
 			"You can also scroll with the mouse cursor!",
 			"Get a Auto Completer, increase the speed of programming!",
-			"It took 1 month to make this."
+			"It took 1 month to make this.",
+			"The logo is made by SyncGit12!"
 		];
 		sendNotification(tip[FlxG.random.int(0, tip.length-1)]);
 		sendNotification("This is on a alpha state, changes will be made.");
 		
 		var funny:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
-		FlxTween.tween(funny, {alpha: 0}, 0.5, {onComplete: function(e) {
-			funny.destroy();
-		}});
+		FlxTween.tween(funny, {alpha: 0}, 0.5, {onComplete: e -> funny.destroy()});
 		add(funny);
 
 		file.onSelect.add(file -> {
@@ -249,9 +240,7 @@ class PlayState extends FlxState {
 		function dumb(Value:Float):Void yPos = Value;
 
 		disableMoving = true;
-		FlxTween.num(yPos, 0, 0.6, {ease: FlxEase.backOut, onComplete: function(e) {
-			disableMoving = false;
-		}}, dumb);
+		FlxTween.num(yPos, 0, 0.6, {ease: FlxEase.backOut, onComplete: e -> disableMoving = false}, dumb);
 
 		textIDList = [];
 		textYPos = [];
@@ -262,7 +251,7 @@ class PlayState extends FlxState {
 		var checks:Array<String> = FileSystem.readDirectory('mods/');
 		var done:Int = 0;
 		for (folder in checks) {
-			var fileName:String = "mods/" + folder + "/";
+			var fileName:String = 'mods/$folder/';
 			if (FileSystem.exists('${fileName}source/main.lua')) {
 				var name:String = folder;
 				var cred:String = "Unknown";
@@ -289,7 +278,7 @@ class PlayState extends FlxState {
 				var l:Int = spriteIDList.length-1;
 				var sprID:Int = 0;
 				for (i in 0...(Prefs.lowDetail ? 1 : 2)) {
-					spriteIDList[l].push(new FlxSprite().makeGraphic(816 + (14 * i), 126 + (14 * i), (i == 0 ? Std.parseInt('0xFF454545') : Std.parseInt('0xFF777777'))));
+					spriteIDList[l].push(new FlxSprite().makeGraphic(816 + (14 * i), 126 + (14 * i), (i == 0 ? 0xFF454545 : 0xFF777777)));
 					spriteIDList[l][i].screenCenter();
 					spriteIDList[l][i].alpha = 0.25;
 					spriteIDList[l][i].y = 70 + (160 * done) - (i == 1 ? 7 : 0);
@@ -340,14 +329,11 @@ class PlayState extends FlxState {
 		text.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 		text.alpha = 0;
 		FlxTween.tween(text, {alpha: 1, y: 20}, 1, {ease: FlxEase.circOut});
-		new FlxTimer().start(3, function(e) {
-			FlxTween.tween(text, {alpha: 0, y: 0}, 1, {ease: FlxEase.backOut, onComplete: function(e) {
-				text.destroy();
-			}});
+		new FlxTimer().start(3, e -> {
+			FlxTween.tween(text, {alpha: 0, y: 0}, 1, {ease: FlxEase.backOut, onComplete: e -> text.destroy()});
 		});
 		add(text);*/
 
-		sleepy.makeGraphic(1920, 1080, FlxColor.BLACK);
 		sleepy.alpha = 0;
 		add(sleepy);
 
@@ -436,7 +422,7 @@ class PlayState extends FlxState {
 				var sprite:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
 				sprite.alpha = 0;
 				FlxG.sound.music.fadeOut(0.5, 0);
-				FlxTween.tween(sprite, {alpha: 1}, 1, {onComplete: function(e) {
+				FlxTween.tween(sprite, {alpha: 1}, 1, {onComplete: e -> {
 					modName = luaLists[choice][2];
 					modRaw = 'mods/${luaLists[choice][2]}/';
 					author = luaLists[choice][3];
@@ -464,9 +450,7 @@ class PlayState extends FlxState {
 				var movement:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
 				movement.alpha = 0;
 				FlxG.sound.music.fadeOut(0.5, 0);
-				FlxTween.tween(movement, {alpha: 1}, 0.5, {onComplete: function(e) {
-					FlxG.switchState(OptionsState.new);
-				}});
+				FlxTween.tween(movement, {alpha: 1}, 0.5, {onComplete: e -> FlxG.switchState(OptionsState.new)});
 				add(movement);
 
 				var choose:Sound = Sound.fromFile('assets/sounds/choose.ogg');
@@ -549,7 +533,7 @@ class PlayState extends FlxState {
 		if (!FileSystem.exists(path)) return;
 	
 		for (file in FileSystem.readDirectory(path)) {
-			var full = path + "/" + file;
+			var full = '$path/$file';
 			if (FileSystem.isDirectory(full)) deleteDirectoryRecursive(full); else try FileSystem.deleteFile(full) catch(e) sendNotification('Failed to delete file $full: $e');
 		}
 	

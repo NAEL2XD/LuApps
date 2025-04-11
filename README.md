@@ -14,7 +14,7 @@
 <br>
 </h3>
 
-LuApps is a game engine intended for homebrew developers and easier for Lua newcomers.
+LuApps is a light-weight game engine intended for homebrew developers and easier for Lua newcomers.
 
 #### Made With
 <img src="https://img.shields.io/badge/-HAXE-262626.svg?logo=haxe&style=for-the-badge">
@@ -45,3 +45,7 @@ To install a LuApp mod, follow this:
 [Want LuApp examples? See here.](https://github.com/NAEL2XD/LuApps/wiki/LuApp-Examples)
 
 [State Keybinds](https://github.com/NAEL2XD/LuApps/wiki/State-Keybinds)
+
+### Notes if you use Linux or MacOS.
+
+It is currently unavailable for now, it will be available if Linux and MacOS Support is added.

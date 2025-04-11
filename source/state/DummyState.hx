@@ -1,5 +1,6 @@
 package state;
 
+import lime.graphics.Image;
 import lime.system.Clipboard;
 import haxe.Timer;
 import openfl.media.Sound;
@@ -50,8 +51,8 @@ class Dummy extends FlxState {
 		super.update(elapsed);
 
 		updateVars();
-
 		for (text in debugger) add(text);
+
 		callOnLuas("update", [elapsed]);
 
 		if (FlxG.keys.justPressed.ESCAPE) openSubState(new Pause());
@@ -65,7 +66,7 @@ class Dummy extends FlxState {
 			debugger = [];
 			Pause.killSounds();
 
-			luaArray.push(new LuaEngine(PlayState.modRaw + "source/main.lua"));
+			luaArray.push(new LuaEngine('${PlayState.modRaw}source/main.lua'));
 			FlxG.switchState(Dummy.new);
 		}
 
@@ -94,6 +95,7 @@ class Dummy extends FlxState {
 
 	public static function exit(restartOnly:Bool = false) {
 		try {
+			Application.current.window.setIcon(Image.fromFile("assets/images/icons/iconOG.png"));
 			Dummy.instance.sprites.clear();
 			Dummy.instance.texts.clear();
 			Dummy.instance.variables.clear();
@@ -263,9 +265,7 @@ class Pause extends FlxSubState {
 		modA.alpha = 0;
 		modA.x = -15;
 		modA.y = 20;
-		new FlxTimer().start(0.55, e -> {
-			FlxTween.tween(modA, {y: 50, alpha: 1}, 0.25);
-		});
+		new FlxTimer().start(0.55, e -> FlxTween.tween(modA, {y: 50, alpha: 1}, 0.25));
 		add(modA);
 
 		music.loadEmbedded('assets/music/settings.ogg');
@@ -314,9 +314,7 @@ class Pause extends FlxSubState {
 						case "Exit App":
 							for (sprite in members) FlxTween.tween(sprite, {alpha: 0}, 0.5);
 
-							FlxTween.tween(blackBG, {alpha: 1}, 0.5, {onComplete: e -> {
-								Dummy.exit();
-							}});
+							FlxTween.tween(blackBG, {alpha: 1}, 0.5, {onComplete: e -> Dummy.exit()});
 					}
 				}
 	

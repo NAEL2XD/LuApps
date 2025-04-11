@@ -2,7 +2,6 @@ package engine;
 
 // Will credit them later..
 
-import lime.ui.FileDialog;
 import lime.system.Clipboard;
 import lime.graphics.Image;
 import haxe.Json;
@@ -50,7 +49,7 @@ class LuaEngine {
 			var result:Int = scriptCode != null ? LuaL.dostring(lua, scriptCode) : LuaL.dofile(lua, script);
 			var resultStr:String = Lua.tostring(lua, result);
 			if(resultStr != null && result != 0) {
-				trace('Error on lua script! ' + resultStr);
+				trace('Error on lua script! $resultStr');
 				lime.app.Application.current.window.alert(resultStr, 'Error on lua script!');
 				Lua.close(lua);
 				lua = null;
@@ -175,7 +174,7 @@ class LuaEngine {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null) {
 				var colorNum:Int = Std.parseInt(color);
-				if(!color.startsWith('0x')) colorNum = Std.parseInt('0xff' + color);
+				if(!color.startsWith('0x')) colorNum = Std.parseInt('0xff$color');
 
 				obj.borderSize = size;
 				obj.borderColor = colorNum;
@@ -210,7 +209,7 @@ class LuaEngine {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null) {
 				var colorNum:Int = Std.parseInt(color);
-				if(!color.startsWith('0x')) colorNum = Std.parseInt('0xff' + color);
+				if(!color.startsWith('0x')) colorNum = Std.parseInt('0xff$color');
 
 				obj.color = colorNum;
 				return true;
@@ -385,7 +384,7 @@ class LuaEngine {
 			var tween:Dynamic = tweenStuff(tag, vars);
 			if(tween != null) {
 				var color:Int = Std.parseInt(targetColor);
-				if(!targetColor.startsWith('0x')) color = Std.parseInt('0xff' + targetColor);
+				if(!targetColor.startsWith('0x')) color = Std.parseInt('0xff$targetColor');
 
 				var curColor:FlxColor = tween.color;
 				curColor.alphaFloat = tween.alpha;
@@ -431,7 +430,7 @@ class LuaEngine {
 				return;
 			}
 
-			lime.app.Application.current.window.alert(desc, title);
+			Application.current.window.alert(desc, title);
 		});
 
 		Lua_helper.add_callback(lua, "randomInt", function(?min:Int = 1, ?max:Int = 10) return FlxG.random.int(min, max));
@@ -449,7 +448,7 @@ class LuaEngine {
 
 		Lua_helper.add_callback(lua, "makeGraphic", function(obj:String, ?width:Int = 256, ?height:Int = 256, ?color:String = "FFFFFF") {
 			var colorNum:Int = Std.parseInt(color);
-			if(!color.startsWith('0x')) colorNum = Std.parseInt('0xff' + color);
+			if(!color.startsWith('0x')) colorNum = Std.parseInt('0xff$color');
 
 			var spr:FlxSprite = Dummy.instance.getLuaObject(obj,false);
 			if(spr!=null) {
@@ -534,8 +533,7 @@ class LuaEngine {
 				return "";
 			}
 				
-			var plswork:Dynamic = File.getContent(n);
-			return plswork;
+			return File.getContent(n);
 		});
 
 		Lua_helper.add_callback(lua, "getColorFromFlx", function(color:String = ''):FlxColor {
@@ -548,7 +546,7 @@ class LuaEngine {
 				case 'GREEN':       FlxColor.GREEN;
 				case 'LIME':        FlxColor.LIME;
 				case 'MAGENTA':     FlxColor.MAGENTA;
-				case 'ORANGE' :     FlxColor.ORANGE;
+				case 'ORANGE':     FlxColor.ORANGE;
 				case 'PINK':        FlxColor.PINK;
 				case 'PURPLE':      FlxColor.PURPLE;
 				case 'RED':         FlxColor.RED;
@@ -577,29 +575,6 @@ class LuaEngine {
 		Lua_helper.add_callback(lua, "resetWindowSize", function() Utils.setDefaultResolution());
 
 		Lua_helper.add_callback(lua, "exit", function() Dummy.exit());
-
-		Lua_helper.add_callback(lua, "switchApp", function(name:String = "") {
-			if (name == "") {
-				Dummy.debugPrint('switchApp: Argument 1 must not be empty!', true);
-				return;
-			}
-
-			if (FileSystem.exists('mods/$name/source/main.lua')) {
-				if (FileSystem.exists('mods/$name/pack.json')) {
-					try {
-						var extract = Json.parse(File.getContent('mods/$name/pack.json'));
-
-						PlayState.modName = extract.name;
-						PlayState.modRaw = 'mods/$name/';
-						PlayState.author = extract.author;
-					} catch(e) Dummy.debugPrint('JSON for $name is not formatted correctly and thus does not affect lua variable. Error: $e', true);
-				}
-
-				Dummy.exit(true);
-				Dummy.luaArray.push(new LuaEngine('mods/$name/source/main.lua'));
-				Main.changeWindowName('${PlayState.modName} - ${PlayState.author}');
-			} else Dummy.debugPrint('switchApp: LuApp folder named $name does not exist!', true);
-		});
 
 		Lua_helper.add_callback(lua, "move", function(tag:String, xy:String = "xy", px:Float = 10) {
 			var spr = Dummy.instance.getLuaObject(tag);

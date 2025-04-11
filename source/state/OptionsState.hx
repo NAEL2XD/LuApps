@@ -41,6 +41,8 @@ class OptionsState extends FlxState
 	var textList:Array<Array<FlxText>> = [];
 	var textYPos:Array<Float> = [];
 	var previewText:Array<Array<Dynamic>> = [];
+	var heldText:FlxText = new FlxText(0, 0, 1280, "");
+	var mouseDistance:FlxSprite = new FlxSprite().makeGraphic(0, 0, FlxColor.RED);
 
 	var yPos:Float = 0;
 	var maxYPos:Float = 0;
@@ -50,15 +52,11 @@ class OptionsState extends FlxState
 	var ticksRemain:Int = 0;
 	var curOption:Int = 0;
 	var heldProps:Array<Dynamic> = [false, 0, 0, new FlxSprite(), new FlxSprite()];
-	var heldText:FlxText = new FlxText(0, 0, 1280, "");
 
 	override public function create() {
 		Main.changeWindowName("Settings");
 
-		mouseDistance.makeGraphic(0, 0, FlxColor.RED);
-		add(mouseDistance);
-
-		var optionsBG:FlxSprite = new FlxSprite().makeGraphic(1280, 720, Std.parseInt('0xFF756C6C'));
+		var optionsBG:FlxSprite = new FlxSprite().makeGraphic(1280, 720, 0xFF756C6C);
 		optionsBG.alpha = 0;
 		FlxTween.tween(optionsBG, {alpha: 1}, 0.5);
 		add(optionsBG);
@@ -109,13 +107,13 @@ class OptionsState extends FlxState
 			add(previewText[i][1]);
 
 			if (t != "State") {
-				spriteList[i].push(new FlxSprite().makeGraphic(860, 105, Std.parseInt('0xFF797979')));
+				spriteList[i].push(new FlxSprite().makeGraphic(860, 105, 0xFF797979));
 				spriteList[i][0].screenCenter();
 				spriteList[i][0].y = 60 + yDown;
 				add(spriteList[i][0]);
 
 				if (!Prefs.lowDetail) {
-					spriteList[i].push(new FlxSprite().makeGraphic(845, 90, Std.parseInt('0xFF363636')));
+					spriteList[i].push(new FlxSprite().makeGraphic(845, 90, 0xFF363636));
 					spriteList[i][1].screenCenter();
 					spriteList[i][1].y = 67.5 + yDown;
 					add(spriteList[i][1]);
@@ -166,10 +164,8 @@ class OptionsState extends FlxState
 
 		FlxG.sound.playMusic('assets/music/settings.ogg', 1, true);
 
-		var blackFade:FlxSprite = new FlxSprite().makeGraphic(1280, 720, Std.parseInt('0xFF000000'));
-		FlxTween.tween(blackFade, {alpha: 0}, 0.5, {onComplete: function(e) {
-			blackFade.destroy();
-		}});
+		var blackFade:FlxSprite = new FlxSprite().makeGraphic(1280, 720, 0xFF000000);
+		FlxTween.tween(blackFade, {alpha: 0}, 0.5, {onComplete: e -> blackFade.destroy()});
 		add(blackFade);
 
 		add(heldProps[4]);
@@ -284,7 +280,7 @@ class OptionsState extends FlxState
 					count++;
 				}
 
-				FlxTween.tween(helpText, {"scale.y": 0}, 0.1, {ease: FlxEase.linear, onComplete: function(e) {
+				FlxTween.tween(helpText, {"scale.y": 0}, 0.1, {ease: FlxEase.linear, onComplete: e -> {
 					helpText.text = 'This is a ${options[option][2]} type.\n';
 
 					switch(options[option][2]) {
@@ -310,9 +306,7 @@ class OptionsState extends FlxState
 				var movement:FlxSprite = new FlxSprite().makeGraphic(1280, 720, FlxColor.BLACK);
 				movement.alpha = 0;
 				FlxG.sound.music.fadeOut(0.5, 0);
-				FlxTween.tween(movement, {alpha: 1}, 0.5, {onComplete: function(e) {
-					FlxG.switchState(PlayState.new);
-				}});
+				FlxTween.tween(movement, {alpha: 1}, 0.5, {onComplete: e -> FlxG.switchState(PlayState.new)});
 				add(movement);
 			}
 
@@ -336,7 +330,7 @@ class OptionsState extends FlxState
 				count++;
 			}
 
-			FlxTween.tween(helpText, {"scale.y": 0}, 0.1, {ease: FlxEase.linear, onComplete: function(e) {
+			FlxTween.tween(helpText, {"scale.y": 0}, 0.1, {ease: FlxEase.linear, onComplete: e -> {
 				helpText.text = 'Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.';
 				FlxTween.tween(helpText, {"scale.y": 1}, 0.1, {ease: FlxEase.linear});
 			}});
@@ -411,9 +405,7 @@ class OptionsState extends FlxState
 				y: oldPopup.y + 240,
 				angle: FlxG.random.float(-50, 50),
 				alpha: 0
-			}, 0.66, {ease: FlxEase.cubeOut, onComplete: function(e) {
-				oldPopup.destroy();
-			}});
+			}, 0.66, {ease: FlxEase.cubeOut, onComplete: e -> oldPopup.destroy()});
 			add(oldPopup);
 		}
 	}
@@ -448,7 +440,7 @@ class OptionsState extends FlxState
 			if (heldProps[1] > 0.5) {
 				heldText.text = options[chosen][1];
 				heldProps[3].makeGraphic((heldText.text.length * 11) + 16, 30, FlxColor.WHITE);
-				heldProps[4].makeGraphic((heldText.text.length * 11) + 24, 38, Std.parseInt("0xFFADADAD"));
+				heldProps[4].makeGraphic((heldText.text.length * 11) + 24, 38, 0xFFADADAD);
 
 				FlxTween.tween(heldText, {alpha: 1}, 0.2);
 				FlxTween.tween(heldProps[3], {alpha: 1}, 0.2);
