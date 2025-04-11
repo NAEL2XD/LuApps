@@ -11,6 +11,7 @@ import flixel.FlxCamera;
 import flixel.util.FlxAxes;
 import openfl.display.BlendMode;
 import flixel.addons.display.FlxBackdrop;
+import flixel.addons.display.FlxGridOverlay;
 import utils.Utils;
 import haxe.Timer;
 import openfl.media.Sound;
@@ -51,7 +52,7 @@ class PlayState extends FlxState {
 	var mouseDistance:FlxSprite = new FlxSprite();
 	var sleepy:FlxSprite = new FlxSprite();
 	var noApps:FlxText = new FlxText(0, 0, 1280, "There are no applications installed!\nPress R to refresh the list.", 32);
-	var background:FlxBackdrop = new FlxBackdrop();
+	var background:FlxBackdrop = new FlxBackdrop(FlxGridOverlay.createGrid(60, 60, 120, 120, true, 0xffa3a3a3, 0x0));
 	var GMB:GlowingMarblingBlack = new GlowingMarblingBlack();
 	var camNotifs:FlxCamera = new FlxCamera(); // i'm so pissed
 	var curNotifSpr:Array<Array<FlxSprite>> = [];
@@ -101,7 +102,6 @@ class PlayState extends FlxState {
 
 		// From JS Engine.
 		if (Prefs.allowParticles) {
-			background = new FlxBackdrop("assets/images/checker.png", FlxAxes.XY);
 			background.color = 0xff467172;
 			background.blend = BlendMode.LAYER;
 			background.scrollFactor.set(0, 0.07);

@@ -52,8 +52,6 @@ class OptionsState extends FlxState
 	var heldProps:Array<Dynamic> = [false, 0, 0, new FlxSprite(), new FlxSprite()];
 	var heldText:FlxText = new FlxText(0, 0, 1280, "");
 
-	var mouseDistance:FlxSprite = new FlxSprite();
-
 	override public function create() {
 		Main.changeWindowName("Settings");
 
@@ -90,7 +88,7 @@ class OptionsState extends FlxState
 
 		var count:Int = 0;
 		var yDown:Float = 0;
-		var PTY:Int = -24;
+		var PTY:Int = -18;
 		for (option in options) {
 			spriteList.push([]);
 			textList.push([]);
@@ -103,11 +101,11 @@ class OptionsState extends FlxState
 			var result:Float = yDown - 280;
 			if (result < 0) result = 0;
 
-			PTY += 20;
-			if (t == "State") PTY += 16;
-			previewText.push([result, new FlxText(12, PTY, n.length * 15, n)]);
-			previewText[i][1].setFormat('assets/fonts/debug.ttf', 14, FlxColor.WHITE);
-			previewText[i][1].x += t != "State" ? 24 : 0;
+			PTY += 16;
+			if (t == "State") PTY += 13;
+			previewText.push([result, new FlxText(10, PTY, n.length * 12, n)]);
+			previewText[i][1].setFormat('assets/fonts/debug.ttf', 11, FlxColor.WHITE);
+			previewText[i][1].x += t != "State" ? 20 : 0;
 			add(previewText[i][1]);
 
 			if (t != "State") {
