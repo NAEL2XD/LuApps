@@ -484,11 +484,8 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "stringStartsWith", function(str:String, start:String) return str.startsWith(start));
-
 		Lua_helper.add_callback(lua, "stringEndsWith", function(str:String, end:String) return str.endsWith(end));
-
 		Lua_helper.add_callback(lua, "stringSplit", function(str:String, split:String) return str.split(split));
-
 		Lua_helper.add_callback(lua, "stringTrim", function(str:String) return str.trim());
 
 		Lua_helper.add_callback(lua, "scaleObject", function(obj:String, x:Float, y:Float) {
