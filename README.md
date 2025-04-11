@@ -1,23 +1,42 @@
-## LuApps: YA2DEfLS
-<h6>Yet Another 2D Engine for Lua Support</h6>
+<h1 align="center">
+  <br>
+  <a href="https://github.com/NAEL2XD/LuApps">
+    <img src="/projIcons/iconOG.png" alt="LuApps" width="150">
+  </a>
+  <br>
+  <b>LuApps</b>
+  <br>
+</h1>
 
-LuApps is an Application to play luapp games made for luapps, It is written in haxe and it's sole purpose is to make and play homebrew apps for developers and players.
+<h3 align="center">
+<br>
+<b><h6>Yet Another 2D Engine for Lua Support</h6><b>
+<br>
+</h3>
 
-[Read the official LUAPI Here!](https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.))
+LuApps is a game engine intended for homebrew developers and easier for Lua newcomers.
 
-### Installing a .luapp mod.
+#### Made With
+<img src="https://img.shields.io/badge/-HAXE-262626.svg?logo=haxe&style=for-the-badge">
 
-To install a luapp mod, follow this:
+#### Moddable With
+<img src="https://img.shields.io/badge/LUA-262626?style=for-the-badge&logo=lua">
 
-1. Find a .luapp mod.
-2. Launch Luapps.
+[Read the official LUAPI Here!](<https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.)>)
+
+### Installing a LuApp mod.
+
+To install a LuApp mod, follow this:
+
+1. Find a LuApps mod.
+2. Launch LuApps.
 3. Press <kbd>I</kbd> to open "Import" window.
 4. Choose a .luapp file.
 
 > [!NOTE]
 > A warning will be thrown if .luapp has not found "source/main.lua" or if the pack.json is invalid or if the .luapp file is corrupt.
 
-5. Done, enjoy the new luapp.
+5. Done, enjoy the new LuApp mod.
 
 ### FAQs.
 

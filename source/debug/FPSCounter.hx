@@ -1,9 +1,9 @@
 package debug;
 
+import flixel.FlxG;
+import flixel.util.FlxStringUtil;
 import openfl.text.TextField;
 import openfl.text.TextFormat;
-import flixel.util.FlxStringUtil;
-import flixel.FlxG;
 
 class FPSCounter extends TextField
 {
@@ -12,9 +12,13 @@ class FPSCounter extends TextField
 	public static var curMaxMemory(default, null):String;
 
 	/**
-		The current memory usage (WARNING: this is NOT your total program memory usage, rather it shows the garbage collector memory)
+		The current memory usage (WARNING: this is NOT your total program memory usage, rather it shows the garbage collector memory.)
 	**/
 	public var memory(get, never):Float;
+
+	/**
+	 * Gets the memory.
+	 */
 	inline function get_memory():Float
 		return cpp.vm.Gc.memInfo64(cpp.vm.Gc.MEM_INFO_USAGE);
 
@@ -46,7 +50,10 @@ class FPSCounter extends TextField
 	var deltaTimeout:Float = 0.0;
 	public var timeoutDelay:Float = 50;
 	var now:Float = 0;
-	// Event Handlers
+	/**
+	 * Event handlers.
+	 * @param deltaTime : The delta time.
+	 */
 	override function __enterFrame(deltaTime:Float):Void {
 		now = haxe.Timer.stamp() * 1000;
 		times.push(now);
