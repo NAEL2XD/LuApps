@@ -28,10 +28,17 @@
 
 	<!-- _____________________________ Path Settings ____________________________ -->
 
-	<set name="BUILD_DIR" value="export" />
+	<!-- LuApps customization. -->
+	<define name="VIDEOS_ALLOWED" if="web || windows" unless="32bits"/>
+
+	<set name="BUILD_DIR" value="export/debug" if="debug" />
+	<set name="BUILD_DIR" value="export/release" unless="debug" />
+	<set name="BUILD_DIR" value="export/32bit" if="32bits" />
+
 	<source path="source" />
 	<assets path="assets" />
 	<assets path="assets/fonts" />
+	<assets path="assets/videos"        library="videos"        if="VIDEOS_ALLOWED"/>
 	<assets path="mods_example" rename="mods" embed="true" type="template" />
 
 	<!-- _______________________________ Libraries ______________________________ -->
@@ -39,6 +46,7 @@
 	<haxelib name="flixel" />
 	<haxelib name="flixel-addons" />
 	<haxelib name="linc_luajit" />
+	<haxelib name="hxvlc" if="VIDEOS_ALLOWED" version="1.9.2"/>
 
 	<!--In case you want to use the ui package-->
 	<!--<haxelib name="flixel-ui" />-->
@@ -90,7 +98,7 @@
 
 	<!-- Haxe 4.3.0+: Enable pretty syntax errors and stuff. -->
 	<!-- pretty (haxeflixel default), indent, classic (haxe compiler default) -->
-	<haxedef name="message.reporting" value="pretty" />
+	<!--<haxedef name="message.reporting" value="pretty" />-->
 
 	<!-- _________________________________ Custom _______________________________ -->
 
