@@ -1,11 +1,12 @@
 package;
 
-import flixel.FlxG;
-import lime.app.Application;
-import flixel.FlxGame;
-import openfl.display.Sprite;
-import debug.FPSCounter;
 import debug.CrashHandler;
+import debug.FPSCounter;
+import flixel.FlxG;
+import flixel.FlxGame;
+import lime.app.Application;
+import openfl.display.Sprite;
+import state.StartupState;
 import utils.Prefs;
 
 class Main extends Sprite {
@@ -28,7 +29,7 @@ class Main extends Sprite {
 		super();
 		CrashHandler.init();
 
-		addChild(new FlxGame(0, 0, state.PlayState, 120, 120, true));
+		addChild(new FlxGame(0, 0, state.StartupState, 120, 120, true));
 
 		fpsVar = new FPSCounter(3, 698, 0x00FFFFFF);
 		addChild(fpsVar);
