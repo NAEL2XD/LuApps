@@ -8,7 +8,6 @@ import haxe.zip.Reader;
 import lime.ui.FileDialog;
 import lime.ui.FileDialogType;
 import flixel.util.FlxStringUtil;
-import openfl.display.BlendMode;
 import flixel.addons.display.FlxBackdrop;
 import flixel.addons.display.FlxGridOverlay;
 import utils.Utils;
@@ -108,7 +107,6 @@ class PlayState extends FlxState {
 		// From JS Engine.
 		if (Prefs.allowParticles) {
 			background.color = 0xff467172;
-			background.blend = BlendMode.LAYER;
 			background.alpha = 0.33;
 			background.updateHitbox();
 			bgGroup.add(background);
@@ -294,13 +292,13 @@ class PlayState extends FlxState {
 				for (i in 0...(Prefs.lowDetail ? 1 : 2)) {
 					spriteIDList[l].push(FlxGradient.createGradientFlxSprite(816 + (14 * i), 126 + (14 * i), [Std.parseInt(gradient[2]), Std.parseInt(gradient[i])], Prefs.lowDetail ? 16 : 1));
 
-					if (i == 1) {
-						spriteTrail.push(new FlxTrail(spriteIDList[l][i], null, Prefs.lowDetail ? 4 : 32, 0, 0.2, 0.033));
+					if (i == 1 && Prefs.allowParticles) {
+						spriteTrail.push(new FlxTrail(spriteIDList[l][i], null, Prefs.lowDetail ? 8 : 32, 0, 0.09, 0.005));
 						appGroup.add(spriteTrail[l]);
 					}
 
 					spriteIDList[l][i].screenCenter();
-					spriteIDList[l][i].alpha = i == 1 ? 0.1 : 0.6;
+					spriteIDList[l][i].alpha = 0.2;
 					spriteIDList[l][i].y = 70 + (160 * done) - (i == 1 ? 7 : 0);
 					appGroup.add(spriteIDList[l][i]);
 					sprID++;
@@ -437,30 +435,35 @@ class PlayState extends FlxState {
 				}
 			}
 
-			var numChosen:Int = -1;
-			for (tab in textIDList) {
-				numChosen++;
-				for (i in 0...3) tab[i].color = numChosen == choice ? FlxColor.YELLOW : FlxColor.WHITE;
-			}
-
-			if (FlxG.mouse.justReleased && choice != -1 && !disableMoving) {
-				disableMoving = true;
-				var sprite:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
-				sprite.alpha = 0;
-				FlxG.sound.music.fadeOut(0.5, 0);
-				FlxTween.tween(sprite, {alpha: 1}, 1, {onComplete: e -> {
-					modName = luaLists[choice][2];
-					modRaw = 'mods/${luaLists[choice][2]}/';
-					author = luaLists[choice][3];
-					Dummy.luaArray.push(new LuaEngine(luaLists[choice][1]));
-					Main.changeWindowName('$modName - $author');
-					FlxG.sound.destroy(true);
-					FlxG.switchState(Dummy.new);
-				}});
-				add(sprite);
-
-				var choose:Sound = Sound.fromFile('assets/sounds/choose.ogg');
-				choose.play();
+			if(Math.abs(mouseScroll + wheelSpeed) < 1) {
+				var numChosen:Int = -1;
+				for (tab in textIDList) {
+					numChosen++;
+					for (i in 0...3) tab[i].color = numChosen == choice ? FlxColor.YELLOW : FlxColor.WHITE;
+				}
+			
+				if (FlxG.mouse.justReleased && choice != -1 && !disableMoving) {
+					disableMoving = true;
+					FlxG.sound.music.fadeOut(0.5, 0);
+					mouseScroll = 0;
+					wheelSpeed = 0;
+				
+					var sprite:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
+					sprite.alpha = 0;
+					FlxTween.tween(sprite, {alpha: 1}, 1, {onComplete: e -> {
+						modName = luaLists[choice][2];
+						modRaw = 'mods/${luaLists[choice][2]}/';
+						author = luaLists[choice][3];
+						Dummy.luaArray.push(new LuaEngine(luaLists[choice][1]));
+						Main.changeWindowName('$modName - $author');
+						FlxG.sound.destroy(true);
+						FlxG.switchState(Dummy.new);
+					}});
+					add(sprite);
+				
+					var choose:Sound = Sound.fromFile('assets/sounds/choose.ogg');
+					choose.play();
+				}
 			}
 		}
 
