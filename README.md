@@ -45,11 +45,11 @@
 4. Select your `.luapp` file  
 5. Wait for installation to complete  
 
-> **Note:**  
-> Installation will fail if:  
-> - No `source/main.lua` found in the mod  
-> - `pack.json` is invalid  
-> - `.luapp` file is corrupted  
+ **Note:**  
+ Installation will fail if:  
+ - No `source/main.lua` found in the mod  
+ - `pack.json` is invalid  
+ - `.luapp` file is corrupted  
 
 ---
 
