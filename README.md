@@ -1,51 +1,59 @@
-<h1 align="center">
-  <br>
-  <a href="https://github.com/NAEL2XD/LuApps">
-    <img src="assets/images/icons/iconOG.png" alt="LuApps" width="150">
-  </a>
-  <br>
-  <b>LuApps</b>
-  <br>
-</h1>
+# LuApps 🎮
+================
 
-<h3 align="center">
-<br>
-<b><h6>Yet Another 2D Engine for Lua Support</h6><b>
-<br>
-</h3>
+[![License Badge](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Made With HAXE](https://img.shields.io/badge/-HAXE-262626.svg?logo=haxe&style=for-the-badge)](https://haxe.org/)
+[![Moddable With LUA](https://img.shields.io/badge/LUA-262626?style=for-the-badge&logo=lua)](https://www.lua.org/)
 
-LuApps is a light-weight game engine intended for homebrew developers and easier for Lua newcomers.
+<a href="https://github.com/NAEL2XD/LuApps">
+  <img src="assets/images/icons/iconOG.png" alt="LuApps" width="150" align="center">
+</a>
 
-#### Made With
-<img src="https://img.shields.io/badge/-HAXE-262626.svg?logo=haxe&style=for-the-badge">
+## Overview 📚
+LuApps is a lightweight game engine built for homebrew developers, designed to make Lua game development more approachable for newcomers. It provides a streamlined environment for creating 2D games while maintaining high performance and modularity.
 
-#### Moddable With
-<img src="https://img.shields.io/badge/LUA-262626?style=for-the-badge&logo=lua">
 
-[Read the official LUAPI Here!](<https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.)>)
+## Key Features 🎯
+-----------------
 
-### Installing a LuApp mod.
+* Lightweight architecture optimized for performance
+* Native Lua integration for scripting
+* Easy modding system with .luapp file format
+* Comprehensive API documentation
+* Built-in mod management tools
 
-To install a LuApp mod, follow this:
+## Installation Guide 🛠️
+----------------------
 
-1. Find a LuApps mod.
-2. Launch LuApps.
-3. Press <kbd>I</kbd> to open "Import" window.
-4. Choose a .luapp file.
+### Installing LuApp Mods
+
+Follow these simple steps to install mods:
+
+1. Find a compatible LuApp mod (.luapp file)
+2. Launch LuApps
+3. Press <kbd>I</kbd> to open the Import window
+4. Select your .luapp file
+5. Wait for installation completion
 
 > [!NOTE]
-> A warning will be thrown if .luapp has not found "source/main.lua" or if the pack.json is invalid or if the .luapp file is corrupt.
+> Installation will fail if:
+> - No "source/main.lua" found in the mod
+> - pack.json is invalid
+> - .luapp file is corrupted
 
-5. Done, enjoy the new LuApp mod.
+## Documentation 📖
+-----------------
 
-### FAQs.
+* [Official LUAPI Documentation](https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.))
+* [Example Projects](https://github.com/NAEL2XD/LuApps/wiki/LuApp-Examples)
+* [State Keybinds](https://github.com/NAEL2XD/LuApps/wiki/State-Keybinds)
 
-[View here.](https://github.com/NAEL2XD/LuApps/wiki)
+## Platform Support ⚙️
+-------------------
 
-[Want LuApp examples? See here.](https://github.com/NAEL2XD/LuApps/wiki/LuApp-Examples)
+Currently supports Windows platforms. Linux and MacOS versions are planned for future releases.
 
-[State Keybinds](https://github.com/NAEL2XD/LuApps/wiki/State-Keybinds)
+## Contributing 🤝
+--------------
 
-### Notes if you use Linux or MacOS.
-
-It is currently unavailable for now, it will be available if Linux and MacOS Support is added.
+Contributions are welcome! Check out our wiki for guidelines and examples.
