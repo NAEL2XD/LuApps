@@ -68,6 +68,7 @@ Linux and macOS versions are planned for future releases.
 ## 🤝 Contributing
 
 Contributions are welcome!  
-Check out our [wiki](https://github.com/NAEL2XD/LuApps/wiki) for guidelines and examples.
+If you have a bug to report, click on [here](https://github.com/NAEL2XD/LuApps/issues) to report one.
+If you actually want to contribute, click on [here](https://github.com/NAEL2XD/LuApps/pulls).
 
 ---
