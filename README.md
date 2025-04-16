@@ -1,8 +1,5 @@
 <h1 align="center">LuApps 🎮</h1>
 <p align="center">
-  <a href="https://opensource.org/licenses/MIT">
-    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License Badge">
-  </a>
   <a href="https://haxe.org/">
     <img src="https://img.shields.io/badge/-HAXE-262626.svg?logo=haxe&style=for-the-badge" alt="Made With HAXE">
   </a>
