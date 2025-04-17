@@ -1,7 +1,5 @@
 package utils;
 
-import flixel.system.FlxAssets.FlxShader;
-
 class GlowingMarblingBlack extends FlxShader {
 	@:glFragmentSource('
 		// Automatically converted with https://github.com/TheLeerName/ShadertoyToFlixel

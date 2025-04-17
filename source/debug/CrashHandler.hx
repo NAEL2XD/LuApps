@@ -2,23 +2,6 @@ package debug;
 
 // an fully working crash handler on ALL platforms
 
-import state.DummyState.Dummy;
-import flixel.tweens.FlxTween;
-import flixel.util.FlxColor;
-import flixel.text.FlxText;
-import flixel.FlxState;
-import flixel.FlxG;
-import openfl.events.UncaughtErrorEvent;
-import openfl.events.ErrorEvent;
-import openfl.errors.Error;
-import haxe.CallStack;
-import haxe.io.Path;
-import sys.FileSystem;
-import sys.io.File;
-import openfl.Lib;
-
-using StringTools;
-
 // Crash Handler.
 // @author YoshiCrafter29, Ne_Eo. MAJigsaw77 and mcagabe19
 

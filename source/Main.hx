@@ -1,18 +1,13 @@
 package;
 
-import flixel.FlxG;
-import lime.app.Application;
 import flixel.FlxGame;
 import openfl.display.Sprite;
-import debug.FPSCounter;
-import debug.CrashHandler;
-import utils.Prefs;
 
 class Main extends Sprite {
 	public static var fpsVar:FPSCounter;
 	
 	// Main Settings
-	public static var luversion:String = "0.0.2"; // version
+	public static var luversion:String = "0.1.0"; // version
 	public static var sentenceCrash:Array<String> = [ // funny crash sentence
 		"Report to github!",
 		"Hey world, i smashed his thingie ma bob!",
@@ -21,19 +16,18 @@ class Main extends Sprite {
 		"null",
 		"Engine used Crash, It's very effective!",
 		"oops",
-		"No way dude! You Really Crashed The Game!? How Dare You!"
+		"No way dude! You Really Crashed The Game!? How Dare You!",
+		"This shouldn't have happend!"
 	];
 
 	public function new() {
 		super();
 		CrashHandler.init();
 
-		addChild(new FlxGame(0, 0, state.PlayState, 120, 120, true));
+		addChild(new FlxGame(0, 0, PlayState, 120, 120, true));
 
 		fpsVar = new FPSCounter(3, 698, 0x00FFFFFF);
 		addChild(fpsVar);
-
-		FlxG.mouse.useSystemCursor = true;
 
 		Prefs.loadPrefs();
 	}

@@ -1,11 +1,9 @@
 package utils;
 
-import flixel.FlxG;
-import flixel.input.keyboard.FlxKey;
-
 class Prefs {
-	// Settings
 	public static var luAppsType:String = "ALL";
+	public static var calculateSize:Bool = true;
+
 	public static var antiAliasing:Bool = true;
 	public static var lowDetail:Bool = false;
 	public static var framerate:Int = 60;

@@ -1,43 +1,12 @@
 package state;
 
-import flixel.addons.effects.FlxTrail;
-import flixel.group.FlxGroup;
-import flixel.util.FlxGradient;
-import haxe.io.BytesInput;
-import haxe.zip.Reader;
-import lime.ui.FileDialog;
-import lime.ui.FileDialogType;
-import flixel.util.FlxStringUtil;
-import flixel.addons.display.FlxBackdrop;
-import flixel.addons.display.FlxGridOverlay;
-import utils.Utils;
-import haxe.Timer;
-import openfl.media.Sound;
-import flixel.util.FlxTimer;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
-import flixel.FlxSprite;
-import sys.FileSystem;
-import sys.io.File;
-import flixel.FlxState;
-import flixel.text.FlxText;
-import flixel.util.FlxColor;
-import flixel.FlxG;
-import openfl.display.BitmapData;
-import engine.LuaEngine;
-import utils.Prefs;
-import haxe.Json;
-import utils.Shaders;
-import state.DummyState;
-
-using StringTools;
-
 var luaLists:Array<Array<String>> = [];
 
 class PlayState extends FlxState {
 	public static var author:String;
 	public static var modName:String;
 	public static var modRaw:String;
+	public static var qSize:Int = 8 * (Prefs.lowDetail ? 1 : 2);
 
 	var bgGroup:FlxGroup = new FlxGroup();
 	var appGroup:FlxGroup = new FlxGroup();
@@ -46,19 +15,21 @@ class PlayState extends FlxState {
 	var spriteIDList:Array<Array<FlxSprite>> = [];
 	var spriteYPos:Array<Float> = [];
 	var spriteTrail:Array<FlxTrail> = [];
-	var textIDList:Array<Array<FlxText>> = [];
+	var textIDList:Array<Array<UtilText>> = [];
 	var textYPos:Array<Float> = [];
 
-	var optionsBG:FlxSprite = new FlxSprite().makeGraphic(165, 60, 0xFFA78080);
-	var optionsText:FlxText = new FlxText(1095, 642, 1920, "Options", 16);
-	var options:FlxSprite = new FlxSprite().makeGraphic(155, 50, 0xFF534040);
+	var curNotifSpr:Array<Array<FlxSprite>> = [];
 	var mouseDistance:FlxSprite = new FlxSprite();
+	var optionsBG:FlxSprite = new FlxSprite().makeGraphic(165, 60, 0xFFA78080);
+	var options:FlxSprite = new FlxSprite().makeGraphic(155, 50, 0xFF534040);
 	var sleepy:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
-	var noApps:FlxText = new FlxText(0, 0, 1280, "There are no applications installed!\nPress R to refresh the list.", 32);
+
+	var curNotifTxt:Array<Array<UtilText>>   = [];
+	var optionsText:UtilText = new UtilText(1095, 642, 1920, "Options", 32);
+	var noApps:UtilText = new UtilText(0, 0, 1280, "There are no applications installed!\nPress R to refresh the list.", 32);
+
 	var background:FlxBackdrop = new FlxBackdrop(FlxGridOverlay.createGrid(60, 60, 120, 120, true, 0xffa3a3a3, 0x0));
 	var GMB:GlowingMarblingBlack = new GlowingMarblingBlack();
-	var curNotifSpr:Array<Array<FlxSprite>> = [];
-	var curNotifTxt:Array<Array<FlxText>>   = [];
 	var file:FileDialog = new FileDialog();
 
 	var allowTween:Bool = false;
@@ -85,6 +56,7 @@ class PlayState extends FlxState {
 			FlxG.resetState();
 		}
 
+		
 		FlxG.autoPause = false;
 		if (!FlxG.fullscreen) Utils.setDefaultResolution();
 		FlxG.sound.muted = false;
@@ -95,7 +67,7 @@ class PlayState extends FlxState {
 		add(bgGroup);
 		add(appGroup);
 		add(utilGroup);
-
+		
 		oldTime = Timer.stamp();
 
 		if (!FileSystem.exists("mods/")) FileSystem.createDirectory("mods/");
@@ -112,8 +84,6 @@ class PlayState extends FlxState {
 			bgGroup.add(background);
 		}
 
-		noApps.setFormat("assets/fonts/main.ttf", 36, FlxColor.WHITE, CENTER, OUTLINE, FlxColor.BLACK);
-		noApps.setBorderStyle(FlxTextBorderStyle.OUTLINE, FlxColor.BLACK, 2, 4);
 		noApps.screenCenter();
 		FlxTween.tween(noApps, {alpha: 0}, 1.5, {type: PINGPONG});
 		noApps.visible = false;
@@ -131,18 +101,17 @@ class PlayState extends FlxState {
 		options.y = 640;
 		utilGroup.add(options);
 
-		optionsText.setFormat("assets/fonts/main.ttf", 32, FlxColor.WHITE);
-		optionsText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+		optionsText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, qSize, qSize);
 		utilGroup.add(optionsText);
 
 		generate();
 
-		var version:FlxText = new FlxText(20, 680, 1920, 'You are running v${Main.luversion}');
-		version.setFormat("assets/fonts/main.ttf", 20, 0xFF4D4242);
-		version.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+		var version:UtilText = new UtilText(20, 680, 1920, 'You are running v${Main.luversion}', 20, LEFT);
+		version.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, qSize, qSize);
+		version.color = 0xFF573C3C;
 		version.bold = true;
 		version.underline = true;
-		new FlxTimer().start(5, e -> FlxTween.tween(version, {y: 720, alpha: 0, "scale.y": 0.6}, 2, {ease: FlxEase.circIn, onComplete: e -> version.destroy()}));
+		new FlxTimer().start(5, e -> FlxTween.tween(version, {y: 720, alpha: 0, "scale.y": 0.6 / (Prefs.lowDetail ? 1 : 2)}, 2, {ease: FlxEase.circIn, onComplete: e -> version.destroy()}));
 		utilGroup.add(version);
 
 		if (Prefs.allowParticles) {
@@ -305,16 +274,13 @@ class PlayState extends FlxState {
 				}
 
 				textIDList.push([]);
-				textIDList[done].push(new FlxText(-245, 75 + (160 * done), 1280, name));
-				textIDList[done][0].setFormat("assets/fonts/main.ttf", 40, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+				textIDList[done].push(new UtilText(-245, 75 + (160 * done), 1280, name, 40, RIGHT));
 				appGroup.add(textIDList[done][0]);
 
-				textIDList[done].push(new FlxText(-245, 116 + (160 * done), 1280, cred));
-				textIDList[done][1].setFormat("assets/fonts/main.ttf", 32, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+				textIDList[done].push(new UtilText(-245, 118 + (160 * done), 1280, name, 32, RIGHT));
 				appGroup.add(textIDList[done][1]);
 
-				textIDList[done].push(new FlxText(-245, 155 + (160 * done), 1280, '$ver - ${FlxStringUtil.formatBytes(Utils.getDirectorySize(fileName))}'));
-				textIDList[done][2].setFormat("assets/fonts/main.ttf", 22, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
+				textIDList[done].push(new UtilText(-245, 155 + (160 * done), 1280, '$ver' + (Prefs.calculateSize ? ' - ${FlxStringUtil.formatBytes(Utils.getDirectorySize(fileName))}' : ''), 22, RIGHT));
 				textIDList[done][2].underline = true;
 				appGroup.add(textIDList[done][2]);
 
@@ -347,9 +313,7 @@ class PlayState extends FlxState {
 		text.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
 		text.alpha = 0;
 		FlxTween.tween(text, {alpha: 1, y: 20}, 1, {ease: FlxEase.circOut});
-		new FlxTimer().start(3, e -> {
-			FlxTween.tween(text, {alpha: 0, y: 0}, 1, {ease: FlxEase.backOut, onComplete: e -> text.destroy()});
-		});
+		new FlxTimer().start(3, e -> FlxTween.tween(text, {alpha: 0, y: 0}, 1, {ease: FlxEase.backOut, onComplete: e -> text.destroy()}));
 		add(text);*/
 
 		sleepy.alpha = 0;
@@ -361,12 +325,14 @@ class PlayState extends FlxState {
 	override public function update(elapsed:Float) {
 		if (Prefs.shaders) GMB.update(elapsed);
 
+		qSize = 8 * (Prefs.lowDetail ? 1 : 2);
+
 		if (Math.abs(wheelSpeed) > .0001) wheelSpeed = wheelSpeed/(1 + (0.2 / (Prefs.framerate / 60)));
 
 		for (sprite in members) {
 			var sprite:Dynamic = sprite;
 			var sprite:FlxSprite = sprite;
-			if(sprite != null && (sprite is FlxSprite) && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
+			if(sprite != null && (sprite is FlxSprite) && !(sprite is UtilText)) sprite.antialiasing = Prefs.antiAliasing;
 		}
 
 		if (!disableMoving && maxYPos != 0) {
@@ -451,7 +417,7 @@ class PlayState extends FlxState {
 					var sprite:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, FlxColor.BLACK);
 					sprite.alpha = 0;
 					FlxTween.tween(sprite, {alpha: 1}, 1, {onComplete: e -> {
-						modName = luaLists[choice][2];
+						modName = luaLists[choice][0];
 						modRaw = 'mods/${luaLists[choice][2]}/';
 						author = luaLists[choice][3];
 						Dummy.luaArray.push(new LuaEngine(luaLists[choice][1]));
@@ -529,9 +495,8 @@ class PlayState extends FlxState {
 			// no idea how i'm suppose to do this
 		}
 
-		curNotifTxt.push([new FlxText(1290, 648 - (88 * notifsSent), 275, title)]);
-		curNotifTxt[l][0].setFormat('assets/fonts/main.ttf', 16, FlxColor.WHITE);
-		curNotifTxt[l][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+		curNotifTxt.push([new UtilText(1290, 648 - (88 * notifsSent), 275, title, 16)]);
+		curNotifTxt[l][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, qSize, qSize);
 		curNotifTxt[l][0].alpha = 0;
 		FlxTween.tween(curNotifTxt[l][0], {alpha: 1, x: 970}, 2, {ease: FlxEase.elasticOut});
 		utilGroup.add(curNotifTxt[l][0]);
@@ -543,6 +508,7 @@ class PlayState extends FlxState {
 				notifsGone++;
 				notifsSent--;
 
+				// TODO: Try to not make the sprite go to another floor or smth??
 				var nums:Array<Int> = [636, 640, 648];
 				for (i in 0...curNotifSpr.length) {
 					for (j in 0...curNotifSpr[i].length) FlxTween.tween(curNotifSpr[i][j], {y: nums[j] - (88 * (i - notifsGone))}, .66, {ease: FlxEase.backOut});

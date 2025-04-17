@@ -1,17 +1,10 @@
 package debug;
 
-import haxe.Timer;
-import cpp.vm.Gc;
-import openfl.text.TextField;
-import openfl.text.TextFormat;
-import flixel.util.FlxStringUtil;
-import flixel.FlxG;
-
-class FPSCounter extends TextField
-{
+class FPSCounter extends TextField {
 	public static var currentFPS(default, null):Float;
 	public static var curMemory(default, null):String;
 	public static var curMaxMemory(default, null):String;
+	
 
 	// The current memory usage (WARNING: this is NOT your total program memory usage, rather it shows the garbage collector memory)
 	public var memory(get, never):Float;

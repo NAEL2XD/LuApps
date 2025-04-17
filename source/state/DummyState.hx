@@ -1,26 +1,5 @@
 package state;
 
-import lime.graphics.Image;
-import lime.system.Clipboard;
-import haxe.Timer;
-import openfl.media.Sound;
-import openfl.media.SoundChannel;
-import openfl.media.SoundTransform;
-import flixel.sound.FlxSound;
-import flixel.util.FlxColor;
-import flixel.FlxSubState;
-import utils.Prefs;
-import lime.app.Application;
-import flixel.util.FlxTimer;
-import flixel.tweens.FlxTween;
-import flixel.FlxState;
-import flixel.text.FlxText;
-import flixel.FlxSprite;
-import flixel.FlxG;
-import state.PlayState;
-import engine.LuaEngine;
-import debug.FPSCounter;
-
 class Dummy extends FlxState {
 	public static var instance:Dummy;
 
@@ -35,12 +14,20 @@ class Dummy extends FlxState {
 	public static var channels:Array<SoundChannel> = [];
 	public static var positions:Array<Float> = [];
     public static var sounds:Array<Sound> = [];
-	
+	public static var startTime:Float = 0;
+	public static var pausedTime:Float = 0;
+	public static var allowDebug:Bool = false;
+
 	var oldTime:Float = 0;
 
 	override public function create() {
-		oldTime = Timer.stamp();
-		instance = this;
+		instance   = this;
+
+		allowDebug = false;
+
+		oldTime    = Timer.stamp();
+		startTime  = 0;
+		pausedTime = 0;
 
 		updateVars();
 		callOnLuas("create");
@@ -55,7 +42,10 @@ class Dummy extends FlxState {
 
 		callOnLuas("update", [elapsed]);
 
-		if (FlxG.keys.justPressed.ESCAPE) openSubState(new Pause());
+		if (FlxG.keys.justPressed.ESCAPE) {
+			pausedTime = Timer.stamp();
+			openSubState(new Pause());
+		}
 
 		if (FlxG.keys.justPressed.R && Prefs.restartByR) {
 			sprites = [];
@@ -109,6 +99,8 @@ class Dummy extends FlxState {
 	}
 
 	public static function debugPrint(text:String, warn:Bool = false) {
+		if (!allowDebug && warn) return;
+
 		var l:Int = debugger.length;
 		text = (warn ? "[WARN] " : "") + text;
 
@@ -133,8 +125,7 @@ class Dummy extends FlxState {
 
 		var curText:Array<String> = text.split("\n");
 		for (text in curText) {
-			debugger.push(new FlxText(0, 16 * l, 1280, text));
-			debugger[l].setFormat('assets/fonts/debug.ttf', 14, warn ? FlxColor.YELLOW : FlxColor.WHITE);
+			debugger.push(new UtilText(0, 16 * l, 1280 * (Prefs.lowDetail ? 1 : 2), text, 14, null, null, null, null, 'assets/fonts/debug.ttf'));
 			l = debugger.length;
 		}
 	}
@@ -153,7 +144,7 @@ class Dummy extends FlxState {
 		set('mouseMoved',    FlxG.mouse.justMoved);
 		set('mouseX',        FlxG.mouse.x);
 		set('mouseY',        FlxG.mouse.y);
-		set('time',          Timer.stamp() - oldTime);
+		set('time',          Timer.stamp() - (oldTime + startTime));
 		set('version',       Main.luversion);
 		set('width',         Application.current.window.width);
 	}
@@ -193,15 +184,14 @@ class Dummy extends FlxState {
 class Pause extends FlxSubState {
 	public function new() super(0x00000000);
 
-	var isMouseHidden:Bool = FlxG.mouse.enabled;
-
-	private var pauseText:FlxText = new FlxText(0, 0, 1280, "Pause.", 24);
 	private var buttonSpr:Array<FlxSprite> = [];
 	private var buttonTxt:Array<FlxText> = [];
-
+	
+	private var pauseText:FlxText = new FlxText(0, 0, 1280, "Pause.", 24);
 	private var music:FlxSound = new FlxSound();
 	private var blackBG:FlxSprite = new FlxSprite();
 
+	var isMouseHidden:Bool = FlxG.mouse.enabled;
 	var isGoing:Bool = true;
 
 	override public function create() {
@@ -220,9 +210,7 @@ class Pause extends FlxSubState {
 		pauseText.screenCenter();
 		pauseText.y = 26;
 		pauseText.alpha = 0;
-		FlxTween.tween(pauseText, {alpha: 1}, 0.5, {onComplete: e -> {
-			isGoing = false;
-		}});
+		FlxTween.tween(pauseText, {alpha: 1}, 0.5, {onComplete: e -> isGoing = false});
 		add(pauseText);
 
 		var stuffies:Array<String> = ["Exit App", "Continue"];
@@ -253,9 +241,7 @@ class Pause extends FlxSubState {
 		modN.alpha = 0;
 		modN.x = -15;
 		modN.y = -20;
-		new FlxTimer().start(0.35, e -> {
-			FlxTween.tween(modN, {y: 10, alpha: 1}, 0.25);
-		});
+		new FlxTimer().start(0.35, e -> FlxTween.tween(modN, {y: 10, alpha: 1}, 0.25));
 		add(modN);
 
 		var modA:FlxText = new FlxText(0, 0, 1280, PlayState.author, 36);
@@ -310,6 +296,8 @@ class Pause extends FlxSubState {
 
 									close();
 								}});
+
+							Dummy.startTime += Timer.stamp() - Dummy.pausedTime + 0.5;
 	
 						case "Exit App":
 							for (sprite in members) FlxTween.tween(sprite, {alpha: 0}, 0.5);

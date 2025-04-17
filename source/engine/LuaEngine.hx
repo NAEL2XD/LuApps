@@ -1,37 +1,5 @@
 package engine;
 
-// Will credit them later..
-
-import flixel.util.FlxSpriteUtil;
-import flixel.util.FlxStringUtil;
-import lime.system.Clipboard;
-import lime.graphics.Image;
-import haxe.Json;
-import utils.Utils;
-import lime.app.Application;
-import flixel.util.FlxTimer;
-import flixel.math.FlxVelocity;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
-import openfl.display.BlendMode;
-import openfl.display.BitmapData;
-import sys.io.File;
-import sys.FileSystem;
-import flixel.util.FlxColor;
-import flixel.text.FlxText;
-import llua.Lua;
-import llua.LuaL;
-import llua.State;
-import llua.Convert;
-import flixel.FlxG;
-import flixel.FlxSprite;
-import openfl.filters.ShaderFilter;
-import state.DummyState;
-import state.PlayState;
-import utils.Prefs;
-
-using StringTools;
-
 class LuaEngine {
 	public static var Function_Stop:Dynamic = "FUNCTIONSTOP";
 	public static var Function_Continue:Dynamic = "FUNCTIONCONTINUE";
@@ -65,9 +33,7 @@ class LuaEngine {
 
 		var raw:String = PlayState.modRaw;
 
-		Lua_helper.add_callback(lua, "print", function(text:String) {
-			Dummy.debugPrint(text);
-		});
+		Lua_helper.add_callback(lua, "print", function(text:String) Dummy.debugPrint(text));
 
 		Lua_helper.add_callback(lua, "makeSprite", function(tag:String, ?image:String, ?x:Float = 0, ?y:Float = 0) {
 			function resetSpriteTag(tag:String) {
@@ -602,7 +568,7 @@ class LuaEngine {
 				return 0;
 			}
 
-			return Math.abs((spr1.x + spr1.y) - (spr2.x + spr2.y));
+			return FlxMath.distanceBetween(spr1, spr2);
 		});
 
 		Lua_helper.add_callback(lua, "setIcon", function(image:String) {
@@ -618,7 +584,7 @@ class LuaEngine {
 
 		Lua_helper.add_callback(lua, "setClipboardText", function(text:String) Clipboard.text = text);
 
-		Lua_helper.add_callback(lua, "mouseReleased", function(?button:String) {
+		Lua_helper.add_callback(lua, "mouseReleased", function(?button:String):Bool {
 			return switch (button.toLowerCase()) {
 				case "middle": FlxG.mouse.releasedMiddle;
 				case "right": FlxG.mouse.releasedRight;
@@ -627,7 +593,7 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "mouseJustReleased", function(?button:String) {
+		Lua_helper.add_callback(lua, "mouseJustReleased", function(?button:String):Bool {
 			return switch (button.toLowerCase()) {
 				case "middle": FlxG.mouse.justReleasedMiddle;
 				case "right": FlxG.mouse.justReleasedRight;
@@ -636,12 +602,12 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "keyReleased", function(?key:String) {
+		Lua_helper.add_callback(lua, "keyReleased", function(?key:String):Bool {
 			if (key == null) return FlxG.keys.released.ANY;
 			return Reflect.getProperty(FlxG.keys.released, key);
 		});
 
-		Lua_helper.add_callback(lua, "keyJustReleased", function(?key:String) {
+		Lua_helper.add_callback(lua, "keyJustReleased", function(?key:String):Bool {
 			if (key == null) return FlxG.keys.justReleased.ANY;
 			return Reflect.getProperty(FlxG.keys.justReleased, key);
 		});
@@ -649,6 +615,7 @@ class LuaEngine {
 		Lua_helper.add_callback(lua, "formatBytes", function(bytes:Float, precision:Int = 2):String return FlxStringUtil.formatBytes(bytes, precision));
 		Lua_helper.add_callback(lua, "formatMoney", function(amount:Float, showDecimal:Bool = true, englishStyle:Bool = true):String return FlxStringUtil.formatMoney(amount, showDecimal, englishStyle));
 		Lua_helper.add_callback(lua, "formatTime",  function(seconds:Float, showMS:Bool = false):String return FlxStringUtil.formatTime(seconds, showMS));
+		Lua_helper.add_callback(lua, "getDecimals", function(num:Float):Int return FlxMath.getDecimals(num));
 
 		Lua_helper.add_callback(lua, "setBrightness", function(tag:String, ?brightness:Float = 0) {
 			var spr = Dummy.instance.getLuaObject(tag);
@@ -660,21 +627,77 @@ class LuaEngine {
 
 			FlxSpriteUtil.setBrightness(spr, brightness);
 		});
+
+		Lua_helper.add_callback(lua, "mouseOverlaps", function(tag:String):Bool {
+			var spr = Dummy.instance.getLuaObject(tag);
+
+			if (spr == null) {
+				Dummy.debugPrint('mouseOverlaps: Sprite tag "$tag" does not exist, did you make a typo?', true);
+				return false;
+			}
+
+			return FlxG.mouse.overlaps(spr);
+		});
+
+		Lua_helper.add_callback(lua, "getDay",        function():Int    return Date.now().getDate());
+		Lua_helper.add_callback(lua, "getWeekDay",    function():Int    return Date.now().getDay());
+		Lua_helper.add_callback(lua, "getFullYear",   function():Int    return Date.now().getFullYear());
+		Lua_helper.add_callback(lua, "getHours",      function():Int    return Date.now().getHours());
+		Lua_helper.add_callback(lua, "getMinutes",    function():Int    return Date.now().getMinutes());
+		Lua_helper.add_callback(lua, "getMonth",      function():Int    return Date.now().getMonth());
+		Lua_helper.add_callback(lua, "getSeconds",    function():Int    return Date.now().getSeconds());
+		Lua_helper.add_callback(lua, "getTime",       function():Float  return Date.now().getTime());
+		Lua_helper.add_callback(lua, "getTimeFormat", function():String return Date.now().toString());
+
+		Lua_helper.add_callback(lua, "quickFile", function(name:String = ""):String {
+			if (name == "") name = "main";
+			return '${raw}source/$name'.replace("/", ".");
+		});
+
+		Lua_helper.add_callback(lua, "saveContent", function(fileName:String, content:String = "") {
+			var pathFile:String = '${raw}assets/data/$fileName';
+			try {
+				File.saveContent(pathFile, content);
+			} catch(e) Dummy.debugPrint('Cannot save file on location: $pathFile');
+		});
+
+		Lua_helper.add_callback(lua, "debugger", function(?allow:Bool = false) Dummy.allowDebug = allow);
 	}
 
-	public function set(variable:String, data:Dynamic) {
-		if (lua == null) return;
-
-		Convert.toLua(lua, data);
-		Lua.setglobal(lua, variable);
-	}
-
-	inline static function getTextObject(name:String):FlxText return Dummy.instance.texts.exists(name) ? Dummy.instance.texts.get(name) : Reflect.getProperty(Dummy.instance, name);
-
-	var lastCalledFunction:String = '';
+	public static var lastCalledScript:LuaEngine = null;
 	public function call(func:String, args:Array<Dynamic>):Dynamic {
+		function getErrorMessage(status:Int):String {
+			var v:String = Lua.tostring(lua, -1);
+			Lua.pop(lua, 1);
+	
+			if (v != null) v = v.trim();
+			if (v == null || v == "") {
+				return switch(status) {
+					case Lua.LUA_ERRRUN: "Runtime Error";
+					case Lua.LUA_ERRMEM: "Memory Allocation Error";
+					case Lua.LUA_ERRERR: "Critical Error";
+					default:             "Unknown Error";
+				}
+			}
+	
+			return v;
+		}
+
+		function typeToString(type:Int):String {
+			switch(type) {
+				case Lua.LUA_TBOOLEAN:  return "boolean";
+				case Lua.LUA_TNUMBER:   return "number";
+				case Lua.LUA_TSTRING:   return "string";
+				case Lua.LUA_TTABLE:    return "table";
+				case Lua.LUA_TFUNCTION: return "function";
+			}
+			if (type <= Lua.LUA_TNIL) return "nil";
+			return "unknown";
+		}
+
 		if(closed) return Function_Continue;
 
+		lastCalledScript = this;
 		try {
 			if(lua == null) return Function_Continue;
 
@@ -702,22 +725,12 @@ class LuaEngine {
 
 			Lua.pop(lua, 1);
 			return result;
-		}
-		catch (e:Dynamic) trace(e);
+		} catch (e:Dynamic) trace(e);
 		return Function_Continue;
 	}
 
-	function typeToString(type:Int):String {
-		switch(type) {
-			case Lua.LUA_TBOOLEAN: return "boolean";
-			case Lua.LUA_TNUMBER: return "number";
-			case Lua.LUA_TSTRING: return "string";
-			case Lua.LUA_TTABLE: return "table";
-			case Lua.LUA_TFUNCTION: return "function";
-		}
-		if (type <= Lua.LUA_TNIL) return "nil";
-		return "unknown";
-	}
+
+	inline static function getTextObject(name:String):FlxText return Dummy.instance.texts.exists(name) ? Dummy.instance.texts.get(name) : Reflect.getProperty(Dummy.instance, name);
 
 	function tweenStuff(tag:String, vars:String) {
 		cancelTween(tag);
@@ -786,23 +799,6 @@ class LuaEngine {
 		}
 	}
 
-	function getErrorMessage(status:Int):String {
-		var v:String = Lua.tostring(lua, -1);
-		Lua.pop(lua, 1);
-
-		if (v != null) v = v.trim();
-		if (v == null || v == "") {
-			return switch(status) {
-				case Lua.LUA_ERRRUN: "Runtime Error";
-				case Lua.LUA_ERRMEM: "Memory Allocation Error";
-				case Lua.LUA_ERRERR: "Critical Error";
-				default: "Unknown Error";
-			}
-		}
-
-		return v;
-	}
-
 	public static function gpltw(thing:Array<String>, ?checkForTextsToo:Bool = true, ?getProperty:Bool=true):Dynamic {
 		var stuff:Dynamic = getObjectDirectly(thing[0], checkForTextsToo);
 		var end = thing.length;
@@ -869,18 +865,19 @@ class LuaEngine {
 		return true;
 	}
 
-	public static function isOfTypes(value:Any, types:Array<Dynamic>) {
-		for (type in types) if(Std.isOfType(value, type)) return true;
-		return false;
+	public function set(variable:String, data:Dynamic) {
+		if (lua == null) return;
+
+		Convert.toLua(lua, data);
+		Lua.setglobal(lua, variable);
 	}
 }
 
 class ModchartSprite extends FlxSprite {
 	public var wasAdded:Bool = false;
-	public var animOffsets:Map<String, Array<Float>> = new Map<String, Array<Float>>();
 
 	public function new(?x:Float = 0, ?y:Float = 0) {
 		super(x, y);
-		antialiasing = true;
+		antialiasing = Prefs.antiAliasing;
 	}
 }

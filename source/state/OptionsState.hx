@@ -1,29 +1,16 @@
 package state;
 
-import flixel.group.FlxGroup;
-import flixel.FlxG;
-import flixel.FlxSprite;
-import flixel.FlxState;
-import flixel.sound.FlxSound;
-import flixel.text.FlxText;
-import flixel.tweens.FlxEase;
-import flixel.tweens.FlxTween;
-import flixel.util.FlxColor;
-import haxe.Timer;
-import utils.Prefs;
-import utils.Utils;
-
-class OptionsState extends FlxState
-{
+class OptionsState extends FlxState {
 	var options:Array<Array<Dynamic>> = [
 		["LuApps Settings",  "Have too many LuApps but want to show to something else? Now you can set them here.", "State"],
-		["Show Type",        "What type of LuApps you want it to show?",                                            "String", "luAppsType",   ["ALL"]],
+		["Show Type",        "What type of LuApps you want it to show?",                                            "String", "luAppsType",      ["ALL"]],
+		["Calculate Size",   "Whatever or not you want to calculate the size of an LuApp File.",                    "Bool",   "calculateSize"],
 
 		["Graphics",         "Setting your graphic to whatever's beautiful or just plain toaster.",                 "State"],
 		["Anti-Aliasing",    "If ON, most of the objects (especially images) will be sharped and clean.",           "Bool",   "antiAliasing"],
 		["Low Detail",       "If ON, most details such as 2 overlapping objects on PlayState will be removed.",     "Bool",   "lowDetail"],
-		["Framerate",        "How low or high do you want for the framerate?",                                      "Int",    "framerate",    [60, 240, 1]], // Min, Max, Times per Change
-		["Resolution",       "How little or much quality do you want? Will resize if it's changed.",                "String", "screenSize",   ["640x360", "1280x720", "1920x1080"]],
+		["Framerate",        "How low or high do you want for the framerate?",                                      "Int",    "framerate",       [60, 240, 1, 7]], // Min, Max, Times per Change, Ticks per Change
+		["Resolution",       "How little or much quality do you want? Will resize if it's changed.",                "String", "screenSize",      ["640x360", "1280x720", "1920x1080"]],
 		["Shaders",          "If ON, shaders will be active. (Will cause stutters if it's a weak PC.)",             "Bool",   "shaders"],
 
 		["Visuals",          "For the people who wants to disable something distracting or etc.",                   "State"],
@@ -35,13 +22,13 @@ class OptionsState extends FlxState
 		["Restart by [R]",   "If ON, pressing [R] will restart the LuApps. Only intended for developers!",          "Bool",   "restartByR"],
 	];
 
-	var helpText:FlxText = new FlxText(0, 0, 1280, "Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.");
+	var helpText:UtilText = new UtilText(0, 0, 1280, "Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.", 24, CENTER, SHADOW, null, FlxColor.YELLOW);
 	var spriteList:Array<Array<FlxSprite>> = [];
 	var spriteYPos:Array<Float> = [];
-	var textList:Array<Array<FlxText>> = [];
+	var textList:Array<Array<UtilText>> = [];
 	var textYPos:Array<Float> = [];
 	var previewText:Array<Array<Dynamic>> = [];
-	var heldText:FlxText = new FlxText(0, 0, 1280, "");
+	var heldText:UtilText = new UtilText(0, 0, 1280, "", 20, null, null, null, null, 'assets/fonts/settings.ttf');
 	var mouseDistance:FlxSprite = new FlxSprite().makeGraphic(0, 0, FlxColor.RED);
 	var optionGroup:FlxGroup = new FlxGroup();
 	var jumpGroup:FlxGroup = new FlxGroup();
@@ -54,6 +41,7 @@ class OptionsState extends FlxState
 	var ticksRemain:Int = 0;
 	var curOption:Int = 0;
 	var heldProps:Array<Dynamic> = [false, 0, 0, new FlxSprite(), new FlxSprite()];
+	var currentLDStatus:Bool = Prefs.lowDetail;
 
 	override public function create() {
 		Main.changeWindowName("Settings");
@@ -106,8 +94,7 @@ class OptionsState extends FlxState
 
 			PTY += 16;
 			if (t == "State") PTY += 13;
-			previewText.push([result, new FlxText(10, PTY, n.length * 13.75, n)]);
-			previewText[i][1].setFormat('assets/fonts/debug.ttf', 13, FlxColor.WHITE);
+			previewText.push([result, new UtilText(10, PTY, n.length * 13.75, n, 13, null, null, null, null, 'assets/fonts/debug.ttf')]);
 			previewText[i][1].x += t != "State" ? 20 : 0;
 			jumpGroup.add(previewText[i][1]);
 
@@ -117,37 +104,34 @@ class OptionsState extends FlxState
 				spriteList[i][0].y = 60 + yDown;
 				optionGroup.add(spriteList[i][0]);
 
-				if (!Prefs.lowDetail) {
+				if (!currentLDStatus) {
 					spriteList[i].push(new FlxSprite().makeGraphic(845, 90, 0xFF363636));
 					spriteList[i][1].screenCenter();
 					spriteList[i][1].y = 67.5 + yDown;
 					optionGroup.add(spriteList[i][1]);
 				}
 
-				textList[j].push(new FlxText(230, 75 + yDown, 1280, n));
-				textList[j][0].setFormat('assets/fonts/main.ttf', 56, FlxColor.WHITE);
-				textList[j][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				textList[j].push(new UtilText(230, 75 + yDown, 1280, n, 56));
+				textList[j][0].setBorderStyle(SHADOW, FlxColor.BLACK, PlayState.qSize, PlayState.qSize);
 				optionGroup.add(textList[j][0]);
 
 				var value:Dynamic = Reflect.getProperty(Prefs, option[3]);
-				textList[j].push(new FlxText(-240, 77 + yDown, 1280, '$value', 60));
-				textList[j][1].setFormat('assets/fonts/settings.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
-				textList[j][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				textList[j].push(new UtilText(-240, 88 + yDown - (currentLDStatus ? 6 : 0), 1280, '$value', 60, RIGHT, SHADOW));
+				textList[j][1].setBorderStyle(SHADOW, FlxColor.BLACK, PlayState.qSize, PlayState.qSize);
 				textList[j][1].underline = true;
+				textList[j][1].font = 'assets/fonts/settings.ttf';
 				optionGroup.add(textList[j][1]);
 
 				if (option[2] == "Bool") textList[j][1].text = value ? "ON" : "OFF";
 
 				yDown += 115;
 			} else {
-				textList[j].push(new FlxText(0, 90 + yDown, 1280, option[0]));
-				textList[j][0].setFormat('assets/fonts/main.ttf', 64, FlxColor.WHITE, FlxTextAlign.CENTER);
-				textList[j][0].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				textList[j].push(new UtilText(0, 90 + yDown, 1280, option[0], 64, CENTER, SHADOW));
+				textList[j][0].setBorderStyle(SHADOW, FlxColor.BLACK, PlayState.qSize, PlayState.qSize);
 				optionGroup.add(textList[j][0]);
 
-				textList[j].push(new FlxText(0, 164 + yDown, 1280, option[1]));
-				textList[j][1].setFormat('assets/fonts/main.ttf', 24, FlxColor.GRAY, FlxTextAlign.CENTER);
-				textList[j][1].setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+				textList[j].push(new UtilText(0, 164 + yDown, 1280, option[1], 24, CENTER, null, null, 0xFF8D8D8D));
+				textList[j][1].setBorderStyle(SHADOW, FlxColor.BLACK, PlayState.qSize, PlayState.qSize);
 				optionGroup.add(textList[j][1]);
 
 				yDown += 160;
@@ -158,8 +142,7 @@ class OptionsState extends FlxState
 
 		maxYPos = -(yDown < 630 ? 0 : yDown - 630);
 
-		helpText.setFormat('assets/fonts/main.ttf', 24, FlxColor.YELLOW, CENTER);
-		helpText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+		helpText.setBorderStyle(SHADOW, FlxColor.BLACK, 8, 8);
 		helpText.screenCenter();
 		helpText.y = 650;
 		jumpGroup.add(helpText);
@@ -175,7 +158,6 @@ class OptionsState extends FlxState
 
 		jumpGroup.add(heldProps[4]);
 		jumpGroup.add(heldProps[3]);
-		heldText.setFormat('assets/fonts/settings.ttf', 20, FlxColor.BLACK, FlxTextAlign.LEFT);
 		heldText.screenCenter();
 		jumpGroup.add(heldText);
 
@@ -208,9 +190,7 @@ class OptionsState extends FlxState
 						
 						function move(Value:Float):Void yPos = Value;
 						
-						FlxTween.num(yPos, Math.abs(maxYPos) < sprite[0] ? maxYPos : -sprite[0], 0.7, {ease: FlxEase.backOut, onComplete: e -> {
-							allowMoving = true;
-						}}, move);
+						FlxTween.num(yPos, Math.abs(maxYPos) < sprite[0] ? maxYPos : -sprite[0], 0.7, {ease: FlxEase.backOut, onComplete: e -> allowMoving = true}, move);
 					
 						sprite[1].color = FlxColor.YELLOW;
 						FlxTween.color(sprite[1], 0.7, sprite[1].color, FlxColor.WHITE);
@@ -271,7 +251,7 @@ class OptionsState extends FlxState
 			if (FlxG.mouse.justPressed && option != -1 && allowMoving) {
 				isSettingThing = true;
 				var t:String = options[option][2];
-				if (t.toLowerCase() != "bool") ticksRemain = options[option][4][2];
+				if (t.toLowerCase() == "int") ticksRemain = options[option][4][2];
 
 				var count:Int = 0;
 				for (spr in spriteList) {
@@ -292,10 +272,11 @@ class OptionsState extends FlxState
 						case 'Int':    helpText.text += "A/Q/LEFT to decrement, D/RIGHT to increment.";
 						case 'Bool':   helpText.text += "Enter to Switch";
 						case 'String': helpText.text += "A/Q/LEFT to switch left, D/RIGHT to switch right.";
+							// TODO: Not choose index 0 but instead whatever the save chose to use.
 							curOption = options[option][4].indexOf(Reflect.getProperty(Prefs, options[option][3]));
 					}
 
-					FlxTween.tween(helpText, {"scale.y": 1}, 0.1, {ease: FlxEase.linear});
+					FlxTween.tween(helpText, {"scale.y": 1 / (currentLDStatus ? 1 : 2)}, 0.1, {ease: FlxEase.linear});
 
 					heldProps[0] = false;
 					FlxTween.tween(heldText, {alpha: 0}, 0.2);
@@ -337,11 +318,9 @@ class OptionsState extends FlxState
 
 			FlxTween.tween(helpText, {"scale.y": 0}, 0.1, {ease: FlxEase.linear, onComplete: e -> {
 				helpText.text = 'Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.';
-				FlxTween.tween(helpText, {"scale.y": 1}, 0.1, {ease: FlxEase.linear});
+				FlxTween.tween(helpText, {"scale.y": 1 / (currentLDStatus ? 1 : 2)}, 0.1, {ease: FlxEase.linear});
 			}});
 		}
-
-		if (!FlxG.keys.justPressed.ANY) return;
 
 		var t:String = options[option][2].toLowerCase();
 		var v:Dynamic = t != "string" ? Reflect.getProperty(Prefs, options[option][3]) : options[option][4][curOption];
@@ -349,15 +328,15 @@ class OptionsState extends FlxState
 		
 		var oldText:String = textList[option][1].text;
 		switch(t) {
-			case 'int' | 'float':
-				var allow:Array<Int> = [for (i in 0...3) options[option][4][i]];
+			case 'int':
+				var allow:Array<Int> = [for (i in 0...4) options[option][4][i]];
 
 				ticksRemain--;
 				if (ticksRemain == 0) {
 					if (FlxG.keys.anyPressed([Q, A, LEFT])) r = -allow[2];
 					else if (FlxG.keys.anyPressed([D, RIGHT])) r = allow[2];
 
-					ticksRemain = allow[2];
+					ticksRemain = allow[3];
 				}
 
 				v += r;
@@ -368,8 +347,8 @@ class OptionsState extends FlxState
 			case 'bool': if (FlxG.keys.justPressed.ENTER) v = !v;
 
 			case 'string':
-				if (FlxG.keys.anyPressed([Q, A, LEFT])) curOption--;
-				else if (FlxG.keys.anyPressed([D, RIGHT])) curOption++;
+				if (FlxG.keys.anyJustPressed([Q, A, LEFT])) curOption--;
+				else if (FlxG.keys.anyJustPressed([D, RIGHT])) curOption++;
 				
 				if (curOption < 0) curOption = Math.round(options[option][4].length-1);
 				else if (curOption > options[option][4].length-1) curOption = 0;
@@ -391,7 +370,7 @@ class OptionsState extends FlxState
 				for (sprite in members) {
 					var sprite:Dynamic = sprite;
 					var sprite:FlxSprite = sprite;
-					if(sprite != null && sprite is FlxSprite && !(sprite is FlxText)) sprite.antialiasing = Prefs.antiAliasing;
+					if(sprite != null && sprite is FlxSprite && !(sprite is UtilText)) sprite.antialiasing = Prefs.antiAliasing;
 				}
 
 			case 'Resolution': Utils.setDefaultResolution();
@@ -400,11 +379,12 @@ class OptionsState extends FlxState
 		if (t == 'bool') textList[option][1].text = v ? "ON" : "OFF";
 
 		if (oldText != textList[option][1].text && Prefs.allowParticles) {
-			var sprite:FlxText = textList[option][1];
-			var oldPopup:FlxText = new FlxText(sprite.x, sprite.y, sprite.width, oldText);
-			oldPopup.setFormat('assets/fonts/settings.ttf', 60, FlxColor.WHITE, RIGHT, OUTLINE, FlxColor.BLACK);
-			oldPopup.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 8, 8);
+			// TODO: Actually make the cool thing show up and not hide.
+			var sprite:UtilText = textList[option][1];
+			var oldPopup:UtilText = new UtilText(sprite.x, sprite.y, sprite.width / (currentLDStatus ? 2 : 1), oldText, 60, RIGHT, OUTLINE);
+			oldPopup.setBorderStyle(SHADOW, FlxColor.BLACK, PlayState.qSize, PlayState.qSize);
 			oldPopup.underline = true;
+			oldPopup.font = 'assets/fonts/settings.ttf';
 			FlxTween.tween(oldPopup, {
 				x: FlxG.random.float(sprite.x - 75, sprite.x + 75),
 				y: oldPopup.y + 240,

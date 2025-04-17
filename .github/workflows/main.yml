@@ -43,6 +43,7 @@ jobs:
       # Runs a set of commands using the runners shell
       - name: Install Haxelib
         run: |
+          mkdir haxelib
           haxelib setup C:/haxelib
           haxelib install hxcpp > /dev/null --quiet
           .\"setup/windows.bat"
@@ -56,7 +57,7 @@ jobs:
           haxe compile.hxml
           cd ../..
       - name: Compile
-        run: haxelib run lime build windows
+        run: haxelib run lime build windows -D ${{ inputs.buildFlags || 'commit' }} # please work for the love of god
       - name: Clear Previous Cache
         uses: actions/github-script@main
         with:
