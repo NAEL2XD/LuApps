@@ -12,49 +12,64 @@
   <a href="https://github.com/NAEL2XD/LuApps">
     <img src="assets/images/icons/iconOG.png" alt="LuApps Logo" width="150">
   </a>
-  <br>
-  <b>LuApps</b>
-  <br>
-</h1>
+</p>
 
-<h3 align="center">
-<br>
-<b><h6>Yet Another 2D Engine for Lua Support</h6><b>
-<br>
-</h3>
+---
 
-LuApps is a light-weight game engine intended for homebrew developers and easier for Lua newcomers.
+## 📚 Overview
 
-#### Made With
-<img src="https://img.shields.io/badge/-HAXE-262626.svg?logo=haxe&style=for-the-badge">
+**LuApps** is a lightweight, optimized homebrew engine built for homebrew developers ***like the wii/3ds homebrew application!***, designed to make Lua game development more approachable for newcomers. It provides a streamlined environment for creating 2D games while maintaining high performance and modularity.
 
-#### Moddable With
-<img src="https://img.shields.io/badge/LUA-262626?style=for-the-badge&logo=lua">
+---
 
-[Read the official LUAPI Here!](<https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.)>)
+## 🎯 Key Features
 
-### Installing a LuApp mod.
+- Lightweight architecture optimized for performance  
+- Native Lua integration for scripting  
+- Easy modding system with `.luapp` file format  
+- Comprehensive API documentation  
+- Built-in mod management tools  
 
-To install a LuApp mod, follow this:
+---
 
-1. Find a LuApps mod.
-2. Launch LuApps.
-3. Press <kbd>I</kbd> to open "Import" window.
-4. Choose a .luapp file.
+## 🛠️ Installation Guide
 
-> [!NOTE]
-> A warning will be thrown if .luapp has not found "source/main.lua" or if the pack.json is invalid or if the .luapp file is corrupt.
+### Installing LuApp Mods
 
-5. Done, enjoy the new LuApp mod.
+1. Find a compatible LuApp mod (`.luapp` file)  
+2. Launch LuApps  
+3. Press <kbd>I</kbd> to open the Import window  
+4. Select your `.luapp` file  
+5. Wait for installation to complete  
 
-### FAQs.
+ **Note:**  
+ Installation will fail if:  
+ - No `source/main.lua` found in the mod  
+ - `pack.json` is invalid  
+ - `.luapp` file is corrupted  
 
-[View here.](https://github.com/NAEL2XD/LuApps/wiki)
+---
 
-[Want LuApp examples? See here.](https://github.com/NAEL2XD/LuApps/wiki/LuApp-Examples)
+## 📖 Documentation
 
-[State Keybinds](https://github.com/NAEL2XD/LuApps/wiki/State-Keybinds)
+- [Official LUAPI Documentation](https://github.com/NAEL2XD/LuApps/wiki/All-LUA-APIs.-(Functions,-Variables-and-Events.))  
+- [Example Projects](https://github.com/NAEL2XD/LuApps/wiki/LuApp-Examples)  
+- [State Keybinds](https://github.com/NAEL2XD/LuApps/wiki/State-Keybinds)  
 
-### Notes if you use Linux or MacOS.
+---
 
-It is currently unavailable for now, it will be available if Linux and MacOS Support is added.
+## ⚙️ Platform Support
+
+Currently supports **Windows** platforms.  
+Linux and macOS versions are planned for future releases.
+
+---
+
+## 🤝 Contributing
+
+Contributions are welcome!  
+If you have a bug to report, click on [here](https://github.com/NAEL2XD/LuApps/issues) to report one.
+
+If you actually want to contribute, click on [here](https://github.com/NAEL2XD/LuApps/pulls).
+
+---
