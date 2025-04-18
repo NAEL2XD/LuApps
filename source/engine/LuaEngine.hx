@@ -92,9 +92,7 @@ class LuaEngine {
 
 			tag = tag.replace('.', '');
 			resetTextTag(tag);
-			var leText:FlxText = new FlxText(x, y, width, text, 16);
-			leText.setFormat("assets/fonts/main.ttf", 16, FlxColor.WHITE, CENTER, FlxTextBorderStyle.OUTLINE, FlxColor.BLACK);
-			leText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.BLACK, 4);
+			var leText:FlxText = new UtilText(x, y, width, text, 16, CENTER);
 			Dummy.instance.texts.set(tag, leText);
 		});
 
@@ -131,7 +129,7 @@ class LuaEngine {
 		Lua_helper.add_callback(lua, "setTextSize", function(tag:String, size:Int) {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null) {
-				obj.size = size;
+				obj.size = size * (Prefs.lowDetail ? 1 : 2);
 				return true;
 			}
 			Dummy.debugPrint('setTextSize: Object $tag doesn\'t exist!', true);
@@ -144,7 +142,7 @@ class LuaEngine {
 				var colorNum:Int = Std.parseInt(color);
 				if(!color.startsWith('0x')) colorNum = Std.parseInt('0xff$color');
 
-				obj.borderSize = size;
+				obj.borderSize = size * (Prefs.lowDetail ? 1 : 2);
 				obj.borderColor = colorNum;
 				return true;
 			}
@@ -170,7 +168,7 @@ class LuaEngine {
 			if (!hexColor.contains("0xFF")) hexColor = '0xFF$hexColor';
 
 			var text:FlxText = Dummy.instance.texts.get(tag);
-			text.setBorderStyle(getStyle(style), Std.parseInt(hexColor), size, quality);
+			text.setBorderStyle(getStyle(style), Std.parseInt(hexColor), size * (Prefs.lowDetail ? 1 : 2), quality);
 		});
 
 		Lua_helper.add_callback(lua, "setTextColor", function(tag:String, color:String) {
@@ -658,10 +656,20 @@ class LuaEngine {
 			var pathFile:String = '${raw}assets/data/$fileName';
 			try {
 				File.saveContent(pathFile, content);
-			} catch(e) Dummy.debugPrint('Cannot save file on location: $pathFile');
+			} catch(e) Dummy.debugPrint('saveContent: Cannot save file on location: $pathFile');
 		});
 
-		Lua_helper.add_callback(lua, "debugger", function(?allow:Bool = false) Dummy.allowDebug = allow);
+		Lua_helper.add_callback(lua, "deleteFile", function(fileName:String):Bool {
+			var pathFile:String = '${raw}assets/data/$fileName';
+			try {
+				FileSystem.deleteFile(pathFile);
+				return true;
+			} catch(e) Dummy.debugPrint('deleteFile: Cannot delete file on location: $pathFile');
+			return false;
+		});
+
+		Lua_helper.add_callback(lua, "debugger",   function(?allow:Bool = false)  Dummy.allowDebug = allow);
+		Lua_helper.add_callback(lua, "fileExists", function(filePath:String):Bool return FileSystem.exists('${raw}assets/data/$filePath'));
 	}
 
 	public static var lastCalledScript:LuaEngine = null;
