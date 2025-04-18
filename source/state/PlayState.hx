@@ -6,7 +6,7 @@ class PlayState extends FlxState {
 	public static var author:String;
 	public static var modName:String;
 	public static var modRaw:String;
-	public static var qSize:Int = 8 * (Prefs.lowDetail ? 1 : 2);
+	public static var qSize:Int = 8;
 
 	var bgGroup:FlxGroup = new FlxGroup();
 	var appGroup:FlxGroup = new FlxGroup();
@@ -26,7 +26,7 @@ class PlayState extends FlxState {
 
 	var curNotifTxt:Array<Array<UtilText>>   = [];
 	var optionsText:UtilText = new UtilText(1095, 642, 1920, "Options", 32);
-	var noApps:UtilText = new UtilText(0, 0, 1280, "There are no applications installed!\nPress R to refresh the list.", 32);
+	var noApps:UtilText = new UtilText(0, 0, 1280, "There are no applications installed!\nPress R to refresh the list.", 32, CENTER);
 
 	var background:FlxBackdrop = new FlxBackdrop(FlxGridOverlay.createGrid(60, 60, 120, 120, true, 0xffa3a3a3, 0x0));
 	var GMB:GlowingMarblingBlack = new GlowingMarblingBlack();
@@ -49,13 +49,13 @@ class PlayState extends FlxState {
 	
 	override public function create() {
 		Main.changeWindowName("Applications");
+		if (!FileSystem.exists("mods/")) FileSystem.createDirectory("mods/");
 
 		if (modRaw != "") {
 			modRaw = "";
 			if (FlxG.sound.music != null) FlxG.sound.music.stop();
 			FlxG.resetState();
 		}
-
 		
 		FlxG.autoPause = false;
 		if (!FlxG.fullscreen) Utils.setDefaultResolution();
@@ -69,8 +69,7 @@ class PlayState extends FlxState {
 		add(utilGroup);
 		
 		oldTime = Timer.stamp();
-
-		if (!FileSystem.exists("mods/")) FileSystem.createDirectory("mods/");
+		qSize = 8 * (Prefs.lowDetail ? 1 : 2);
 
 		var gray:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, 0xFF222222);
 		if (Prefs.shaders) gray.shader = GMB;
@@ -324,8 +323,6 @@ class PlayState extends FlxState {
 
 	override public function update(elapsed:Float) {
 		if (Prefs.shaders) GMB.update(elapsed);
-
-		qSize = 8 * (Prefs.lowDetail ? 1 : 2);
 
 		if (Math.abs(wheelSpeed) > .0001) wheelSpeed = wheelSpeed/(1 + (0.2 / (Prefs.framerate / 60)));
 

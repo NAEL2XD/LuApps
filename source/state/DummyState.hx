@@ -187,7 +187,7 @@ class Pause extends FlxSubState {
 	private var buttonSpr:Array<FlxSprite> = [];
 	private var buttonTxt:Array<FlxText> = [];
 	
-	private var pauseText:FlxText = new FlxText(0, 0, 1280, "Pause.", 24);
+	private var pauseText:UtilText = new UtilText(0, 26, 1280, "Pause.", 96, CENTER);
 	private var music:FlxSound = new FlxSound();
 	private var blackBG:FlxSprite = new FlxSprite();
 
@@ -205,10 +205,7 @@ class Pause extends FlxSubState {
 		FlxG.mouse.enabled = true;
 		FlxG.mouse.visible = true;
 
-		pauseText.setFormat('assets/fonts/main.ttf', 96, FlxColor.WHITE, FlxTextAlign.CENTER);
-		pauseText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.GRAY, 4, 4);
-		pauseText.screenCenter();
-		pauseText.y = 26;
+		pauseText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.GRAY, PlayState.qSize, PlayState.qSize);
 		pauseText.alpha = 0;
 		FlxTween.tween(pauseText, {alpha: 1}, 0.5, {onComplete: e -> isGoing = false});
 		add(pauseText);
@@ -224,33 +221,21 @@ class Pause extends FlxSubState {
 			FlxTween.tween(buttonSpr[i], {alpha: 1}, 0.5);
 			add(buttonSpr[i]);
 
-			buttonTxt.push(new FlxText(0, 0, 1280, stuff, 48));
-			buttonTxt[i].setFormat('assets/fonts/main.ttf', 48, FlxColor.WHITE, FlxTextAlign.CENTER);
-			buttonTxt[i].screenCenter();
-			buttonTxt[i].x += (-(stuffies.length*200) + (i * 400)) + 200;
-			buttonTxt[i].y = 555;
+			buttonTxt.push(new UtilText((-(stuffies.length*200) + (i * 400)) + 200, 555, 1280, stuff, 48, CENTER));
 			buttonTxt[i].alpha = 0;
 			FlxTween.tween(buttonTxt[i], {alpha: 1}, 0.5);
 			add(buttonTxt[i]);
 		}
 
-		var modN:FlxText = new FlxText(0, 0, 1280, PlayState.modName, 36);
-		modN.setFormat('assets/fonts/main.ttf', 36);
-		modN.alignment = FlxTextAlign.RIGHT;
+		var modN:FlxText = new UtilText(-15, -20, 1280, PlayState.modName, 36, RIGHT);
 		modN.bold = true;
 		modN.alpha = 0;
-		modN.x = -15;
-		modN.y = -20;
 		new FlxTimer().start(0.35, e -> FlxTween.tween(modN, {y: 10, alpha: 1}, 0.25));
 		add(modN);
 
-		var modA:FlxText = new FlxText(0, 0, 1280, PlayState.author, 36);
-		modA.setFormat('assets/fonts/main.ttf', 36);
-		modA.alignment = FlxTextAlign.RIGHT;
+		var modA:FlxText = new UtilText(-15, 20, 1280, PlayState.author, 36, RIGHT);
 		modA.bold = true;
 		modA.alpha = 0;
-		modA.x = -15;
-		modA.y = 20;
 		new FlxTimer().start(0.55, e -> FlxTween.tween(modA, {y: 50, alpha: 1}, 0.25));
 		add(modA);
 

@@ -80,6 +80,7 @@ class OptionsState extends FlxState {
 		var count:Int = 0;
 		var yDown:Float = 0;
 		var PTY:Int = -18;
+		trace("Creating random things");
 		for (option in options) {
 			spriteList.push([]);
 			textList.push([]);
@@ -94,7 +95,7 @@ class OptionsState extends FlxState {
 
 			PTY += 16;
 			if (t == "State") PTY += 13;
-			previewText.push([result, new UtilText(10, PTY, n.length * 13.75, n, 13, null, null, null, null, 'assets/fonts/debug.ttf')]);
+			previewText.push([result, new UtilText(10, PTY, n.length * 13.75, n, 13, LEFT, NONE, null, null, 'assets/fonts/debug.ttf')]);
 			previewText[i][1].x += t != "State" ? 20 : 0;
 			jumpGroup.add(previewText[i][1]);
 
@@ -164,6 +165,8 @@ class OptionsState extends FlxState {
 		heldProps[4].alpha = 0;
 		heldProps[3].alpha = 0;
 		heldText.alpha = 0;
+
+		trace("Done making random things.");
 	}
 
 	var option:Int = 0;
@@ -180,7 +183,7 @@ class OptionsState extends FlxState {
 			option = -1;
 
 			if (allowMoving) {
-				updateColors();
+				applyColsAndTexts();
 				for (sprite in previewText) {
 					colArray[1] += sprite[1].x == 22 ? 2 : 1;
 					if (FlxG.mouse.overlaps(sprite[1]) && FlxG.mouse.justPressed) {
@@ -217,13 +220,13 @@ class OptionsState extends FlxState {
 					}
 					tickLeft--;
 				} else if (mouseScroll != 0) {
-					mouseScroll += mouseScroll > 0 ? -0.25 : 0.25;
 					yPos -= mouseScroll;
+					mouseScroll += mouseScroll > 0 ? -0.25 : 0.25;
 				}
 		
 				if (yPos < maxYPos) yPos = maxYPos;
 				if (yPos > -5) yPos = -5;
-			} else updateColors(false, colArray[0]);
+			} else applyColsAndTexts(false, colArray[0]);
 
 			var id:Int = 0;
 			for (table in spriteList) {
@@ -240,13 +243,6 @@ class OptionsState extends FlxState {
 					id++;
 				}
 			}
-
-			heldProps[3].x = FlxG.mouse.x + 4;
-			heldProps[3].y = FlxG.mouse.y + 23;
-			heldProps[4].x = FlxG.mouse.x;
-			heldProps[4].y = FlxG.mouse.y + 19;
-			heldText.x = FlxG.mouse.x + 10;
-			heldText.y = FlxG.mouse.y + 29;
 
 			if (FlxG.mouse.justPressed && option != -1 && allowMoving) {
 				isSettingThing = true;
@@ -395,7 +391,7 @@ class OptionsState extends FlxState {
 		}
 	}
 
-	function updateColors(didChoose:Bool = true, chosen:Int = -1) {
+	function applyColsAndTexts(didChoose:Bool = true, chosen:Int = -1) {
 		var hasChosen:Bool = false;
 		if (didChoose) {
 			for (sprite in spriteList) {
@@ -419,6 +415,8 @@ class OptionsState extends FlxState {
 
 		held = hasChosen;
 		if (held && allowMoving) {
+			if (heldText.alpha != 0) return;
+
 			if (!heldProps[0]) heldProps[2] = Timer.stamp();
 			heldProps[1] = Timer.stamp() - heldProps[2];
 
@@ -426,6 +424,13 @@ class OptionsState extends FlxState {
 				heldText.text = options[chosen][1];
 				heldProps[3].makeGraphic((heldText.text.length * 11) + 16, 30, FlxColor.WHITE);
 				heldProps[4].makeGraphic((heldText.text.length * 11) + 24, 38, 0xFFADADAD);
+
+				heldProps[3].x = FlxG.mouse.x + 4;
+				heldProps[3].y = FlxG.mouse.y + 23;
+				heldProps[4].x = FlxG.mouse.x;
+				heldProps[4].y = FlxG.mouse.y + 19;
+				heldText.x = FlxG.mouse.x + 10;
+				heldText.y = FlxG.mouse.y + 29;
 
 				FlxTween.tween(heldText, {alpha: 1}, 0.2);
 				FlxTween.tween(heldProps[3], {alpha: 1}, 0.2);
