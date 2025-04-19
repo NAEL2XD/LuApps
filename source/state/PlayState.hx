@@ -276,7 +276,7 @@ class PlayState extends FlxState {
 				textIDList[done].push(new UtilText(-245, 75 + (160 * done), 1280, name, 40, RIGHT));
 				appGroup.add(textIDList[done][0]);
 
-				textIDList[done].push(new UtilText(-245, 118 + (160 * done), 1280, name, 32, RIGHT));
+				textIDList[done].push(new UtilText(-245, 118 + (160 * done), 1280, cred, 32, RIGHT));
 				appGroup.add(textIDList[done][1]);
 
 				textIDList[done].push(new UtilText(-245, 155 + (160 * done), 1280, '$ver' + (Prefs.calculateSize ? ' - ${FlxStringUtil.formatBytes(Utils.getDirectorySize(fileName))}' : ''), 22, RIGHT));
