@@ -18,7 +18,7 @@
 
 ## 📚 Overview
 
-**LuApps** is a lightweight, optimized homebrew engine built for homebrew developers ***like the wii/3ds homebrew application!***, designed to make Lua game development more approachable for newcomers. It provides a streamlined environment for creating 2D games while maintaining high performance and modularity.
+**LuApps** is a lightweight, optimized homebrew engine built for homebrew developers ***like the Wii/3DS homebrew application!***, designed to make Lua game development more approachable for newcomers. It provides a streamlined environment for creating 2D games while maintaining high performance and modularity.
 
 ---
 
