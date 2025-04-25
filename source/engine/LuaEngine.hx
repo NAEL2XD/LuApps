@@ -303,7 +303,7 @@ class LuaEngine {
 			if(tween != null) {
 				Dummy.instance.tweens.set(tag, FlxTween.tween(tween, {x: value}, duration, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
-						Dummy.instance.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('tweenComplete', [tag]);
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
@@ -315,7 +315,7 @@ class LuaEngine {
 			if(tween != null) {
 				Dummy.instance.tweens.set(tag, FlxTween.tween(tween, {y: value}, duration, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
-						Dummy.instance.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('tweenComplete', [tag]);
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
@@ -327,7 +327,7 @@ class LuaEngine {
 			if(tween != null) {
 				Dummy.instance.tweens.set(tag, FlxTween.tween(tween, {angle: value}, duration, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
-						Dummy.instance.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('tweenComplete', [tag]);
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
@@ -339,7 +339,7 @@ class LuaEngine {
 			if(tween != null) {
 				Dummy.instance.tweens.set(tag, FlxTween.tween(tween, {alpha: value}, duration, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
-						Dummy.instance.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('tweenComplete', [tag]);
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
@@ -357,7 +357,7 @@ class LuaEngine {
 				Dummy.instance.tweens.set(tag, FlxTween.color(tween, duration, curColor, color, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
 						Dummy.instance.tweens.remove(tag);
-						Dummy.instance.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('tweenComplete', [tag]);
 					}
 				}));
 			} else Dummy.debugPrint('doTweenColor: Couldn\'t find object: $vars', true);
@@ -479,7 +479,7 @@ class LuaEngine {
 			cancelTimer(tag);
 			Dummy.instance.timers.set(tag, new FlxTimer().start(time, function(tmr:FlxTimer) {
 				if(tmr.finished) Dummy.instance.timers.remove(tag);
-				Dummy.instance.callOnLuas('timerComplete', [tag, tmr.loops, tmr.loopsLeft]);
+				Dummy.callOnLuas('timerComplete', [tag, tmr.loops, tmr.loopsLeft]);
 			}, loops));
 		});
 
@@ -652,11 +652,13 @@ class LuaEngine {
 			return '${raw}source/$name'.replace("/", ".");
 		});
 
-		Lua_helper.add_callback(lua, "saveContent", function(fileName:String, content:String = "") {
+		Lua_helper.add_callback(lua, "saveContent", function(fileName:String, content:String = ""):Bool {
 			var pathFile:String = '${raw}assets/data/$fileName';
 			try {
 				File.saveContent(pathFile, content);
-			} catch(e) Dummy.debugPrint('saveContent: Cannot save file on location: $pathFile');
+				return true;
+			} catch(e) Dummy.debugPrint('saveContent: Cannot save file on location: $pathFile', true);
+			return false;
 		});
 
 		Lua_helper.add_callback(lua, "deleteFile", function(fileName:String):Bool {
@@ -664,12 +666,24 @@ class LuaEngine {
 			try {
 				FileSystem.deleteFile(pathFile);
 				return true;
-			} catch(e) Dummy.debugPrint('deleteFile: Cannot delete file on location: $pathFile');
+			} catch(e) Dummy.debugPrint('deleteFile: Cannot delete file on location: $pathFile', true);
 			return false;
 		});
 
 		Lua_helper.add_callback(lua, "debugger",   function(?allow:Bool = false)  Dummy.allowDebug = allow);
 		Lua_helper.add_callback(lua, "fileExists", function(filePath:String):Bool return FileSystem.exists('${raw}assets/data/$filePath'));
+		Lua_helper.add_callback(lua, "moveWindow", function(xPos:Int, yPos:Int)   Application.current.window.move(xPos, yPos));
+
+		Lua_helper.add_callback(lua, "switchState", function(file:String) {
+			var path:String = '${raw}source/$file.lua';
+
+			if (FileSystem.exists(path)) {
+				Dummy.switchState(path);
+				return;
+			}
+
+			Dummy.debugPrint('switchState: Couldn\'t find file: $path');
+		});
 	}
 
 	public static var lastCalledScript:LuaEngine = null;

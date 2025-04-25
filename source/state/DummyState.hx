@@ -18,7 +18,7 @@ class Dummy extends FlxState {
 	public static var pausedTime:Float = 0;
 	public static var allowDebug:Bool = false;
 
-	var oldTime:Float = 0;
+	static var oldTime:Float = 0;
 
 	override public function create() {
 		instance   = this;
@@ -84,18 +84,18 @@ class Dummy extends FlxState {
     }
 
 	public static function exit(restartOnly:Bool = false) {
-		try {
-			Dummy.instance.sprites.clear();
-			Dummy.instance.texts.clear();
-			Dummy.instance.variables.clear();
-			Dummy.instance.tweens.clear();
-			Dummy.instance.timers.clear();
-			Dummy.luaArray = [];
-			debugger = [];
-			Application.current.window.setIcon(Image.fromFile("assets/images/icons/iconOG.png"));
-		} catch(e:Dynamic) {} // Failed to do those, prevent a crash.
+		Dummy.resetVars();
 
+		Application.current.window.setIcon(Image.fromFile("assets/images/icons/iconOG.png"));
 		if (!restartOnly) FlxG.resetGame();
+	}
+
+	public static function switchState(path:String) {
+		Dummy.resetVars();
+
+		luaArray.push(new LuaEngine('${PlayState.modRaw}source/$path.lua'));
+		Dummy.updateVars();
+		Dummy.callOnLuas("create");
 	}
 
 	public static function debugPrint(text:String, warn:Bool = false) {
@@ -125,28 +125,30 @@ class Dummy extends FlxState {
 
 		var curText:Array<String> = text.split("\n");
 		for (text in curText) {
-			debugger.push(new UtilText(0, 16 * l, 1280 * (Prefs.lowDetail ? 1 : 2), text, 14, null, null, null, null, 'assets/fonts/debug.ttf'));
+			debugger.push(new UtilText(0, 16 * l, 1280 * (Prefs.lowDetail ? 1 : 2), text, 14, null, null, null, warn ? FlxColor.YELLOW : FlxColor.WHITE, 'assets/fonts/debug.ttf'));
 			l = debugger.length;
 		}
 	}
 
-	public function updateVars() {
-		set('author',        PlayState.author);
-		set('clipboardItem', Clipboard.text);
-		set('fps',           FPSCounter.currentFPS);
-		set('fullscreen',    FlxG.fullscreen);
-		set('height',        Application.current.window.height);
-		set('lowDetail',     Prefs.lowDetail);
-		set('memory',        FPSCounter.curMemory);
-		set('mempeak',       FPSCounter.curMaxMemory);
-		set('modName',       PlayState.modName);
-		set('modRaw',        PlayState.modRaw);
-		set('mouseMoved',    FlxG.mouse.justMoved);
-		set('mouseX',        FlxG.mouse.x);
-		set('mouseY',        FlxG.mouse.y);
-		set('time',          Timer.stamp() - (oldTime + startTime));
-		set('version',       Main.luversion);
-		set('width',         Application.current.window.width);
+	public static function updateVars() {
+		Dummy.set('author',        PlayState.author);
+		Dummy.set('clipboardItem', Clipboard.text);
+		Dummy.set('fps',           FPSCounter.currentFPS);
+		Dummy.set('fullscreen',    FlxG.fullscreen);
+		Dummy.set('height',        Application.current.window.height);
+		Dummy.set('lowDetail',     Prefs.lowDetail);
+		Dummy.set('memory',        FPSCounter.curMemory);
+		Dummy.set('mempeak',       FPSCounter.curMaxMemory);
+		Dummy.set('modName',       PlayState.modName);
+		Dummy.set('modRaw',        PlayState.modRaw);
+		Dummy.set('mouseMoved',    FlxG.mouse.justMoved);
+		Dummy.set('mouseX',        FlxG.mouse.x);
+		Dummy.set('mouseY',        FlxG.mouse.y);
+		Dummy.set('time',          Timer.stamp() - (Dummy.oldTime + Dummy.startTime));
+		Dummy.set('version',       Main.luversion);
+		Dummy.set('width',         Application.current.window.width);
+		Dummy.set('windowX',       Application.current.window.x);
+		Dummy.set('windowY',       Application.current.window.y);
 	}
 
 	public static function clearLog() {
@@ -155,7 +157,7 @@ class Dummy extends FlxState {
 		Dummy.debugger = [];
 	}
 
-	public function callOnLuas(event:String, args:Array<Dynamic> = null, ignoreStops = true, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
+	public static function callOnLuas(event:String, args:Array<Dynamic> = null, ignoreStops = true, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
 		var returnVal = LuaEngine.Function_Continue;
 		if(args == null) args = [];
 		if(exclusions == null) exclusions = [];
@@ -171,13 +173,27 @@ class Dummy extends FlxState {
 		return returnVal;
 	}
 
-	public function set(variable:String, arg:Dynamic) for (i in 0...luaArray.length) luaArray[i].set(variable, arg);
+	public static function set(variable:String, arg:Dynamic) for (i in 0...luaArray.length) luaArray[i].set(variable, arg);
 
 	public function getLuaObject(tag:String, text:Bool=true):FlxSprite {
 		if (sprites.exists(tag)) return sprites.get(tag);
 		if (text && texts.exists(tag)) return texts.get(tag);
 		if (variables.exists(tag)) return variables.get(tag);
 		return null;
+	}
+
+	static function resetVars() {
+		try {
+			clearLog();
+
+			Dummy.instance.sprites.clear();
+			Dummy.instance.texts.clear();
+			Dummy.instance.variables.clear();
+			Dummy.instance.tweens.clear();
+			Dummy.instance.timers.clear();
+			Dummy.luaArray = [];
+			debugger = [];
+		} catch(e:Dynamic) {} // Failed to do those, prevent a crash.
 	}
 }
 
