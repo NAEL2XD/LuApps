@@ -610,9 +610,22 @@ class LuaEngine {
 			return Reflect.getProperty(FlxG.keys.justReleased, key);
 		});
 
-		Lua_helper.add_callback(lua, "formatBytes", function(bytes:Float, precision:Int = 2):String return FlxStringUtil.formatBytes(bytes, precision));
-		Lua_helper.add_callback(lua, "formatMoney", function(amount:Float, showDecimal:Bool = true, englishStyle:Bool = true):String return FlxStringUtil.formatMoney(amount, showDecimal, englishStyle));
-		Lua_helper.add_callback(lua, "formatTime",  function(seconds:Float, showMS:Bool = false):String return FlxStringUtil.formatTime(seconds, showMS));
+		Lua_helper.add_callback(lua, "formatBytes",       function(bytes:Float, precision:Int = 2):String return FlxStringUtil.formatBytes(bytes, precision));
+		Lua_helper.add_callback(lua, "formatMoney",       function(amount:Float, showDecimal:Bool = true, englishStyle:Bool = true):String return FlxStringUtil.formatMoney(amount, showDecimal, englishStyle));
+		Lua_helper.add_callback(lua, "formatTime",        function(seconds:Float, showMS:Bool = false):String return FlxStringUtil.formatTime(seconds, showMS));
+		Lua_helper.add_callback(lua, "toTitleCase",       function(str:String):String return FlxStringUtil.toTitleCase(str));
+		Lua_helper.add_callback(lua, "toUnderscoreCase",  function(str:String):String return FlxStringUtil.toUnderscoreCase(str));
+		Lua_helper.add_callback(lua, "distanceToMouse",   function(sprite:String):Int {
+			var spr = Dummy.instance.getLuaObject(sprite);
+
+			if (spr == null) {
+				Dummy.debugPrint('distanceToMouse: Sprite "$sprite" doesn\'t exist!', true);
+				return 0;
+			}
+
+			return FlxMath.distanceToMouse(spr);
+		});
+
 		Lua_helper.add_callback(lua, "getDecimals", function(num:Float):Int return FlxMath.getDecimals(num));
 
 		Lua_helper.add_callback(lua, "setBrightness", function(tag:String, ?brightness:Float = 0) {
@@ -736,6 +749,9 @@ class LuaEngine {
 			
 			DiscordRPC.changePresence(state, description);
 		});
+
+		Lua_helper.add_callback(lua, "openURL",  function(url:String)    FlxG.openURL(url));
+		Lua_helper.add_callback(lua, "openFile", function(path:String) System.openFile(path));
 	}
 
 	public static var lastCalledScript:LuaEngine = null;
