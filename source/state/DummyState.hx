@@ -279,8 +279,12 @@ class Pause extends FlxSubState {
 							FlxG.mouse.enabled = isMouseHidden;
 							FlxG.mouse.visible = isMouseHidden;
 
+							var hit:Bool = false;
 							for (sprite in members)
 								FlxTween.tween(sprite, {alpha: 0}, 0.5, {onComplete: e -> {
+									if (hit) return;
+									hit = true;
+
 									for (i in 0...Dummy.sounds.length) {
 										if (Dummy.sounds[i] != null) {
 											if (Dummy.channels[i] != null) Dummy.channels[i].stop();
@@ -318,7 +322,7 @@ class Pause extends FlxSubState {
                 Dummy.positions[i] = Dummy.channels[i].position; // Save position
                 Dummy.channels[i].stop(); // Stop the sound
                 Dummy.channels[i] = null;
-				Dummy.sounds[i] = null;
+				// Dummy.sounds[i] = null;
             }
         }
 	}

@@ -251,8 +251,8 @@ class PlayState extends FlxState {
 				}
 
 				if (ver == null) ver = "Unknown";
-				luaLists.push([name, '${fileName}source/main.lua', folder, cred, type, ver]);
 				if ((!Prefs.luAppsType.startsWith(type) && Prefs.luAppsType != "ALL") && File.getContent('${fileName}source/main.lua').length != 0) continue;
+				else luaLists.push([name, '${fileName}source/main.lua', folder, cred, type, ver]);
 
 				spriteIDList.push([]);
 				var l:Int = spriteIDList.length-1;
