@@ -376,7 +376,7 @@ class LuaEngine {
 				return;
 			}
 
-			Dummy.playSound(n);
+			Dummy.playSound(n, sound);
 		});
 
 		Lua_helper.add_callback(lua, "moveTowardsMouse", function(tag:String, ?speed:Int = 60) {

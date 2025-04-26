@@ -1,5 +1,7 @@
 package state;
 
+import openfl.events.Event;
+
 class Dummy extends FlxState {
 	public static var instance:Dummy;
 
@@ -69,7 +71,7 @@ class Dummy extends FlxState {
         }
 	}
 
-	public static function playSound(path:String) {
+	public static function playSound(path:String, soundName:String) {
         var sound:Sound = Sound.fromFile(path);
         var channel:SoundChannel = sound.play();
         if (channel != null) {
@@ -80,6 +82,8 @@ class Dummy extends FlxState {
             channels.push(channel);
             positions.push(0); // Start at position 0
             sounds.push(sound);
+
+			channel.addEventListener(Event.SOUND_COMPLETE, e -> callOnLuas("soundComplete", [soundName]));
         }
     }
 
@@ -193,6 +197,11 @@ class Dummy extends FlxState {
 			Dummy.instance.timers.clear();
 			Dummy.luaArray = [];
 			debugger = [];
+
+			Pause.killSounds(true);
+			Dummy.sounds = [];
+			Dummy.channels = [];
+			Dummy.positions = [];
 		} catch(e:Dynamic) {} // Failed to do those, prevent a crash.
 	}
 }
@@ -211,6 +220,8 @@ class Pause extends FlxSubState {
 	var isGoing:Bool = true;
 
 	override public function create() {
+		killSounds();
+
 		blackBG.makeGraphic(1920, 1080, FlxColor.BLACK);
 		blackBG.alpha = 0;
 		FlxTween.tween(blackBG, {alpha: 0.6}, 0.5);
@@ -260,8 +271,6 @@ class Pause extends FlxSubState {
 		music.looped = true;
 		music.play();
 
-		killSounds();
-
 		super.create();
 	}
 
@@ -287,7 +296,10 @@ class Pause extends FlxSubState {
 
 									for (i in 0...Dummy.sounds.length) {
 										if (Dummy.sounds[i] != null) {
-											if (Dummy.channels[i] != null) Dummy.channels[i].stop();
+											if (Dummy.channels[i] != null) {
+												Dummy.channels[i].stop(); // Stop old channel if it somehow survived
+												Dummy.channels[i] = null;
+											}
 											var channel:SoundChannel = Dummy.sounds[i].play(Dummy.positions[i]); // Resume from saved position
 											if (channel != null) {
 												var transform:SoundTransform = channel.soundTransform;
@@ -316,13 +328,13 @@ class Pause extends FlxSubState {
 		}
 	}
 
-	public static function killSounds() {
+	public static function killSounds(?killSounds:Bool = false) {
 		for (i in 0...Dummy.channels.length) {
             if (Dummy.channels[i] != null) {
                 Dummy.positions[i] = Dummy.channels[i].position; // Save position
                 Dummy.channels[i].stop(); // Stop the sound
                 Dummy.channels[i] = null;
-				// Dummy.sounds[i] = null;
+				if (killSounds) Dummy.sounds[i] = null;
             }
         }
 	}
