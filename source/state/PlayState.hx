@@ -6,6 +6,7 @@ class PlayState extends FlxState {
 	public static var author:String;
 	public static var modName:String;
 	public static var modRaw:String;
+	public static var appVersion:String;
 	public static var qSize:Int = 8;
 
 	var bgGroup:FlxGroup = new FlxGroup();
@@ -50,6 +51,7 @@ class PlayState extends FlxState {
 	override public function create() {
 		Main.changeWindowName("Applications");
 		if (!FileSystem.exists("mods/")) FileSystem.createDirectory("mods/");
+		DiscordRPC.changePresence("Currently on Menu", "Browsing Apps");
 
 		if (modRaw != "") {
 			modRaw = "";
@@ -70,6 +72,7 @@ class PlayState extends FlxState {
 		
 		oldTime = Timer.stamp();
 		qSize = 8 * (Prefs.lowDetail ? 1 : 2);
+		modName = "";
 
 		var gray:FlxSprite = new FlxSprite().makeGraphic(1920, 1080, 0xFF222222);
 		if (Prefs.shaders) gray.shader = GMB;
@@ -417,6 +420,7 @@ class PlayState extends FlxState {
 						modName = luaLists[choice][0];
 						modRaw = 'mods/${luaLists[choice][2]}/';
 						author = luaLists[choice][3];
+						appVersion = luaLists[choice][5];
 						Dummy.luaArray.push(new LuaEngine(luaLists[choice][1]));
 						Main.changeWindowName('$modName - $author');
 						FlxG.sound.destroy(true);

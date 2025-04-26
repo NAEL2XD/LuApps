@@ -13,6 +13,7 @@ class Prefs {
 	public static var allowParticles:Bool = true;
 	public static var showFPS:Bool = true;
 	public static var notification:Bool = true;
+	public static var discordRPCAllow:Bool = true;
 
 	public static var restartByR:Bool = false;
 

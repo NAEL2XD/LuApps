@@ -729,6 +729,13 @@ class LuaEngine {
 			else
 				Dummy.debugPrint('sendNotification: Cannot send notification because desc is empty!', true);
 		});
+
+		Lua_helper.add_callback(lua, "changePresence", function(?state:String = "", ?description:String = "") {
+			if (state == "")       state = Dummy.rpcDetails[0];
+			if (description == "") description = Dummy.rpcDetails[1];
+			
+			DiscordRPC.changePresence(state, description);
+		});
 	}
 
 	public static var lastCalledScript:LuaEngine = null;

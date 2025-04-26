@@ -3,7 +3,12 @@ package;
 // Sorted by A to Z
 
 #if !macro
+#if cpp
+import cpp.ConstCharStar;
+import cpp.Function;
+import cpp.RawConstPointer;
 import cpp.vm.Gc;
+#end
 import debug.CrashHandler;
 import debug.FPSCounter;
 import engine.HiddenProcess;
@@ -35,6 +40,8 @@ import haxe.io.Path;
 import haxe.Json;
 import haxe.Timer;
 import haxe.zip.Reader;
+import hxdiscord_rpc.Discord;
+import hxdiscord_rpc.Types;
 import lime.app.Application;
 import lime.graphics.Image;
 import lime.system.Clipboard;
@@ -58,9 +65,11 @@ import openfl.media.SoundTransform;
 import openfl.text.TextField;
 import openfl.text.TextFormat;
 import sys.FileSystem;
-import state.PlayState;
 import sys.io.File;
+import sys.thread.Thread;
+import state.PlayState;
 import state.DummyState.Dummy;
+import utils.DiscordRPC;
 import utils.Prefs;
 import utils.Shaders;
 import utils.Utils;

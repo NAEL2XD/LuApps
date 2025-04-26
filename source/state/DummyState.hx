@@ -4,7 +4,7 @@ import openfl.events.Event;
 
 class Dummy extends FlxState {
 	public static var instance:Dummy;
-
+	
 	public var sprites:Map<String, ModchartSprite> = new Map<String, ModchartSprite>();
 	public var texts:Map<String, FlxText> = new Map<String, FlxText>();
 	public var variables:Map<String, Dynamic> = new Map();
@@ -12,17 +12,22 @@ class Dummy extends FlxState {
 	public var timers:Map<String, FlxTimer> = new Map<String, FlxTimer>();
 	public static var luaArray:Array<LuaEngine> = [];
 	public static var debugger:Array<FlxText> = [];
-
+	
 	public static var channels:Array<SoundChannel> = [];
 	public static var positions:Array<Float> = [];
     public static var sounds:Array<Sound> = [];
 	public static var startTime:Float = 0;
 	public static var pausedTime:Float = 0;
 	public static var allowDebug:Bool = false;
-
+	public static var rpcDetails:Array<String> = ['', ''];
+	
 	static var oldTime:Float = 0;
 
 	override public function create() {
+		rpcDetails[0] = PlayState.modName;
+		rpcDetails[1] = 'By: ${PlayState.author} | Version: ${PlayState.appVersion}';
+		DiscordRPC.changePresence(rpcDetails[0], rpcDetails[1]);
+
 		instance   = this;
 
 		allowDebug = false;
@@ -220,6 +225,7 @@ class Pause extends FlxSubState {
 	var isGoing:Bool = true;
 
 	override public function create() {
+		DiscordRPC.changePresence('[PAUSE] ${Dummy.rpcDetails[0]}', '[PAUSE] ${Dummy.rpcDetails[1]}');
 		killSounds();
 
 		blackBG.makeGraphic(1920, 1080, FlxColor.BLACK);
@@ -311,6 +317,7 @@ class Pause extends FlxSubState {
 										}
 									}
 
+									DiscordRPC.changePresence(Dummy.rpcDetails[0], Dummy.rpcDetails[1]);
 									close();
 								}});
 

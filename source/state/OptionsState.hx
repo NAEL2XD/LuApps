@@ -17,10 +17,13 @@ class OptionsState extends FlxState {
 		["Allow Particles.", "If ON, particles will be used. This will likely increase CPU loads.",                 "Bool",   "allowParticles"],
 		["Show FPS",         "If ON, the FPS (with memory count) will be shown in the top left of this program.",   "Bool",   "showFPS"],
 		["Notifications",    "If ON, notifications will be shown on the Application State",                         "Bool",   "notification"],
+		["Discord RPC",      "If ON, Discord RPC will be enabled so other discord users can see what you play.",    "Bool",   "discordRPCAllow"],
 
 		["Debugging",        "For Developers debugging their application or this program.",                         "State"],
 		["Restart by [R]",   "If ON, pressing [R] will restart the LuApps. Only intended for developers!",          "Bool",   "restartByR"],
 	];
+	var requiresRestart:Array<String> = ["Discord RPC"];
+	var rrEnabled:Bool = false;
 
 	var helpText:UtilText = new UtilText(0, 0, 1280, "Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.", 24, CENTER, SHADOW, null, FlxColor.YELLOW);
 	var spriteList:Array<Array<FlxSprite>> = [];
@@ -45,6 +48,8 @@ class OptionsState extends FlxState {
 
 	override public function create() {
 		Main.changeWindowName("Settings");
+		DiscordRPC.changePresence("On Settings", "Setting some Changes.");
+		rrEnabled = false;
 
 		add(optionGroup);
 		add(jumpGroup);
@@ -375,6 +380,14 @@ class OptionsState extends FlxState {
 		if (t == 'bool') textList[option][1].text = v ? "ON" : "OFF";
 
 		if (oldText != textList[option][1].text && Prefs.allowParticles) {
+			if (requiresRestart.contains(options[option][0]) && !rrEnabled) {
+				rrEnabled = true;
+
+				var restartText:UtilText = new UtilText(0, 560, 1280, "You chose an option that requires a engine restart!", 28, CENTER, null, null, FlxColor.YELLOW);
+				restartText.scale.y = 0;
+				FlxTween.tween(restartText, {"scale.y": 1 / (currentLDStatus ? 1 : 2)}, 0.5, {ease: FlxEase.backOut});
+				jumpGroup.add(restartText);
+			}
 			// TODO: Actually make the cool thing show up and not hide.
 			var sprite:UtilText = textList[option][1];
 			var oldPopup:UtilText = new UtilText(sprite.x, sprite.y, sprite.width / (currentLDStatus ? 2 : 1), oldText, 60, RIGHT, OUTLINE);

@@ -30,6 +30,8 @@ class Main extends Sprite {
 		addChild(fpsVar);
 
 		Prefs.loadPrefs();
+
+		DiscordRPC.prepare();
 	}
 
 	public static function changeWindowName(name:String = "") Application.current.window.title = 'LuApps v$luversion ${name != "" ? '- $name' : ''}';
