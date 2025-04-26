@@ -684,6 +684,51 @@ class LuaEngine {
 
 			Dummy.debugPrint('switchState: Couldn\'t find file: $path');
 		});
+
+		Lua_helper.add_callback(lua, "createDir", function(folder:String) FileSystem.createDirectory('${raw}assets/data/$folder'));
+
+		Lua_helper.add_callback(lua, "sendNotification", function(desc:String) {
+			function getWindowsVersion() {
+				var windowsVersions:Map<String, Int> = [
+					"Windows 11" => 11,
+					"Windows 10" => 10,
+					"Windows 8.1" => 8,
+					"Windows 8" => 8,
+					"Windows 7" => 7,
+				];
+
+				var words = System.platformLabel.split(" ");
+				var windowsIndex = words.indexOf("Windows");
+				var result = "";
+				if (windowsIndex != -1 && windowsIndex < words.length - 1) result = words[windowsIndex] + " " + words[windowsIndex + 1];
+
+				if (windowsVersions.exists(result)) return windowsVersions.get(result);
+
+				return 0;
+			}
+		
+			var powershellCommand = "powershell -Command \"& {$ErrorActionPreference = 'Stop';"
+			+ "$title = '"
+			+ desc
+			+ "';"
+			+ "[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] > $null;"
+			+ "$template = [Windows.UI.Notifications.ToastNotificationManager]::GetTemplateContent([Windows.UI.Notifications.ToastTemplateType]::ToastText01);"
+			+ "$toastXml = [xml] $template.GetXml();"
+			+ "$toastXml.GetElementsByTagName('text').AppendChild($toastXml.CreateTextNode($title)) > $null;"
+			+ "$xml = New-Object Windows.Data.Xml.Dom.XmlDocument;"
+			+ "$xml.LoadXml($toastXml.OuterXml);"
+			+ "$toast = [Windows.UI.Notifications.ToastNotification]::new($xml);"
+			+ "$toast.Tag = 'Test1';"
+			+ "$toast.Group = 'Test2';"
+			+ "$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('" + PlayState.modName + "');"
+			+ "$notifier.Show($toast);}\"";
+
+			var vers:Int = getWindowsVersion();
+			if (desc != null && desc != "")
+				if (vers != 7) new HiddenProcess(powershellCommand); else Dummy.debugPrint('sendNotification: Cannot send notification because you are using Windows 7!', true);
+			else
+				Dummy.debugPrint('sendNotification: Cannot send notification because desc is empty!', true);
+		});
 	}
 
 	public static var lastCalledScript:LuaEngine = null;

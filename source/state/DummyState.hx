@@ -37,7 +37,7 @@ class Dummy extends FlxState {
 	override public function update(elapsed:Float) {
 		super.update(elapsed);
 
-		updateVars();
+		Dummy.updateVars();
 		for (text in debugger) add(text);
 
 		callOnLuas("update", [elapsed]);
@@ -93,7 +93,7 @@ class Dummy extends FlxState {
 	public static function switchState(path:String) {
 		Dummy.resetVars();
 
-		luaArray.push(new LuaEngine('${PlayState.modRaw}source/$path.lua'));
+		luaArray.push(new LuaEngine(path));
 		Dummy.updateVars();
 		Dummy.callOnLuas("create");
 	}
