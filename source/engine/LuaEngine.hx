@@ -1,5 +1,7 @@
 package engine;
 
+import state.DummyState.Pause;
+
 class LuaEngine {
 	public static var Function_Stop:Dynamic = "FUNCTIONSTOP";
 	public static var Function_Continue:Dynamic = "FUNCTIONCONTINUE";
@@ -753,6 +755,12 @@ class LuaEngine {
 		Lua_helper.add_callback(lua, "openURL",     function(url:String)  FlxG.openURL(url));
 		Lua_helper.add_callback(lua, "openFile",    function(path:String) System.openFile('${raw}assets/data/$path'));
 		Lua_helper.add_callback(lua, "randomColor", function():FlxColor   return FlxG.random.color());
+		Lua_helper.add_callback(lua, "stopAllSounds", function() Pause.killSounds(true));
+		Lua_helper.add_callback(lua, "readDirectory", function(dir:String):Array<String> {
+			var path:String = '$raw$dir';
+			
+			return FileSystem.readDirectory(path);
+		});
 	}
 
 	public static var lastCalledScript:LuaEngine = null;
