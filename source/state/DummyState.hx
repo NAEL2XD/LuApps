@@ -20,7 +20,7 @@ class Dummy extends FlxState {
 	public static var pausedTime:Float = 0;
 	public static var allowDebug:Bool = false;
 	public static var rpcDetails:Array<String> = ['', ''];
-	
+
 	static var oldTime:Float = 0;
 
 	override public function create() {
@@ -31,7 +31,6 @@ class Dummy extends FlxState {
 		instance   = this;
 
 		allowDebug = false;
-
 		oldTime    = Timer.stamp();
 		startTime  = 0;
 		pausedTime = 0;
@@ -151,6 +150,7 @@ class Dummy extends FlxState {
 		Dummy.set('modName',       PlayState.modName);
 		Dummy.set('modRaw',        PlayState.modRaw);
 		Dummy.set('mouseMoved',    FlxG.mouse.justMoved);
+		Dummy.set('mouseWheel',    FlxG.mouse.wheel);
 		Dummy.set('mouseX',        FlxG.mouse.x);
 		Dummy.set('mouseY',        FlxG.mouse.y);
 		Dummy.set('time',          Timer.stamp() - (Dummy.oldTime + Dummy.startTime));

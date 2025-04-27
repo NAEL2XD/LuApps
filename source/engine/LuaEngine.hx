@@ -750,8 +750,9 @@ class LuaEngine {
 			DiscordRPC.changePresence(state, description);
 		});
 
-		Lua_helper.add_callback(lua, "openURL",  function(url:String)    FlxG.openURL(url));
-		Lua_helper.add_callback(lua, "openFile", function(path:String) System.openFile(path));
+		Lua_helper.add_callback(lua, "openURL",     function(url:String)  FlxG.openURL(url));
+		Lua_helper.add_callback(lua, "openFile",    function(path:String) System.openFile('${raw}assets/data/$path'));
+		Lua_helper.add_callback(lua, "randomColor", function():FlxColor   return FlxG.random.color());
 	}
 
 	public static var lastCalledScript:LuaEngine = null;
