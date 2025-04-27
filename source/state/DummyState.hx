@@ -31,7 +31,7 @@ class Dummy extends FlxState {
 		instance   = this;
 
 		allowDebug = false;
-		oldTime    = Timer.stamp();
+		oldTime    = Date.now().getTime();
 		startTime  = 0;
 		pausedTime = 0;
 
@@ -48,10 +48,7 @@ class Dummy extends FlxState {
 
 		callOnLuas("update", [elapsed]);
 
-		if (FlxG.keys.justPressed.ESCAPE) {
-			pausedTime = Timer.stamp();
-			openSubState(new Pause());
-		}
+		if (FlxG.keys.justPressed.ESCAPE) openSubState(new Pause());
 
 		if (FlxG.keys.justPressed.R && Prefs.restartByR) {
 			sprites = [];
@@ -153,7 +150,7 @@ class Dummy extends FlxState {
 		Dummy.set('mouseWheel',    FlxG.mouse.wheel);
 		Dummy.set('mouseX',        FlxG.mouse.x);
 		Dummy.set('mouseY',        FlxG.mouse.y);
-		Dummy.set('time',          Timer.stamp() - (Dummy.oldTime + Dummy.startTime));
+		Dummy.set('time',          (Date.now().getTime() - (Dummy.oldTime + Dummy.startTime)) / 1000);
 		Dummy.set('version',       Main.luversion);
 		Dummy.set('width',         Application.current.window.width);
 		Dummy.set('windowX',       Application.current.window.x);
@@ -226,6 +223,7 @@ class Pause extends FlxSubState {
 
 	override public function create() {
 		DiscordRPC.changePresence('[PAUSE] ${Dummy.rpcDetails[0]}', '[PAUSE] ${Dummy.rpcDetails[1]}');
+		Dummy.pausedTime = Date.now().getTime();
 		killSounds();
 
 		blackBG.makeGraphic(1920, 1080, FlxColor.BLACK);
@@ -318,10 +316,10 @@ class Pause extends FlxSubState {
 									}
 
 									DiscordRPC.changePresence(Dummy.rpcDetails[0], Dummy.rpcDetails[1]);
+									Dummy.startTime += Date.now().getTime() - Dummy.pausedTime;
 									close();
 								}});
 
-							Dummy.startTime += Timer.stamp() - Dummy.pausedTime + 0.5;
 	
 						case "Exit App":
 							for (sprite in members) FlxTween.tween(sprite, {alpha: 0}, 0.5);
