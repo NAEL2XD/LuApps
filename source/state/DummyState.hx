@@ -1,348 +1,181 @@
-package state;
+package;
 
-import openfl.events.Event;
+import flixel.FlxState;
+import flixel.FlxSprite;
+import flixel.FlxGroup;
+import flixel.FlxTween;
+import flixel.FlxSound;
+import flixel.util.FlxColor;
+import flixel.util.FlxEase;
 
-class Dummy extends FlxState {
-	public static var instance:Dummy;
-	
-	public var sprites:Map<String, ModchartSprite> = new Map<String, ModchartSprite>();
-	public var texts:Map<String, FlxText> = new Map<String, FlxText>();
-	public var variables:Map<String, Dynamic> = new Map();
-	public var tweens:Map<String, FlxTween> = new Map<String, FlxTween>();
-	public var timers:Map<String, FlxTimer> = new Map<String, FlxTimer>();
-	public static var luaArray:Array<LuaEngine> = [];
-	public static var debugger:Array<FlxText> = [];
-	
-	public static var channels:Array<SoundChannel> = [];
-	public static var positions:Array<Float> = [];
-    public static var sounds:Array<Sound> = [];
-	public static var startTime:Float = 0;
-	public static var pausedTime:Float = 0;
-	public static var allowDebug:Bool = false;
-	public static var rpcDetails:Array<String> = ['', ''];
-	
-	static var oldTime:Float = 0;
+class OptionsState extends FlxState {
 
-	override public function create() {
-		rpcDetails[0] = PlayState.modName;
-		rpcDetails[1] = 'By: ${PlayState.author} | Version: ${PlayState.appVersion}';
-		DiscordRPC.changePresence(rpcDetails[0], rpcDetails[1]);
+    // Options and state settings
+    var options:Array<Array<Dynamic>> = [
+        ["LuApps Settings",  "Have too many LuApps but want to show something else? Now you can set them here.", "State"],
+        ["Show Type",        "What type of LuApps you want to show?",                                            "String", "luAppsType", ["ALL"]],
+        ["Calculate Size",   "Whether or not you want to calculate the size of a LuApp file.",                  "Bool",   "calculateSize"],
+        ["Graphics",         "Set your graphic settings, from beautiful to toaster.",                          "State"],
+        ["Anti-Aliasing",    "If ON, most objects (especially images) will be sharp and clean.",               "Bool",   "antiAliasing"],
+        ["Low Detail",       "If ON, most details (e.g., overlapping objects) will be removed.",              "Bool",   "lowDetail"],
+        ["Framerate",        "Adjust the framerate.",                                                        "Int",    "framerate", [60, 240, 1, 7]],
+        ["Resolution",       "Adjust the screen resolution.",                                                "String", "screenSize", ["640x360", "1280x720", "1920x1080"]],
+        ["Shaders",          "Enable or disable shaders.",                                                  "Bool",   "shaders"],
+        ["Visuals",          "Settings for disabling distracting elements.",                                 "State"],
+        ["Allow Particles.", "If ON, particles will be used (increases CPU load).",                           "Bool",   "allowParticles"],
+        ["Show FPS",         "If ON, FPS (with memory count) will be shown.",                               "Bool",   "showFPS"],
+        ["Notifications",    "If ON, notifications will be shown.",                                           "Bool",   "notification"],
+        ["Discord RPC",      "If ON, Discord RPC will be enabled to show your game to others.",              "Bool",   "discordRPCAllow"],
+        ["Debugging",        "Developer options.",                                                           "State"],
+        ["Restart by [R]",   "If ON, pressing [R] will restart the LuApps. Only for developers!",             "Bool",   "restartByR"]
+    ];
 
-		instance   = this;
+    var requiresRestart:Array<String> = ["Discord RPC"];
+    var helpText:UtilText;
+    var spriteList:Array<Array<FlxSprite>> = [];
+    var textList:Array<Array<UtilText>> = [];
+    var previewText:Array<Array<Dynamic>> = [];
+    var currentLDStatus:Bool = Prefs.lowDetail;
 
-		allowDebug = false;
+    var yPos:Float = 0;
+    var maxYPos:Float = 0;
+    var isSettingThing:Bool = false;
+    var allowMoving:Bool = true;
+    var triggered:Bool = false;
 
-		oldTime    = Timer.stamp();
-		startTime  = 0;
-		pausedTime = 0;
+    override public function create() {
+        initializeSettings();
+        initializeUI();
+        setupMusic();
+        setupHelpText();
+    }
 
-		updateVars();
-		callOnLuas("create");
-		super.create();
-	}
+    // Initialize game settings and options.
+    private function initializeSettings():Void {
+        Main.changeWindowName("Settings");
+        DiscordRPC.changePresence("On Settings", "Setting some Changes.");
 
-	override public function update(elapsed:Float) {
-		super.update(elapsed);
+        // Set up LuApps type options based on available Lua lists.
+        options[1][4] = sortLuAppsTypes(PlayState.luaLists);
 
-		Dummy.updateVars();
-		for (text in debugger) add(text);
-
-		callOnLuas("update", [elapsed]);
-
-		if (FlxG.keys.justPressed.ESCAPE) {
-			pausedTime = Timer.stamp();
-			openSubState(new Pause());
-		}
-
-		if (FlxG.keys.justPressed.R && Prefs.restartByR) {
-			sprites = [];
-			texts = [];
-			variables = [];
-			tweens = [];
-			luaArray = [];
-			debugger = [];
-			Pause.killSounds();
-
-			luaArray.push(new LuaEngine('${PlayState.modRaw}source/main.lua'));
-			FlxG.switchState(Dummy.new);
-		}
-
-		for (channel in channels) {
-            if (channel != null) {
-                var transform:SoundTransform = channel.soundTransform;
-                transform.volume = FlxG.sound.volume; // Apply new volume
-                channel.soundTransform = transform;
-            }
-        }
-	}
-
-	public static function playSound(path:String, soundName:String) {
-        var sound:Sound = Sound.fromFile(path);
-        var channel:SoundChannel = sound.play();
-        if (channel != null) {
-            var transform:SoundTransform = channel.soundTransform;
-            transform.volume = FlxG.sound.volume;
-            channel.soundTransform = transform;
-            
-            channels.push(channel);
-            positions.push(0); // Start at position 0
-            sounds.push(sound);
-
-			channel.addEventListener(Event.SOUND_COMPLETE, e -> callOnLuas("soundComplete", [soundName]));
+        for (option in options) {
+            createOption(option);
         }
     }
 
-	public static function exit(restartOnly:Bool = false) {
-		Dummy.resetVars();
+    // Set up the user interface elements (sprites, text, etc.).
+    private function initializeUI():Void {
+        addOptionBackground();
+        createOptionElements();
+    }
 
-		Application.current.window.setIcon(Image.fromFile("assets/images/icons/iconOG.png"));
-		if (!restartOnly) FlxG.resetGame();
-	}
+    // Create the background for the options menu.
+    private function addOptionBackground():Void {
+        var optionsBG:FlxSprite = new FlxSprite().makeGraphic(1280, 720, 0xFF756C6C);
+        optionsBG.alpha = 0;
+        FlxTween.tween(optionsBG, {alpha: 1}, 0.5);
+        add(optionsBG);
+    }
 
-	public static function switchState(path:String) {
-		Dummy.resetVars();
+    // Set up background music for the options menu.
+    private function setupMusic():Void {
+        FlxG.sound.playMusic('assets/music/settings.ogg', 1, true);
+    }
 
-		luaArray.push(new LuaEngine(path));
-		Dummy.updateVars();
-		Dummy.callOnLuas("create");
-	}
+    // Set up help text displayed on the options screen.
+    private function setupHelpText():Void {
+        helpText = new UtilText(0, 0, 1280, "Use your mouse and hold left click and move up or down to scroll. Left click on an option to change it.\nPress BACKSPACE or ESCAPE to leave options.", 24, CENTER, SHADOW, null, FlxColor.YELLOW);
+        helpText.setBorderStyle(SHADOW, FlxColor.BLACK, 8, 8);
+        helpText.screenCenter();
+        helpText.y = 650;
+        add(helpText);
+    }
 
-	public static function debugPrint(text:String, warn:Bool = false) {
-		if (!allowDebug && warn) return;
+    // Sort LuApps types by their frequency in the game.
+    private function sortLuAppsTypes(luaLists:Array<Dynamic>):Array<String> {
+        var typeList:Array<String> = [for (thing in luaLists) thing[4]];
+        var map:Map<String, Int> = new Map();
 
-		var l:Int = debugger.length;
-		text = (warn ? "[WARN] " : "") + text;
-
-		if (l == 37) {
-			debugger[0].destroy();
-			debugger.remove(debugger[0]);
-
-			var i:Int = 0;
-			for (tex in debugger) {
-				tex.y = 20 * i;
-				i++;
-			}
-
-			l--;
-		}
-
-		if (text.length > 91) {
-			Sys.println('${PlayState.modName}: $text');
-			text = text.substr(0, 88);
-			text += "...\n(Full Debug if the terminal is launched!)";
-		}
-
-		var curText:Array<String> = text.split("\n");
-		for (text in curText) {
-			debugger.push(new UtilText(0, 16 * l, 1280 * (Prefs.lowDetail ? 1 : 2), text, 14, null, null, null, warn ? FlxColor.YELLOW : FlxColor.WHITE, 'assets/fonts/debug.ttf'));
-			l = debugger.length;
-		}
-	}
-
-	public static function updateVars() {
-		Dummy.set('author',        PlayState.author);
-		Dummy.set('clipboardItem', Clipboard.text);
-		Dummy.set('fps',           FPSCounter.currentFPS);
-		Dummy.set('fullscreen',    FlxG.fullscreen);
-		Dummy.set('height',        Application.current.window.height);
-		Dummy.set('lowDetail',     Prefs.lowDetail);
-		Dummy.set('memory',        FPSCounter.curMemory);
-		Dummy.set('mempeak',       FPSCounter.curMaxMemory);
-		Dummy.set('modName',       PlayState.modName);
-		Dummy.set('modRaw',        PlayState.modRaw);
-		Dummy.set('mouseMoved',    FlxG.mouse.justMoved);
-		Dummy.set('mouseX',        FlxG.mouse.x);
-		Dummy.set('mouseY',        FlxG.mouse.y);
-		Dummy.set('time',          Timer.stamp() - (Dummy.oldTime + Dummy.startTime));
-		Dummy.set('version',       Main.luversion);
-		Dummy.set('width',         Application.current.window.width);
-		Dummy.set('windowX',       Application.current.window.x);
-		Dummy.set('windowY',       Application.current.window.y);
-	}
-
-	public static function clearLog() {
-		for (text in Dummy.debugger) text.destroy();
-			
-		Dummy.debugger = [];
-	}
-
-	public static function callOnLuas(event:String, args:Array<Dynamic> = null, ignoreStops = true, exclusions:Array<String> = null, excludeValues:Array<Dynamic> = null):Dynamic {
-		var returnVal = LuaEngine.Function_Continue;
-		if(args == null) args = [];
-		if(exclusions == null) exclusions = [];
-		if(excludeValues == null) excludeValues = [];
-
-		for (script in luaArray) {
-			if(exclusions.contains(script.scriptName)) continue;
-
-			final myValue = script.call(event, args);
-			if(myValue == LuaEngine.Function_StopLua && !ignoreStops) break;
-			if(myValue != null && myValue != LuaEngine.Function_Continue) returnVal = myValue;
-		}
-		return returnVal;
-	}
-
-	public static function set(variable:String, arg:Dynamic) for (i in 0...luaArray.length) luaArray[i].set(variable, arg);
-
-	public function getLuaObject(tag:String, text:Bool=true):FlxSprite {
-		if (sprites.exists(tag)) return sprites.get(tag);
-		if (text && texts.exists(tag)) return texts.get(tag);
-		if (variables.exists(tag)) return variables.get(tag);
-		return null;
-	}
-
-	static function resetVars() {
-		try {
-			clearLog();
-
-			Dummy.instance.sprites.clear();
-			Dummy.instance.texts.clear();
-			Dummy.instance.variables.clear();
-			Dummy.instance.tweens.clear();
-			Dummy.instance.timers.clear();
-			Dummy.luaArray = [];
-			debugger = [];
-
-			Pause.killSounds(true);
-			Dummy.sounds = [];
-			Dummy.channels = [];
-			Dummy.positions = [];
-		} catch(e:Dynamic) {} // Failed to do those, prevent a crash.
-	}
-}
-
-class Pause extends FlxSubState {
-	public function new() super(0x00000000);
-
-	private var buttonSpr:Array<FlxSprite> = [];
-	private var buttonTxt:Array<FlxText> = [];
-	
-	private var pauseText:UtilText = new UtilText(0, 26, 1280, "Pause.", 96, CENTER);
-	private var music:FlxSound = new FlxSound();
-	private var blackBG:FlxSprite = new FlxSprite();
-
-	var isMouseHidden:Bool = FlxG.mouse.enabled;
-	var isGoing:Bool = true;
-
-	override public function create() {
-		DiscordRPC.changePresence('[PAUSE] ${Dummy.rpcDetails[0]}', '[PAUSE] ${Dummy.rpcDetails[1]}');
-		killSounds();
-
-		blackBG.makeGraphic(1920, 1080, FlxColor.BLACK);
-		blackBG.alpha = 0;
-		FlxTween.tween(blackBG, {alpha: 0.6}, 0.5);
-		add(blackBG);
-
-		if (FlxG.sound.music != null) FlxG.sound.music.pause();
-
-		FlxG.mouse.enabled = true;
-		FlxG.mouse.visible = true;
-
-		pauseText.setBorderStyle(FlxTextBorderStyle.SHADOW, FlxColor.GRAY, PlayState.qSize, PlayState.qSize);
-		pauseText.alpha = 0;
-		FlxTween.tween(pauseText, {alpha: 1}, 0.5, {onComplete: e -> isGoing = false});
-		add(pauseText);
-
-		var stuffies:Array<String> = ["Exit App", "Continue"];
-		for (stuff in stuffies) {
-			var i:Int = buttonSpr.length;
-			buttonSpr.push(new FlxSprite().makeGraphic(260, 80, FlxColor.RED));
-			buttonSpr[i].screenCenter();
-			buttonSpr[i].x += (-(stuffies.length*200) + (i * 400)) + 200;
-			buttonSpr[i].y = 550;
-			buttonSpr[i].alpha = 0;
-			FlxTween.tween(buttonSpr[i], {alpha: 1}, 0.5);
-			add(buttonSpr[i]);
-
-			buttonTxt.push(new UtilText((-(stuffies.length*200) + (i * 400)) + 200, 555, 1280, stuff, 48, CENTER));
-			buttonTxt[i].alpha = 0;
-			FlxTween.tween(buttonTxt[i], {alpha: 1}, 0.5);
-			add(buttonTxt[i]);
-		}
-
-		var modN:FlxText = new UtilText(-15, -20, 1280, PlayState.modName, 36, RIGHT);
-		modN.bold = true;
-		modN.alpha = 0;
-		new FlxTimer().start(0.35, e -> FlxTween.tween(modN, {y: 10, alpha: 1}, 0.25));
-		add(modN);
-
-		var modA:FlxText = new UtilText(-15, 20, 1280, PlayState.author, 36, RIGHT);
-		modA.bold = true;
-		modA.alpha = 0;
-		new FlxTimer().start(0.55, e -> FlxTween.tween(modA, {y: 50, alpha: 1}, 0.25));
-		add(modA);
-
-		music.loadEmbedded('assets/music/settings.ogg');
-		music.fadeIn(8);
-		music.looped = true;
-		music.play();
-
-		super.create();
-	}
-
-	override public function update(elapsed:Float) {
-		var i:Int = 0;
-		if (!isGoing) {
-			for (sprite in buttonSpr) {
-				if (FlxG.mouse.overlaps(sprite) && FlxG.mouse.justPressed) {
-					isGoing = true;
-					music.fadeOut(0.5);
-	
-					switch(buttonTxt[i].text) {
-						case "Continue":
-							music.stop();
-							FlxG.mouse.enabled = isMouseHidden;
-							FlxG.mouse.visible = isMouseHidden;
-
-							var hit:Bool = false;
-							for (sprite in members)
-								FlxTween.tween(sprite, {alpha: 0}, 0.5, {onComplete: e -> {
-									if (hit) return;
-									hit = true;
-
-									for (i in 0...Dummy.sounds.length) {
-										if (Dummy.sounds[i] != null) {
-											if (Dummy.channels[i] != null) {
-												Dummy.channels[i].stop(); // Stop old channel if it somehow survived
-												Dummy.channels[i] = null;
-											}
-											var channel:SoundChannel = Dummy.sounds[i].play(Dummy.positions[i]); // Resume from saved position
-											if (channel != null) {
-												var transform:SoundTransform = channel.soundTransform;
-												transform.volume = FlxG.sound.volume;
-												channel.soundTransform = transform;
-												
-												Dummy.channels[i] = channel;
-											}
-										}
-									}
-
-									DiscordRPC.changePresence(Dummy.rpcDetails[0], Dummy.rpcDetails[1]);
-									close();
-								}});
-
-							Dummy.startTime += Timer.stamp() - Dummy.pausedTime + 0.5;
-	
-						case "Exit App":
-							for (sprite in members) FlxTween.tween(sprite, {alpha: 0}, 0.5);
-
-							FlxTween.tween(blackBG, {alpha: 1}, 0.5, {onComplete: e -> Dummy.exit()});
-					}
-				}
-	
-				i++;
-			}
-		}
-	}
-
-	public static function killSounds(?killSounds:Bool = false) {
-		for (i in 0...Dummy.channels.length) {
-            if (Dummy.channels[i] != null) {
-                Dummy.positions[i] = Dummy.channels[i].position; // Save position
-                Dummy.channels[i].stop(); // Stop the sound
-                Dummy.channels[i] = null;
-				if (killSounds) Dummy.sounds[i] = null;
+        // Count occurrences of each type.
+        for (type in typeList) {
+            if (map.exists(type)) {
+                map.set(type, map.get(type) + 1);
+            } else {
+                map.set(type, 1);
             }
         }
-	}
-}
+
+        // Sort types by frequency and return the result.
+        var sortedTypes:Array<String> = ["ALL"];
+        for (key in map.keys()) {
+            sortedTypes.push('${key} [${map.get(key)}]');
+        }
+        sortedTypes.sort((a, b) -> {
+            var aCount = Std.parseInt(a.split("[")[1].split("]")[0]);
+            var bCount = Std.parseInt(b.split("[")[1].split("]")[0]);
+            return bCount - aCount;
+        });
+
+        return sortedTypes;
+    }
+
+    // Create and add UI elements (sprites, text) for each option.
+    private function createOption(option:Array<Dynamic>):Void {
+        var optionName:String = option[0];
+        var optionType:String = option[2];
+        var yOffset:Float = calculateYOffset(optionType);
+
+        // Create preview text.
+        createPreviewText(optionName, yOffset, optionType);
+
+        if (optionType != "State") {
+            createOptionUI(option, yOffset);
+        } else {
+            createStateOptionUI(option, yOffset);
+        }
+    }
+
+    // Calculate the Y offset based on the option type (state or other).
+    private function calculateYOffset(optionType:String):Float {
+        var yOffset:Float = 0;
+        if (optionType == "State") {
+            yOffset = 160;
+        } else {
+            yOffset = 115;
+        }
+        return yOffset;
+    }
+
+    // Create preview text for the option.
+    private function createPreviewText(optionName:String, yOffset:Float, optionType:String):Void {
+        previewText.push([yOffset, new UtilText(10, yOffset, optionName.length * 13.75, optionName, 13, LEFT, NONE, null, null, 'assets/fonts/debug.ttf')]);
+        previewText[previewText.length - 1][1].x += (optionType != "State" ? 20 : 0);
+        add(previewText[previewText.length - 1][1]);
+    }
+
+    // Create standard UI elements for an option (not of type "State").
+    private function createOptionUI(option:Array<Dynamic>, yOffset:Float):Void {
+        var sprite:FlxSprite = new FlxSprite().makeGraphic(860, 105, 0xFF797979);
+        sprite.screenCenter();
+        sprite.y = 60 + yOffset;
+        add(sprite);
+
+        var text:UtilText = new UtilText(230, 75 + yOffset, 1280, option[0], 56);
+        text.setBorderStyle(SHADOW, FlxColor.BLACK, PlayState.qSize, PlayState.qSize);
+        add(text);
+
+        var value:Dynamic = Reflect.getProperty(Prefs, option[3]);
+        var valueText:UtilText = new UtilText(-240, 88 + yOffset - (currentLDStatus ? 6 : 0), 1280, '$value', 60, RIGHT, SHADOW);
+        valueText.setBorderStyle(SHADOW, FlxColor.BLACK, PlayState.qSize, PlayState.qSize);
+        valueText.underline = true;
+        valueText.font = 'assets/fonts/settings.ttf';
+        add(valueText);
+
+        if (option[2] == "Bool") {
+            valueText.text = value ? "ON" : "OFF";
+        }
+    }
+
+    // Create UI for "State" type options (with descriptions).
+    private function createStateOptionUI(option:Array<Dynamic>, yOffset:Float):Void {
+        var nameText:UtilText = new UtilText(0, 90 +
