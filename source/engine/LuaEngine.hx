@@ -22,7 +22,7 @@ class LuaEngine {
 			var resultStr:String = Lua.tostring(lua, result);
 			if(resultStr != null && result != 0) {
 				trace('Error on lua script! $resultStr');
-				lime.app.Application.current.window.alert(resultStr, 'Error on lua script!');
+				Application.current.window.alert(resultStr, 'Error on lua script!');
 				Lua.close(lua);
 				lua = null;
 				FlxG.resetGame();
@@ -36,7 +36,6 @@ class LuaEngine {
 		var raw:String = PlayState.modRaw;
 
 		Lua_helper.add_callback(lua, "print", function(text:String) Dummy.debugPrint(text));
-
 		Lua_helper.add_callback(lua, "makeSprite", function(tag:String, ?image:String, ?x:Float = 0, ?y:Float = 0) {
 			function resetSpriteTag(tag:String) {
 				if(!Dummy.instance.sprites.exists(tag)) return;
@@ -167,7 +166,7 @@ class LuaEngine {
 				return;
 			}
 
-			if (!hexColor.contains("0xFF")) hexColor = '0xFF$hexColor';
+			if (!hexColor.contains("0x")) hexColor = '0xFF$hexColor';
 
 			var text:FlxText = Dummy.instance.texts.get(tag);
 			text.setBorderStyle(getStyle(style), Std.parseInt(hexColor), size * (Prefs.lowDetail ? 1 : 2), quality);
@@ -712,7 +711,8 @@ class LuaEngine {
 					"Windows 7" => 7,
 				];
 
-				var words = System.platformLabel.split(" ");
+				var platformLabel = System.platformLabel;
+				var words = platformLabel.split(" ");
 				var windowsIndex = words.indexOf("Windows");
 				var result = "";
 				if (windowsIndex != -1 && windowsIndex < words.length - 1) result = words[windowsIndex] + " " + words[windowsIndex + 1];
@@ -735,12 +735,14 @@ class LuaEngine {
 			+ "$toast = [Windows.UI.Notifications.ToastNotification]::new($xml);"
 			+ "$toast.Tag = 'Test1';"
 			+ "$toast.Group = 'Test2';"
-			+ "$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('" + PlayState.modName + "');"
+			+ "$notifier = [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('"
+			+ PlayState.modName
+			+ "');"
 			+ "$notifier.Show($toast);}\"";
 
 			var vers:Int = getWindowsVersion();
 			if (desc != null && desc != "")
-				if (vers != 7) new HiddenProcess(powershellCommand); else Dummy.debugPrint('sendNotification: Cannot send notification because you are using Windows 7!', true);
+				new HiddenProcess(powershellCommand);
 			else
 				Dummy.debugPrint('sendNotification: Cannot send notification because desc is empty!', true);
 		});
@@ -760,6 +762,16 @@ class LuaEngine {
 			var path:String = '$raw$dir';
 			
 			return FileSystem.readDirectory(path);
+		});
+
+		Lua_helper.add_callback(lua, "updateHitbox", function(obj:String) {
+			if(Dummy.instance.getLuaObject(obj) != null) {
+				var spr = Dummy.instance.getLuaObject(obj);
+				spr.updateHitbox();
+				return;
+			}
+
+			Dummy.debugPrint('updateHitbox: Could\'t find sprite: $obj', true);
 		});
 	}
 
