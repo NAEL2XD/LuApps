@@ -449,11 +449,8 @@ class LuaEngine {
 		});
 
 		Lua_helper.add_callback(lua, "stringStartsWith", function(str:String, start:String) return str.startsWith(start));
-
 		Lua_helper.add_callback(lua, "stringEndsWith", function(str:String, end:String) return str.endsWith(end));
-
 		Lua_helper.add_callback(lua, "stringSplit", function(str:String, split:String) return str.split(split));
-
 		Lua_helper.add_callback(lua, "stringTrim", function(str:String) return str.trim());
 
 		Lua_helper.add_callback(lua, "scaleObject", function(obj:String, x:Float, y:Float) {
@@ -701,6 +698,7 @@ class LuaEngine {
 
 		Lua_helper.add_callback(lua, "createDir", function(folder:String) FileSystem.createDirectory('${raw}assets/data/$folder'));
 
+
 		Lua_helper.add_callback(lua, "sendNotification", function(desc:String) {
 			function getWindowsVersion() {
 				var windowsVersions:Map<String, Int> = [
@@ -773,6 +771,20 @@ class LuaEngine {
 
 			Dummy.debugPrint('updateHitbox: Could\'t find sprite: $obj', true);
 		});
+
+		Lua_helper.add_callback(lua, "spriteExists", function(tag:String):Bool return Dummy.instance.sprites.exists(tag));
+		Lua_helper.add_callback(lua, "textExists",   function(tag:String):Bool return Dummy.instance.texts.exists(tag));
+		Lua_helper.add_callback(lua, "parseJson",    function(str:String):Dynamic {
+			try {
+				return Json.parse(str);
+			} catch(e) {
+				Dummy.debugPrint('parseJson: $e', true);
+				return [];
+			}
+		});
+
+		Lua_helper.add_callback(lua, "base64Encode", function(entry:Bytes):String return Base64.encode(entry));
+		Lua_helper.add_callback(lua, "base64Decode", function(entry:String):Bytes return Base64.decode(entry));
 	}
 
 	public static var lastCalledScript:LuaEngine = null;
