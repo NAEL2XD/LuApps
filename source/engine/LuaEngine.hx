@@ -12,10 +12,13 @@ class LuaEngine {
 	public var scriptName:String = '';
 	public var closed:Bool = false;
 	
+	var raw:String = "";
 	public function new(script:String, ?scriptCode:String) {
 		lua = LuaL.newstate();
 		LuaL.openlibs(lua);
 		Lua.init_callbacks(lua);
+
+		raw = PlayState.modRaw;
 
 		try {
 			var result:Int = scriptCode != null ? LuaL.dostring(lua, scriptCode) : LuaL.dofile(lua, script);
@@ -32,8 +35,6 @@ class LuaEngine {
 			return;
 		}
 		scriptName = script;
-
-		var raw:String = PlayState.modRaw;
 
 		Lua_helper.add_callback(lua, "print", function(text:String) Dummy.debugPrint(text));
 		Lua_helper.add_callback(lua, "makeSprite", function(tag:String, ?image:String, ?x:Float = 0, ?y:Float = 0) {
@@ -783,8 +784,111 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "base64Encode", function(entry:Bytes):String return Base64.encode(entry));
-		Lua_helper.add_callback(lua, "base64Decode", function(entry:String):Bytes return Base64.decode(entry));
+		Lua_helper.add_callback(lua, "initShader", function(name:String, glslVersion:Int = 120) {
+			if(!Prefs.shaders) return false;
+
+			function initShader(name:String, ?glslVersion:Int = 120) {
+				#if (!flash && sys)
+				if(Dummy.instance.runtimeShaders.exists(name)) {
+					Dummy.debugPrint('initShader: Shader $name was already initialized!');
+					return true;
+				}
+			
+				var foldersToCheck:Array<String> = FileSystem.readDirectory('${raw}assets/shader/');
+				for (folder in foldersToCheck) {
+					if(FileSystem.exists(folder)) {
+						var frag:String = '$folder$name.frag';
+						var vert:String = '$folder$name.frag';
+						var found:Bool = false;
+						if(FileSystem.exists(frag)) {
+							frag = File.getContent(frag);
+							found = true;
+						} else frag = null;
+		
+						if(FileSystem.exists(vert)) {
+							vert = File.getContent(vert);
+							found = true;
+						} else vert = null;
+		
+						if(found) {
+							Dummy.instance.runtimeShaders.set(name, [frag, vert]);
+							return true;
+						}
+					}
+				}
+				Dummy.debugPrint('initShader: Missing shader $name .frag AND .vert files!', true);
+				#end
+				return false;
+			}
+
+			#if (!flash && sys)
+			return initShader(name, glslVersion);
+			#else
+			Dummy.debugPrint("initShader: Platform unsupported for Runtime Shaders!", true);
+			#end
+			return false;
+		});
+
+		Lua_helper.add_callback(lua, "setSpriteShader", function(obj:String, shader:String) {
+			if(!Prefs.shaders) return false;
+
+			if(!Dummy.instance.runtimeShaders.exists(shader)) {
+				Dummy.debugPrint('setSpriteShader: Shader $shader is missing! Make sure you\'ve initalized your shader first!', true);
+				return false;
+			}
+
+			#if (!flash && sys)
+			var killMe:Array<String> = obj.split('.');
+			var leObj:FlxSprite = getObjectDirectly(killMe[0]);
+			if(killMe.length > 1) leObj = getVarInArray(gpltw(killMe), killMe[killMe.length-1]);
+
+			if(leObj != null) {
+				var arr:Array<String> = Dummy.instance.runtimeShaders.get(shader);
+				leObj.shader = new FlxRuntimeShader(arr[0], arr[1]);
+				return true;
+			}
+			#end
+			return false;
+		});
+
+		Lua_helper.add_callback(lua, "removeSpriteShader", function(obj:String) {
+			var killMe:Array<String> = obj.split('.');
+			var leObj:FlxSprite = getObjectDirectly(killMe[0]);
+			if(killMe.length > 1) leObj = getVarInArray(gpltw(killMe), killMe[killMe.length-1]);
+
+			if(leObj != null) {
+				leObj.shader = null;
+				return true;
+			}
+			return false;
+		});
+
+		Lua_helper.add_callback(lua, "setShaderValue", function(obj:String, prop:String, values:Dynamic) {
+			#if (!flash && sys)
+			function getShader(obj:String):FlxRuntimeShader {
+				var killMe:Array<String> = obj.split('.');
+				var leObj:FlxSprite = getObjectDirectly(killMe[0]);
+				if(killMe.length > 1) leObj = getVarInArray(gpltw(killMe), killMe[killMe.length-1]);
+		
+				if(leObj != null) {
+					var shader:Dynamic = leObj.shader;
+					var shader:FlxRuntimeShader = shader;
+					return shader;
+				}
+				return null;
+			}
+
+			var shader:FlxRuntimeShader = getShader(obj);
+			if(shader == null) return;
+
+			switch(Type.typeof(values)) {
+				case TInt: shader.setInt(prop, values);
+				case TFloat: shader.setFloat(prop, values);
+				case TBool: shader.setBool(prop, values);
+				default: Dummy.debugPrint('setShaderValue: Type invalid: ${Type.typeof(values)}', true);
+			}
+			#end
+		});
 	}
 
 	public static var lastCalledScript:LuaEngine = null;

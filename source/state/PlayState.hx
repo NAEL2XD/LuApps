@@ -56,7 +56,6 @@ class PlayState extends FlxState {
 		if (modRaw != "") {
 			modRaw = "";
 			if (FlxG.sound.music != null) FlxG.sound.music.stop();
-			FlxG.resetState();
 		}
 		
 		FlxG.autoPause = false;

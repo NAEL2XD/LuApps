@@ -10,6 +10,7 @@ class Dummy extends FlxState {
 	public var variables:Map<String, Dynamic> = new Map();
 	public var tweens:Map<String, FlxTween> = new Map<String, FlxTween>();
 	public var timers:Map<String, FlxTimer> = new Map<String, FlxTimer>();
+	public var runtimeShaders:Map<String, Array<String>> = new Map<String, Array<String>>();
 	public static var luaArray:Array<LuaEngine> = [];
 	public static var debugger:Array<FlxText> = [];
 	
