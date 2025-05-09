@@ -198,6 +198,7 @@ class Dummy extends FlxState {
 			Dummy.instance.variables.clear();
 			Dummy.instance.tweens.clear();
 			Dummy.instance.timers.clear();
+			Dummy.instance.runtimeShaders.clear();
 			Dummy.luaArray = [];
 			debugger = [];
 
