@@ -784,17 +784,17 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "initShader", function(name:String, glslVersion:Int = 120) {
+		Lua_helper.add_callback(lua, "initShader", function(name:String) {
 			if(!Prefs.shaders) return false;
 
-			function initShader(name:String, ?glslVersion:Int = 120) {
+			function initShader(name:String) {
 				#if (!flash && sys)
 				if(Dummy.instance.runtimeShaders.exists(name)) {
 					Dummy.debugPrint('initShader: Shader $name was already initialized!');
 					return true;
 				}
 			
-				var foldersToCheck:Array<String> = FileSystem.readDirectory('${raw}assets/shader/');
+				var foldersToCheck:Array<String> = FileSystem.readDirectory('${raw}assets/shaders/');
 				for (folder in foldersToCheck) {
 					if(FileSystem.exists(folder)) {
 						var frag:String = '$folder$name.frag';
@@ -816,13 +816,13 @@ class LuaEngine {
 						}
 					}
 				}
-				Dummy.debugPrint('initShader: Missing shader $name .frag AND .vert files!', true);
+				Dummy.debugPrint('initShader: Missing shader $name .frag OR .vert files!', true);
 				#end
 				return false;
 			}
 
 			#if (!flash && sys)
-			return initShader(name, glslVersion);
+			return initShader(name);
 			#else
 			Dummy.debugPrint("initShader: Platform unsupported for Runtime Shaders!", true);
 			#end
@@ -833,7 +833,7 @@ class LuaEngine {
 			if(!Prefs.shaders) return false;
 
 			if(!Dummy.instance.runtimeShaders.exists(shader)) {
-				Dummy.debugPrint('setSpriteShader: Shader $shader is missing! Make sure you\'ve initalized your shader first!', true);
+				Dummy.debugPrint('setSpriteShader: Shader $shader is missing!', true);
 				return false;
 			}
 
