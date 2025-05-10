@@ -10,6 +10,7 @@ class Dummy extends FlxState {
 	public var variables:Map<String, Dynamic> = new Map();
 	public var tweens:Map<String, FlxTween> = new Map<String, FlxTween>();
 	public var timers:Map<String, FlxTimer> = new Map<String, FlxTimer>();
+	public var saves:Map<String, FlxSave> = new Map<String, FlxSave>();
 	public static var luaArray:Array<LuaEngine> = [];
 	public static var debugger:Array<FlxText> = [];
 	
@@ -131,6 +132,7 @@ class Dummy extends FlxState {
 		var curText:Array<String> = text.split("\n");
 		for (text in curText) {
 			debugger.push(new UtilText(0, 16 * l, 1280 * (Prefs.lowDetail ? 1 : 2), text, 14, null, null, null, warn ? FlxColor.YELLOW : FlxColor.WHITE, 'assets/fonts/debug.ttf'));
+			debugger[l].borderSize = 0;
 			l = debugger.length;
 		}
 	}

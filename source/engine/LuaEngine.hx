@@ -782,6 +782,41 @@ class LuaEngine {
 				return [];
 			}
 		});
+
+		Lua_helper.add_callback(lua, "initSave", function(name:String, ?folder:String = 'luapps') {
+			if(!Dummy.instance.saves.exists(name)) {
+				var save:FlxSave = new FlxSave();
+				save.bind(name, '${Utils.getSavePath()}/$folder');
+				Dummy.instance.saves.set(name, save);
+				return;
+			}
+			Dummy.debugPrint('initSave: Save file already initialized: $name');
+		});
+
+		Lua_helper.add_callback(lua, "flushSave", function(name:String) {
+			if(Dummy.instance.saves.exists(name)) {
+				Dummy.instance.saves.get(name).flush();
+				return;
+			}
+			Dummy.debugPrint('flushSave: Save file not initialized: $name', true);
+		});
+
+		Lua_helper.add_callback(lua, "getDataFromSave", function(name:String, field:String) {
+			if(Dummy.instance.saves.exists(name)) {
+				var retVal:Dynamic = Reflect.field(Dummy.instance.saves.get(name).data, field);
+				return retVal;
+			}
+			Dummy.debugPrint('getDataFromSave: Save file not initialized: $name', true);
+			return null;
+		});
+		
+		Lua_helper.add_callback(lua, "setDataFromSave", function(name:String, field:String, value:Dynamic) {
+			if(Dummy.instance.saves.exists(name)) {
+				Reflect.setField(Dummy.instance.saves.get(name).data, field, value);
+				return;
+			}
+			Dummy.debugPrint('setDataFromSave: Save file not initialized: $name', true);
+		});
 	}
 
 	public static var lastCalledScript:LuaEngine = null;

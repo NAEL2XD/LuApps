@@ -30,6 +30,12 @@ class Utils {
 
         return size;
     }
+
+    @:access(flixel.util.FlxSave.validate)
+	inline public static function getSavePath():String {
+		final company:String = FlxG.stage.application.meta.get('company');
+		return '$company/${flixel.util.FlxSave.validate(FlxG.stage.application.meta.get('file'))}';
+	}
 }
 
 class UtilText extends FlxText {
