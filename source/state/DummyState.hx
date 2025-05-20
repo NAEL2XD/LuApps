@@ -138,25 +138,25 @@ class Dummy extends FlxState {
 	}
 
 	public static function updateVars() {
-		Dummy.set('author',        PlayState.author);
-		Dummy.set('clipboardItem', Clipboard.text);
-		Dummy.set('fps',           FPSCounter.currentFPS);
-		Dummy.set('fullscreen',    FlxG.fullscreen);
-		Dummy.set('height',        Application.current.window.height);
-		Dummy.set('lowDetail',     Prefs.lowDetail);
-		Dummy.set('memory',        FPSCounter.curMemory);
-		Dummy.set('mempeak',       FPSCounter.curMaxMemory);
-		Dummy.set('modName',       PlayState.modName);
-		Dummy.set('modRaw',        PlayState.modRaw);
-		Dummy.set('mouseMoved',    FlxG.mouse.justMoved);
-		Dummy.set('mouseWheel',    FlxG.mouse.wheel);
-		Dummy.set('mouseX',        FlxG.mouse.x);
-		Dummy.set('mouseY',        FlxG.mouse.y);
-		Dummy.set('time',          (Date.now().getTime() - (Dummy.oldTime + Dummy.startTime)) / 1000);
-		Dummy.set('version',       Main.luversion);
-		Dummy.set('width',         Application.current.window.width);
-		Dummy.set('windowX',       Application.current.window.x);
-		Dummy.set('windowY',       Application.current.window.y);
+		Dummy.set('GAME_author',    PlayState.author);
+		Dummy.set('CLIPBOARD_item', Clipboard.text);
+		Dummy.set('GAME_fps',       FPSCounter.currentFPS);
+		Dummy.set('WIN_fullscreen', FlxG.fullscreen);
+		Dummy.set('WIN_height',     Application.current.window.height);
+		Dummy.set('GAME_lowDetail', Prefs.lowDetail);
+		Dummy.set('WIN_memory',     FPSCounter.curMemory);
+		Dummy.set('WIN_mempeak',    FPSCounter.curMaxMemory);
+		Dummy.set('GAME_modName',   PlayState.modName);
+		Dummy.set('IO_modRaw',      PlayState.modRaw);
+		Dummy.set('MOUSE_moved',    FlxG.mouse.justMoved);
+		Dummy.set('MOUSE_wheel',    FlxG.mouse.wheel);
+		Dummy.set('MOUSE_x',        FlxG.mouse.x);
+		Dummy.set('MOUSE_y',        FlxG.mouse.y);
+		Dummy.set('GAME_time',      (Date.now().getTime() - (Dummy.oldTime + Dummy.startTime)) / 1000);
+		Dummy.set('GAME_version',   Main.luversion);
+		Dummy.set('WIN_width',      Application.current.window.width);
+		Dummy.set('WIN_x',          Application.current.window.x);
+		Dummy.set('WIN_y',          Application.current.window.y);
 	}
 
 	public static function clearLog() {

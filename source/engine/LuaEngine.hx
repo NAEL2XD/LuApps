@@ -35,8 +35,8 @@ class LuaEngine {
 		}
 		scriptName = script;
 
-		Lua_helper.add_callback(lua, "print", function(text:String) Dummy.debugPrint(text));
-		Lua_helper.add_callback(lua, "makeSprite", function(tag:String, ?image:String, ?x:Float = 0, ?y:Float = 0) {
+		Lua_helper.add_callback(lua, "DEBUG_print", function(text:String) Dummy.debugPrint(text));
+		Lua_helper.add_callback(lua, "SPRITE_make", function(tag:String, ?image:String, ?x:Float = 0, ?y:Float = 0) {
 			function resetSpriteTag(tag:String) {
 				if(!Dummy.instance.sprites.exists(tag)) return;
 		
@@ -62,7 +62,7 @@ class LuaEngine {
 			sprite.active = true;
 		});
 
-		Lua_helper.add_callback(lua, "addSprite", function(tag:String, ?front:Bool = false) {
+		Lua_helper.add_callback(lua, "SPRITE_render", function(tag:String, ?front:Bool = false) {
 			if(Dummy.instance.sprites.exists(tag)) {
 				var thing:ModchartSprite = Dummy.instance.sprites.get(tag);
 				if(!thing.wasAdded) {
@@ -72,7 +72,7 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "removeSprite", function(tag:String) {
+		Lua_helper.add_callback(lua, "SPRITE_destroy", function(tag:String) {
 			if(!Dummy.instance.sprites.exists(tag)) return;
 
 			var lol:ModchartSprite = Dummy.instance.sprites.get(tag);
@@ -81,7 +81,7 @@ class LuaEngine {
 			lol.wasAdded = false;
 		});
 
-		Lua_helper.add_callback(lua, "makeText", function(tag:String, text:String, width:Int, x:Float, y:Float) {
+		Lua_helper.add_callback(lua, "TEXT_make", function(tag:String, text:String, width:Int, x:Float, y:Float) {
 			function resetTextTag(tag:String) {
 				if(!Dummy.instance.texts.exists(tag)) return;
 		
@@ -97,14 +97,14 @@ class LuaEngine {
 			Dummy.instance.texts.set(tag, leText);
 		});
 
-		Lua_helper.add_callback(lua, "addText", function(tag:String) {
+		Lua_helper.add_callback(lua, "TEXT_render", function(tag:String) {
 			if(Dummy.instance.texts.exists(tag)) {
 				var thing:FlxText = Dummy.instance.texts.get(tag);
 				if (thing != null)  Dummy.instance.add(thing);
 			}
 		});
 
-		Lua_helper.add_callback(lua, "removeText", function(tag:String) {
+		Lua_helper.add_callback(lua, "TEST_destroy", function(tag:String) {
 			if(!Dummy.instance.texts.exists(tag)) return;
 
 			var thing:FlxText = Dummy.instance.texts.get(tag);
@@ -114,30 +114,30 @@ class LuaEngine {
 				return;
 			}
 
-			Dummy.debugPrint('removeText: Object $thing does not exist!', true);
+			Dummy.debugPrint('TEST_destroy: Object $thing does not exist!', true);
 		});
 
-		Lua_helper.add_callback(lua, "setTextString", function(tag:String, text:String) {
+		Lua_helper.add_callback(lua, "TEXT_setString", function(tag:String, text:String) {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null) {
 				obj.text = text;
 				return true;
 			}
-			Dummy.debugPrint('setTextString: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('TEXT_setString: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "setTextSize", function(tag:String, size:Int) {
+		Lua_helper.add_callback(lua, "TEXT_setSize", function(tag:String, size:Int) {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null) {
 				obj.size = size * (Prefs.lowDetail ? 1 : 2);
 				return true;
 			}
-			Dummy.debugPrint('setTextSize: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('TEXT_setSize: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "setTextBorder", function(tag:String, size:Int, color:String) {
+		Lua_helper.add_callback(lua, "TEXT_setBorder", function(tag:String, size:Int, color:String) {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null) {
 				var colorNum:Int = Std.parseInt(color);
@@ -147,11 +147,11 @@ class LuaEngine {
 				obj.borderColor = colorNum;
 				return true;
 			}
-			Dummy.debugPrint('setTextBorder: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('TEXT_setBorder: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "setTextStyle", function(tag:String, style:String, hexColor:String, ?size:Float = 1, ?quality:Float = 1) {
+		Lua_helper.add_callback(lua, "TEXT_setStyle", function(tag:String, style:String, hexColor:String, ?size:Float = 1, ?quality:Float = 1) {
 			function getStyle(type:String) {
 				return switch(type.toLowerCase()) {
 					case "shadow": FlxTextBorderStyle.SHADOW;
@@ -162,7 +162,7 @@ class LuaEngine {
 			}
 
 			if (!Dummy.instance.texts.exists(tag)) {
-				Dummy.debugPrint("setTextStyle: Sprite does not exist.", true);
+				Dummy.debugPrint("TEXT_setStyle: Sprite does not exist.", true);
 				return;
 			}
 
@@ -172,7 +172,7 @@ class LuaEngine {
 			text.setBorderStyle(getStyle(style), Std.parseInt(hexColor), size * (Prefs.lowDetail ? 1 : 2), quality);
 		});
 
-		Lua_helper.add_callback(lua, "setTextColor", function(tag:String, color:String) {
+		Lua_helper.add_callback(lua, "TEXT_setColor", function(tag:String, color:String) {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null) {
 				var colorNum:Int = Std.parseInt(color);
@@ -181,21 +181,21 @@ class LuaEngine {
 				obj.color = colorNum;
 				return true;
 			}
-			Dummy.debugPrint('setTextColor: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('TEXT_setColor: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "setTextFont", function(tag:String, newFont:String) {
+		Lua_helper.add_callback(lua, "TEXT_setFont", function(tag:String, newFont:String) {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null) {
 				obj.font = '${raw}assets/fonts/$newFont.ttf';
 				return true;
 			}
-			Dummy.debugPrint('setTextFont: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('TEXT_setFont: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "setTextAlignment", function(tag:String, alignment:String = 'left') {
+		Lua_helper.add_callback(lua, "TEXT_setAlign", function(tag:String, alignment:String = 'left') {
 			var obj:FlxText = getTextObject(tag);
 			if(obj != null) {
 				obj.alignment = LEFT;
@@ -205,44 +205,44 @@ class LuaEngine {
 				}
 				return true;
 			}
-			Dummy.debugPrint('setTextAlignment: Object $tag doesn\'t exist!', true);
+			Dummy.debugPrint('TEXT_setAlign: Object $tag doesn\'t exist!', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "setWindowSize", function(?width:Int = 1280, ?height:Int = 720) {
+		Lua_helper.add_callback(lua, "WIN_setWindowRes", function(?width:Int = 1280, ?height:Int = 720) {
 			FlxG.resizeGame(width, height);
 			FlxG.resizeWindow(width, height);
 		});
 
-		Lua_helper.add_callback(lua, "set", function(variable:String, value:Dynamic) {
+		Lua_helper.add_callback(lua, "PROP_set", function(variable:String, value:Dynamic) {
 			var thing:Array<String> = variable.split('.');
 			if(thing.length > 1) {
 				setVarInArray(gpltw(thing), thing[thing.length-1], value);
 				return;
 			}
 
-			Dummy.debugPrint("set: Cannot access DUMMY variables!", true);
+			Dummy.debugPrint("PROP_set: Cannot access DUMMY variables!", true);
 		});
 
-		Lua_helper.add_callback(lua, "get", function(variable:String) {
+		Lua_helper.add_callback(lua, "PROP_get", function(variable:String) {
 			var result:Dynamic = null;
 			var thing:Array<String> = variable.split('.');
 			if(thing.length > 1) result = getVarInArray(gpltw(thing), thing[thing.length-1]);
-			else Dummy.debugPrint("get: Cannot access DUMMY variables!", true);
+			else Dummy.debugPrint("PROP_get: Cannot access DUMMY variables!", true);
 			return result;
 		});
 
-		Lua_helper.add_callback(lua, "keyJustPressed", function(?key:String) {
+		Lua_helper.add_callback(lua, "KEY_justPressed", function(?key:String) {
 			if (key == null) return FlxG.keys.justPressed.ANY;
 			return Reflect.getProperty(FlxG.keys.justPressed, key);
 		});
 
-		Lua_helper.add_callback(lua, "keyPressed", function(?key:String) {
+		Lua_helper.add_callback(lua, "KEY_pressed", function(?key:String) {
 			if (key == null) return FlxG.keys.pressed.ANY;
 			return Reflect.getProperty(FlxG.keys.pressed, key);
 		});
 
-		Lua_helper.add_callback(lua, "mouseClicked", function(?button:String) {
+		Lua_helper.add_callback(lua, "MOUSE_clicked", function(?button:String) {
 			return switch (button.toLowerCase()) {
 				case "middle": FlxG.mouse.justPressedMiddle;
 				case "right": FlxG.mouse.justPressedRight;
@@ -251,7 +251,7 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "mousePressed", function(?button:String) {
+		Lua_helper.add_callback(lua, "MOUSE_pressed", function(?button:String) {
 			return switch (button.toLowerCase()) {
 				case "middle": FlxG.mouse.pressedMiddle;
 				case "right": FlxG.mouse.pressedRight;
@@ -260,7 +260,7 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "setBlend", function(obj:String, blend:String = '') {
+		Lua_helper.add_callback(lua, "PROP_setBlend", function(obj:String, blend:String = '') {
 			function blendModeFromString(blend:String):BlendMode {
 				return switch(blend.toLowerCase().trim()) {
 					case 'add': ADD;
@@ -295,59 +295,59 @@ class LuaEngine {
 				spr.blend = blendModeFromString(blend);
 				return true;
 			}
-			Dummy.debugPrint('setBlend: Object $obj doesn\'t exist!', true);
+			Dummy.debugPrint('PROP_setBlend: Object $obj doesn\'t exist!', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "doTweenX", function(tag:String, vars:String, value:Dynamic, duration:Float, ?ease:String = 'linear') {
+		Lua_helper.add_callback(lua, "TWEEN_x", function(tag:String, vars:String, value:Dynamic, duration:Float, ?ease:String = 'linear') {
 			var tween:Dynamic = tweenStuff(tag, vars);
 			if(tween != null) {
 				Dummy.instance.tweens.set(tag, FlxTween.tween(tween, {x: value}, duration, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
-						Dummy.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('TWEEN_complete', [tag]);
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
-			} else Dummy.debugPrint('doTweenX: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('TWEEN_x: Couldn\'t find object: $vars', true);
 		});
 
-		Lua_helper.add_callback(lua, "doTweenY", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
+		Lua_helper.add_callback(lua, "TWEEN_y", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
 			var tween:Dynamic = tweenStuff(tag, vars);
 			if(tween != null) {
 				Dummy.instance.tweens.set(tag, FlxTween.tween(tween, {y: value}, duration, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
-						Dummy.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('TWEEN_complete', [tag]);
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
-			} else Dummy.debugPrint('doTweenY: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('TWEEN_y: Couldn\'t find object: $vars', true);
 		});
 
-		Lua_helper.add_callback(lua, "doTweenAngle", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
+		Lua_helper.add_callback(lua, "TWEEN_angle", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
 			var tween:Dynamic = tweenStuff(tag, vars);
 			if(tween != null) {
 				Dummy.instance.tweens.set(tag, FlxTween.tween(tween, {angle: value}, duration, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
-						Dummy.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('TWEEN_complete', [tag]);
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
-			} else Dummy.debugPrint('doTweenAngle: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('TWEEN_angle: Couldn\'t find object: $vars', true);
 		});
 
-		Lua_helper.add_callback(lua, "doTweenAlpha", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
+		Lua_helper.add_callback(lua, "TWEEN_alpha", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
 			var tween:Dynamic = tweenStuff(tag, vars);
 			if(tween != null) {
 				Dummy.instance.tweens.set(tag, FlxTween.tween(tween, {alpha: value}, duration, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
-						Dummy.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('TWEEN_complete', [tag]);
 						Dummy.instance.tweens.remove(tag);
 					}
 				}));
-			} else Dummy.debugPrint('doTweenAlpha: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('TWEEN_alpha: Couldn\'t find object: $vars', true);
 		});
 
-		Lua_helper.add_callback(lua, "doTweenColor", function(tag:String, vars:String, targetColor:String, duration:Float, ease:String) {
+		Lua_helper.add_callback(lua, "TWEEN_color", function(tag:String, vars:String, targetColor:String, duration:Float, ease:String) {
 			var tween:Dynamic = tweenStuff(tag, vars);
 			if(tween != null) {
 				var color:Int = Std.parseInt(targetColor);
@@ -358,62 +358,62 @@ class LuaEngine {
 				Dummy.instance.tweens.set(tag, FlxTween.color(tween, duration, curColor, color, {ease: getFlxEaseByString(ease),
 					onComplete: function(twn:FlxTween) {
 						Dummy.instance.tweens.remove(tag);
-						Dummy.callOnLuas('tweenComplete', [tag]);
+						Dummy.callOnLuas('TWEEN_complete', [tag]);
 					}
 				}));
-			} else Dummy.debugPrint('doTweenColor: Couldn\'t find object: $vars', true);
+			} else Dummy.debugPrint('TWEEN_color: Couldn\'t find object: $vars', true);
 		});
 
-		Lua_helper.add_callback(lua, "setMouseVisibility", function(?show:Bool = true) {
+		Lua_helper.add_callback(lua, "PROP_setMouseVisibility", function(?show:Bool = true) {
 			FlxG.mouse.enabled = show;
 			FlxG.mouse.visible = show;
 		});
 
-		Lua_helper.add_callback(lua, "playSound", function(sound:String) {
+		Lua_helper.add_callback(lua, "WIN_playSound", function(sound:String) {
 			var n:String = '${raw}assets/sounds/$sound.ogg';
 
 			if (!FileSystem.exists(n)) {
-				Dummy.debugPrint('playSound: Couldn\'t find sound file: $n', true);
+				Dummy.debugPrint('WIN_playSound: Couldn\'t find sound file: $n', true);
 				return;
 			}
 
 			Dummy.playSound(n, sound);
 		});
 
-		Lua_helper.add_callback(lua, "moveTowardsMouse", function(tag:String, ?speed:Int = 60) {
+		Lua_helper.add_callback(lua, "PROP_moveToMouse", function(tag:String, ?speed:Int = 60) {
 			if (Dummy.instance.sprites.exists(tag) || Dummy.instance.texts.exists(tag)){
 				FlxVelocity.moveTowardsMouse(Dummy.instance.getLuaObject(tag), speed);
 				return;
 			}
 
-			Dummy.debugPrint("moveTowardsMouse: Sprite does not exist, did you make a typo?", true);
+			Dummy.debugPrint("PROP_moveToMouse: Sprite does not exist, did you make a typo?", true);
 		});
 
-		Lua_helper.add_callback(lua, "sendPopup", function(desc:String = "", ?title:String = "") {
+		Lua_helper.add_callback(lua, "WIN_popup", function(desc:String = "", ?title:String = "") {
 			if (title == "") title = PlayState.modName;
 
 			if (desc == "") {
-				Dummy.debugPrint("sendPopup: Argument 2: Desc cannot be empty!", true);
+				Dummy.debugPrint("WIN_popup: Argument 2: Desc cannot be empty!", true);
 				return;
 			}
 
 			Application.current.window.alert(desc, title);
 		});
 
-		Lua_helper.add_callback(lua, "randomInt", function(?min:Int = 1, ?max:Int = 10) return FlxG.random.int(min, max));
+		Lua_helper.add_callback(lua, "RAND_int", function(?min:Int = 1, ?max:Int = 10) return FlxG.random.int(min, max));
 
-		Lua_helper.add_callback(lua, "randomFloat", function(?min:Float = 0, ?max:Float = 1) return FlxG.random.float(min, max));
+		Lua_helper.add_callback(lua, "RAND_float", function(?min:Float = 0, ?max:Float = 1) return FlxG.random.float(min, max));
 
-		Lua_helper.add_callback(lua, "randomBool", function(?chance:Float = 50) {
+		Lua_helper.add_callback(lua, "RAND_bool", function(?chance:Float = 50) {
 			if (chance > 100) chance = 100;
 			if (chance < 0)   chance = 0;
 
 			return FlxG.random.bool(chance);
 		});
 
-		Lua_helper.add_callback(lua, "collectGarbage", function() openfl.system.System.gc());
+		Lua_helper.add_callback(lua, "WIN_gc", function() openfl.system.System.gc());
 
-		Lua_helper.add_callback(lua, "makeGraphic", function(obj:String, ?width:Int = 256, ?height:Int = 256, ?color:String = "FFFFFF") {
+		Lua_helper.add_callback(lua, "SPRITE_graphic", function(obj:String, ?width:Int = 256, ?height:Int = 256, ?color:String = "FFFFFF") {
 			var colorNum:Int = Std.parseInt(color);
 			if(!color.startsWith('0x')) colorNum = Std.parseInt('0xff$color');
 
@@ -427,7 +427,7 @@ class LuaEngine {
 			if(object != null) object.makeGraphic(width, height, colorNum);
 		});
 
-		Lua_helper.add_callback(lua, "screenCenter", function(obj:String, ?pos:String = 'xy') {
+		Lua_helper.add_callback(lua, "PROP_center", function(obj:String, ?pos:String = 'xy') {
 			var spr:FlxSprite = Dummy.instance.getLuaObject(obj);
 
 			if(spr == null) {
@@ -445,15 +445,15 @@ class LuaEngine {
 				return;
 			}
 
-			Dummy.debugPrint('screenCenter: Object $obj doesn\'t exist!', true);
+			Dummy.debugPrint('PROP_center: Object $obj doesn\'t exist!', true);
 		});
 
-		Lua_helper.add_callback(lua, "stringStartsWith", function(str:String, start:String) return str.startsWith(start));
-		Lua_helper.add_callback(lua, "stringEndsWith", function(str:String, end:String) return str.endsWith(end));
-		Lua_helper.add_callback(lua, "stringSplit", function(str:String, split:String) return str.split(split));
-		Lua_helper.add_callback(lua, "stringTrim", function(str:String) return str.trim());
+		Lua_helper.add_callback(lua, "STR_starts", function(str:String, start:String) return str.startsWith(start));
+		Lua_helper.add_callback(lua, "STR_ends", function(str:String, end:String) return str.endsWith(end));
+		Lua_helper.add_callback(lua, "STR_split", function(str:String, split:String) return str.split(split));
+		Lua_helper.add_callback(lua, "STR_trim", function(str:String) return str.trim());
 
-		Lua_helper.add_callback(lua, "scaleObject", function(obj:String, x:Float, y:Float) {
+		Lua_helper.add_callback(lua, "PROP_scale", function(obj:String, x:Float, y:Float) {
 			if(Dummy.instance.getLuaObject(obj)!=null) {
 				var Stuff:FlxSprite = Dummy.instance.getLuaObject(obj);
 				Stuff.scale.set(x, y);
@@ -470,60 +470,39 @@ class LuaEngine {
 				thing2.updateHitbox();
 				return;
 			}
-			Dummy.debugPrint('scaleObject: Couldnt find object: $obj', true);
+			Dummy.debugPrint('PROP_scale: Couldnt find object: $obj', true);
 		});
 
-		Lua_helper.add_callback(lua, "runTimer", function(tag:String, ?time:Float = 1, ?loops:Int = 1) {
+		Lua_helper.add_callback(lua, "TIMER_run", function(tag:String, ?time:Float = 1, ?loops:Int = 1) {
 			cancelTimer(tag);
 			Dummy.instance.timers.set(tag, new FlxTimer().start(time, function(tmr:FlxTimer) {
 				if(tmr.finished) Dummy.instance.timers.remove(tag);
-				Dummy.callOnLuas('timerComplete', [tag, tmr.loops, tmr.loopsLeft]);
+				Dummy.callOnLuas('TIMER_complete', [tag, tmr.loops, tmr.loopsLeft]);
 			}, loops));
 		});
 
-		Lua_helper.add_callback(lua, "cancelTimer", function(tag:String) cancelTimer(tag));
+		Lua_helper.add_callback(lua, "TIMER_cancel", function(tag:String) cancelTimer(tag));
 
-		Lua_helper.add_callback(lua, "cancelTween", function(tag:String) cancelTween(tag));
+		Lua_helper.add_callback(lua, "TWEEN_cancel", function(tag:String) cancelTween(tag));
 
-		Lua_helper.add_callback(lua, "getContent", function(file:String = ''):String {
+		Lua_helper.add_callback(lua, "IO_read", function(file:String = ''):String {
 			var n:String = '${raw}assets/data/$file';
 			if (file == '') {
-				Dummy.debugPrint("getContent: File argument is empty!", true);
+				Dummy.debugPrint("IO_read: File argument is empty!", true);
 				return "";
 			}
 
 			if (!FileSystem.exists(n)) {
-				Dummy.debugPrint('getContent: File does not exist on $n! Did you make a typo?', true);
+				Dummy.debugPrint('IO_read: File does not exist on $n! Did you make a typo?', true);
 				return "";
 			}
 				
 			return File.getContent(n);
 		});
 
-		Lua_helper.add_callback(lua, "getColorFromFlx", function(color:String = ''):FlxColor {
-			return switch(color) {
-				case 'BLACK':       FlxColor.BLACK;
-				case 'BLUE':        FlxColor.BLUE;
-				case 'BROWN':       FlxColor.BROWN;
-				case 'CYAN':        FlxColor.CYAN;
-				case 'GRAY':        FlxColor.GRAY;
-				case 'GREEN':       FlxColor.GREEN;
-				case 'LIME':        FlxColor.LIME;
-				case 'MAGENTA':     FlxColor.MAGENTA;
-				case 'ORANGE':      FlxColor.ORANGE;
-				case 'PINK':        FlxColor.PINK;
-				case 'PURPLE':      FlxColor.PURPLE;
-				case 'RED':         FlxColor.RED;
-				case 'TRANSPARENT': FlxColor.TRANSPARENT;
-				case 'WHITE':       FlxColor.WHITE;
-				case 'YELLOW':      FlxColor.YELLOW;
-				default:            FlxColor.WHITE;
-			}
-		});
+		Lua_helper.add_callback(lua, "WIN_setWindowName", function(name:String) Main.changeWindowName(name));
 
-		Lua_helper.add_callback(lua, "setWindowName", function(name:String) Main.changeWindowName(name));
-
-		Lua_helper.add_callback(lua, "objectsOverlap", function(obj1:String, obj2:String) {
+		Lua_helper.add_callback(lua, "PROP_objOverlap", function(obj1:String, obj2:String) {
 			var namesArray:Array<String> = [obj1, obj2];
 			var objectsArray:Array<FlxSprite> = [];
 			for (i in 0...namesArray.length) {
@@ -534,40 +513,25 @@ class LuaEngine {
 			return !objectsArray.contains(null) && FlxG.overlap(objectsArray[0], objectsArray[1]);
 		});
 
-		Lua_helper.add_callback(lua, "clearConsole", function() Dummy.clearLog());
+		Lua_helper.add_callback(lua, "DEBUG_clear", function() Dummy.clearLog());
 
-		Lua_helper.add_callback(lua, "resetWindowSize", function() Utils.setDefaultResolution());
+		Lua_helper.add_callback(lua, "WIN_resetRes", function() Utils.setDefaultResolution());
 
-		Lua_helper.add_callback(lua, "exit", function() Dummy.exit());
+		Lua_helper.add_callback(lua, "GAME_exit", function() Dummy.exit());
 
-		Lua_helper.add_callback(lua, "move", function(tag:String, ?xy:String = "xy", ?px:Float = 10) {
-			var spr = Dummy.instance.getLuaObject(tag);
-			if (spr == null) {
-				Dummy.debugPrint('move (argument #1): Couldn\'t find tag: $tag', true);
-				return;
-			}
-
-			switch(xy) {
-				case "x":  spr.x += px;
-				case "y":  spr.y += px;
-				case "xy": spr.x += px; spr.y += px;
-				default: Dummy.debugPrint('move (argument #2): expected x, y or xy, got $xy', true);
-			}
-		});
-
-		Lua_helper.add_callback(lua, "getDistance", function(tag1:String, tag2:String):Float {
+		Lua_helper.add_callback(lua, "PROP_getDist", function(tag1:String, tag2:String):Float {
 			var spr1 = Dummy.instance.getLuaObject(tag1);
 			var spr2 = Dummy.instance.getLuaObject(tag2);
 
 			if (spr1 != null || spr2 != null) {
-				Dummy.debugPrint('getDistance: One of the Sprites does not exist! (arg1: ${spr1.alive}, arg2: ${spr2.alive})', true);
+				Dummy.debugPrint('PROP_getDist: One of the Sprites does not exist! (arg1: ${spr1.alive}, arg2: ${spr2.alive})', true);
 				return 0;
 			}
 
 			return FlxMath.distanceBetween(spr1, spr2);
 		});
 
-		Lua_helper.add_callback(lua, "setIcon", function(image:String) {
+		Lua_helper.add_callback(lua, "WIN_setIcon", function(image:String) {
 			var path:String = '${raw}assets/images/$image.png';
 
 			if (FileSystem.exists(path)) {
@@ -575,12 +539,12 @@ class LuaEngine {
 				return;
 			}
 
-			Dummy.debugPrint('setIcon: Couldn\'t find file: $path');
+			Dummy.debugPrint('WIN_setIcon: Couldn\'t find file: $path');
 		});
 
-		Lua_helper.add_callback(lua, "setClipboardText", function(text:String) Clipboard.text = text);
+		Lua_helper.add_callback(lua, "WIN_setClipboard", function(text:String) Clipboard.text = text);
 
-		Lua_helper.add_callback(lua, "mouseReleased", function(?button:String):Bool {
+		Lua_helper.add_callback(lua, "MOUSE_released", function(?button:String):Bool {
 			return switch (button.toLowerCase()) {
 				case "middle": FlxG.mouse.releasedMiddle;
 				case "right": FlxG.mouse.releasedRight;
@@ -589,7 +553,7 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "mouseJustReleased", function(?button:String):Bool {
+		Lua_helper.add_callback(lua, "MOUSE_justReleased", function(?button:String):Bool {
 			return switch (button.toLowerCase()) {
 				case "middle": FlxG.mouse.justReleasedMiddle;
 				case "right": FlxG.mouse.justReleasedRight;
@@ -598,94 +562,94 @@ class LuaEngine {
 			}
 		});
 
-		Lua_helper.add_callback(lua, "keyReleased", function(?key:String):Bool {
+		Lua_helper.add_callback(lua, "KEY_released", function(?key:String):Bool {
 			if (key == null) return FlxG.keys.released.ANY;
 			return Reflect.getProperty(FlxG.keys.released, key);
 		});
 
-		Lua_helper.add_callback(lua, "keyJustReleased", function(?key:String):Bool {
+		Lua_helper.add_callback(lua, "KEY_JustReleased", function(?key:String):Bool {
 			if (key == null) return FlxG.keys.justReleased.ANY;
 			return Reflect.getProperty(FlxG.keys.justReleased, key);
 		});
 
-		Lua_helper.add_callback(lua, "formatBytes",       function(bytes:Float, precision:Int = 2):String return FlxStringUtil.formatBytes(bytes, precision));
-		Lua_helper.add_callback(lua, "formatMoney",       function(amount:Float, showDecimal:Bool = true, englishStyle:Bool = true):String return FlxStringUtil.formatMoney(amount, showDecimal, englishStyle));
-		Lua_helper.add_callback(lua, "formatTime",        function(seconds:Float, showMS:Bool = false):String return FlxStringUtil.formatTime(seconds, showMS));
-		Lua_helper.add_callback(lua, "toTitleCase",       function(str:String):String return FlxStringUtil.toTitleCase(str));
-		Lua_helper.add_callback(lua, "toUnderscoreCase",  function(str:String):String return FlxStringUtil.toUnderscoreCase(str));
-		Lua_helper.add_callback(lua, "distanceToMouse",   function(sprite:String):Int {
+		Lua_helper.add_callback(lua, "STR_toBytes",       function(bytes:Float, precision:Int = 2):String return FlxStringUtil.formatBytes(bytes, precision));
+		Lua_helper.add_callback(lua, "STR_toMoney",       function(amount:Float, showDecimal:Bool = true, englishStyle:Bool = true):String return FlxStringUtil.formatMoney(amount, showDecimal, englishStyle));
+		Lua_helper.add_callback(lua, "STR_toTime",        function(seconds:Float, showMS:Bool = false):String return FlxStringUtil.formatTime(seconds, showMS));
+		Lua_helper.add_callback(lua, "STR_toTitle",       function(str:String):String return FlxStringUtil.toTitleCase(str));
+		Lua_helper.add_callback(lua, "STR_toUnderscore",  function(str:String):String return FlxStringUtil.toUnderscoreCase(str));
+		Lua_helper.add_callback(lua, "PROP_distanceTo",   function(sprite:String):Int {
 			var spr = Dummy.instance.getLuaObject(sprite);
 
 			if (spr == null) {
-				Dummy.debugPrint('distanceToMouse: Sprite "$sprite" doesn\'t exist!', true);
+				Dummy.debugPrint('PROP_distanceTo: Sprite "$sprite" doesn\'t exist!', true);
 				return 0;
 			}
 
 			return FlxMath.distanceToMouse(spr);
 		});
 
-		Lua_helper.add_callback(lua, "getDecimals", function(num:Float):Int return FlxMath.getDecimals(num));
+		Lua_helper.add_callback(lua, "NUM_decimals", function(num:Float):Int return FlxMath.getDecimals(num));
 
-		Lua_helper.add_callback(lua, "setBrightness", function(tag:String, ?brightness:Float = 0) {
+		Lua_helper.add_callback(lua, "PROP_setBright", function(tag:String, ?brightness:Float = 0) {
 			var spr = Dummy.instance.getLuaObject(tag);
 
 			if (spr == null) {
-				Dummy.debugPrint('setBrightness: Sprite tag "$tag" does not exist, did you make a typo?', true);
+				Dummy.debugPrint('PROP_setBright: Sprite tag "$tag" does not exist, did you make a typo?', true);
 				return;
 			}
 
 			FlxSpriteUtil.setBrightness(spr, brightness);
 		});
 
-		Lua_helper.add_callback(lua, "mouseOverlaps", function(tag:String):Bool {
+		Lua_helper.add_callback(lua, "MOUSE_overlaps", function(tag:String):Bool {
 			var spr = Dummy.instance.getLuaObject(tag);
 
 			if (spr == null) {
-				Dummy.debugPrint('mouseOverlaps: Sprite tag "$tag" does not exist, did you make a typo?', true);
+				Dummy.debugPrint('MOUSE_overlaps: Sprite tag "$tag" does not exist, did you make a typo?', true);
 				return false;
 			}
 
 			return FlxG.mouse.overlaps(spr);
 		});
 
-		Lua_helper.add_callback(lua, "getDay",        function():Int    return Date.now().getDate());
-		Lua_helper.add_callback(lua, "getWeekDay",    function():Int    return Date.now().getDay());
-		Lua_helper.add_callback(lua, "getFullYear",   function():Int    return Date.now().getFullYear());
-		Lua_helper.add_callback(lua, "getHours",      function():Int    return Date.now().getHours());
-		Lua_helper.add_callback(lua, "getMinutes",    function():Int    return Date.now().getMinutes());
-		Lua_helper.add_callback(lua, "getMonth",      function():Int    return Date.now().getMonth());
-		Lua_helper.add_callback(lua, "getSeconds",    function():Int    return Date.now().getSeconds());
-		Lua_helper.add_callback(lua, "getTime",       function():Float  return Date.now().getTime());
-		Lua_helper.add_callback(lua, "getTimeFormat", function():String return Date.now().toString());
+		Lua_helper.add_callback(lua, "DATE_day",        function():Int    return Date.now().getDate());
+		Lua_helper.add_callback(lua, "DATE_weekDay",    function():Int    return Date.now().getDay());
+		Lua_helper.add_callback(lua, "DATE_fullYear",   function():Int    return Date.now().getFullYear());
+		Lua_helper.add_callback(lua, "DATE_hours",      function():Int    return Date.now().getHours());
+		Lua_helper.add_callback(lua, "DATE_minutes",    function():Int    return Date.now().getMinutes());
+		Lua_helper.add_callback(lua, "DATE_month",      function():Int    return Date.now().getMonth());
+		Lua_helper.add_callback(lua, "DATE_seconds",    function():Int    return Date.now().getSeconds());
+		Lua_helper.add_callback(lua, "DATE_time",       function():Float  return Date.now().getTime());
+		Lua_helper.add_callback(lua, "DATE_timeFormat", function():String return Date.now().toString());
 
-		Lua_helper.add_callback(lua, "quickFile", function(name:String = ""):String {
+		Lua_helper.add_callback(lua, "IO_File", function(name:String = ""):String {
 			if (name == "") name = "main";
 			return '${raw}source/$name'.replace("/", ".");
 		});
 
-		Lua_helper.add_callback(lua, "saveContent", function(fileName:String, content:String = ""):Bool {
+		Lua_helper.add_callback(lua, "IO_saveFile", function(fileName:String, content:String = ""):Bool {
 			var pathFile:String = '${raw}assets/data/$fileName';
 			try {
 				File.saveContent(pathFile, content);
 				return true;
-			} catch(e) Dummy.debugPrint('saveContent: Cannot save file on location: $pathFile', true);
+			} catch(e) Dummy.debugPrint('IO_saveFile: Cannot save file on location: $pathFile', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "deleteFile", function(fileName:String):Bool {
+		Lua_helper.add_callback(lua, "IO_deleteFile", function(fileName:String):Bool {
 			var pathFile:String = '${raw}assets/data/$fileName';
 			try {
 				FileSystem.deleteFile(pathFile);
 				return true;
-			} catch(e) Dummy.debugPrint('deleteFile: Cannot delete file on location: $pathFile', true);
+			} catch(e) Dummy.debugPrint('IO_deleteFile: Cannot delete file on location: $pathFile', true);
 			return false;
 		});
 
-		Lua_helper.add_callback(lua, "debugger",   function(?allow:Bool = false)  Dummy.allowDebug = allow);
-		Lua_helper.add_callback(lua, "fileExists", function(filePath:String):Bool return FileSystem.exists('${raw}assets/data/$filePath'));
-		Lua_helper.add_callback(lua, "moveWindow", function(xPos:Int, yPos:Int)   Application.current.window.move(xPos, yPos));
+		Lua_helper.add_callback(lua, "DEBUG_enable",  function(?allow:Bool = false)  Dummy.allowDebug = allow);
+		Lua_helper.add_callback(lua, "IO_fileExists", function(filePath:String):Bool return FileSystem.exists('${raw}assets/data/$filePath'));
+		Lua_helper.add_callback(lua, "WIN_moveWin",   function(xPos:Int, yPos:Int) Application.current.window.move(xPos, yPos));
 
-		Lua_helper.add_callback(lua, "switchState", function(file:String) {
+		Lua_helper.add_callback(lua, "GAME_switchState", function(file:String) {
 			var path:String = '${raw}source/$file.lua';
 
 			if (FileSystem.exists(path)) {
@@ -693,13 +657,13 @@ class LuaEngine {
 				return;
 			}
 
-			Dummy.debugPrint('switchState: Couldn\'t find file: $path');
+			Dummy.debugPrint('GAME_switchState: Couldn\'t find file: $path');
 		});
 
-		Lua_helper.add_callback(lua, "createDir", function(folder:String) FileSystem.createDirectory('${raw}assets/data/$folder'));
+		Lua_helper.add_callback(lua, "IO_mkdir", function(folder:String) FileSystem.createDirectory('${raw}assets/data/$folder'));
 
 
-		Lua_helper.add_callback(lua, "sendNotification", function(desc:String) {
+		Lua_helper.add_callback(lua, "IO_notify", function(desc:String) {
 			function getWindowsVersion() {
 				var windowsVersions:Map<String, Int> = [
 					"Windows 11" => 11,
@@ -742,80 +706,70 @@ class LuaEngine {
 			if (desc != null && desc != "")
 				new HiddenProcess(powershellCommand);
 			else
-				Dummy.debugPrint('sendNotification: Cannot send notification because desc is empty!', true);
+				Dummy.debugPrint('IO_notify: Cannot send notification because desc is empty!', true);
 		});
 
-		Lua_helper.add_callback(lua, "changePresence", function(?state:String = "", ?description:String = "") {
+		Lua_helper.add_callback(lua, "DISCORD_setPresence", function(?state:String = "", ?description:String = "") {
 			if (state == "")       state = Dummy.rpcDetails[0];
 			if (description == "") description = Dummy.rpcDetails[1];
 			
 			DiscordRPC.changePresence(state, description);
 		});
 
-		Lua_helper.add_callback(lua, "openURL",     function(url:String)  FlxG.openURL(url));
-		Lua_helper.add_callback(lua, "openFile",    function(path:String) System.openFile('${raw}assets/data/$path'));
-		Lua_helper.add_callback(lua, "randomColor", function():FlxColor   return FlxG.random.color());
-		Lua_helper.add_callback(lua, "stopAllSounds", function() Pause.killSounds(true));
-		Lua_helper.add_callback(lua, "readDirectory", function(dir:String):Array<String> {
+		Lua_helper.add_callback(lua, "GAME_openURL",      function(url:String)  FlxG.openURL(url));
+		Lua_helper.add_callback(lua, "IO_openFileToWin",  function(path:String) System.openFile('${raw}assets/data/$path'));
+		Lua_helper.add_callback(lua, "WIN_stopAllSounds", function() Pause.killSounds(true));
+		Lua_helper.add_callback(lua, "IO_readDirectory",  function(dir:String):Array<String> {
 			var path:String = '$raw$dir';
 			
 			return FileSystem.readDirectory(path);
 		});
 
-		Lua_helper.add_callback(lua, "updateHitbox", function(obj:String) {
+		Lua_helper.add_callback(lua, "PROP_update", function(obj:String) {
 			if(Dummy.instance.getLuaObject(obj) != null) {
 				var spr = Dummy.instance.getLuaObject(obj);
 				spr.updateHitbox();
 				return;
 			}
 
-			Dummy.debugPrint('updateHitbox: Could\'t find sprite: $obj', true);
+			Dummy.debugPrint('PROP_update: Could\'t find sprite: $obj', true);
 		});
 
-		Lua_helper.add_callback(lua, "spriteExists", function(tag:String):Bool return Dummy.instance.sprites.exists(tag));
-		Lua_helper.add_callback(lua, "textExists",   function(tag:String):Bool return Dummy.instance.texts.exists(tag));
-		Lua_helper.add_callback(lua, "parseJson",    function(str:String):Dynamic {
-			try {
-				return Json.parse(str);
-			} catch(e) {
-				Dummy.debugPrint('parseJson: $e', true);
-				return [];
-			}
-		});
+		Lua_helper.add_callback(lua, "PROP_exists", function(tag:String):Bool  return Dummy.instance.getLuaObject(tag) != null);
 
-		Lua_helper.add_callback(lua, "initSave", function(name:String, ?folder:String = 'luapps') {
+		Lua_helper.add_callback(lua, "SAVE_init", function(name:String, ?folder:String = 'luapps') {
 			if(!Dummy.instance.saves.exists(name)) {
 				var save:FlxSave = new FlxSave();
 				save.bind(name, '${Utils.getSavePath()}/$folder');
 				Dummy.instance.saves.set(name, save);
 				return;
 			}
-			Dummy.debugPrint('initSave: Save file already initialized: $name');
+			Dummy.debugPrint('SAVE_init: Save file already initialized: $name');
 		});
 
-		Lua_helper.add_callback(lua, "flushSave", function(name:String) {
+		Lua_helper.add_callback(lua, "SAVE_flush", function(name:String) {
 			if(Dummy.instance.saves.exists(name)) {
 				Dummy.instance.saves.get(name).flush();
 				return;
 			}
-			Dummy.debugPrint('flushSave: Save file not initialized: $name', true);
+			Dummy.debugPrint('SAVE_flush: Save file not initialized: $name', true);
 		});
 
-		Lua_helper.add_callback(lua, "getDataFromSave", function(name:String, field:String) {
+		Lua_helper.add_callback(lua, "SAVE_getData", function(name:String, field:String) {
 			if(Dummy.instance.saves.exists(name)) {
 				var retVal:Dynamic = Reflect.field(Dummy.instance.saves.get(name).data, field);
 				return retVal;
 			}
-			Dummy.debugPrint('getDataFromSave: Save file not initialized: $name', true);
+			Dummy.debugPrint('SAVE_getData: Save file not initialized: $name', true);
 			return null;
 		});
 		
-		Lua_helper.add_callback(lua, "setDataFromSave", function(name:String, field:String, value:Dynamic) {
+		Lua_helper.add_callback(lua, "SAVE_setData", function(name:String, field:String, value:Dynamic) {
 			if(Dummy.instance.saves.exists(name)) {
 				Reflect.setField(Dummy.instance.saves.get(name).data, field, value);
 				return;
 			}
-			Dummy.debugPrint('setDataFromSave: Save file not initialized: $name', true);
+			Dummy.debugPrint('SAVE_setData: Save file not initialized: $name', true);
 		});
 	}
 
