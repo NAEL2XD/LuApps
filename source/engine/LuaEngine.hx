@@ -1,5 +1,6 @@
 package engine;
 
+import flxanimate.frames.FlxAnimateFrames;
 import state.DummyState.Pause;
 
 class LuaEngine {
@@ -35,39 +36,63 @@ class LuaEngine {
 		}
 		scriptName = script;
 
+		function resetSpriteTag(tag:String) {
+			if(!Dummy.instance.sprites.exists(tag)) return;
+	
+			var thing:ModchartSprite = Dummy.instance.sprites.get(tag);
+			thing.kill();
+			if(thing.wasAdded) Dummy.instance.remove(thing, true);
+
+			thing.destroy();
+			Dummy.instance.sprites.remove(tag);
+		}
+
 		Lua_helper.add_callback(lua, "DEBUG_print", function(text:String) Dummy.debugPrint(text));
 		Lua_helper.add_callback(lua, "SPRITE_make", function(tag:String, ?image:String, ?x:Float = 0, ?y:Float = 0) {
-			function resetSpriteTag(tag:String) {
-				if(!Dummy.instance.sprites.exists(tag)) return;
-		
-				var thing:ModchartSprite = Dummy.instance.sprites.get(tag);
-				thing.kill();
-				if(thing.wasAdded) Dummy.instance.remove(thing, true);
-
-				thing.destroy();
-				Dummy.instance.sprites.remove(tag);
-			}
-
 			tag = tag.replace('.', '');
 			resetSpriteTag(tag);
 			var sprite:ModchartSprite = new ModchartSprite(x, y);
 			if(image != null && image.length > 0) {
-				var path:String = '${raw}assets/images/$image.png';
+				var path:String = '${raw}assets/images/$image';
 				var xd:BitmapData = null;
-				if (FileSystem.exists(path)) xd = BitmapData.fromFile(path);
+				if (FileSystem.exists('$path.png')) xd = BitmapData.fromFile('$path.png');
 				sprite.loadGraphic(xd);
+				if (FileSystem.exists('$path.xml')) sprite.frames = FlxAnimateFrames.fromTextureAtlas('$path.xml');
 			}
 			sprite.antialiasing = Prefs.antiAliasing;
 			Dummy.instance.sprites.set(tag, sprite);
 			sprite.active = true;
 		});
 
+		Lua_helper.add_callback(lua, "SPRITE_addAnimPrefix", function(obj:String, name:String, prefix:String, ?framerate:Int = 24, ?loop:Bool = false) {
+			if(Dummy.instance.getLuaObject(obj,false)!=null) {
+				var s:FlxSprite = Dummy.instance.getLuaObject(obj,false);
+				s.animation.addByPrefix(name, prefix, framerate, loop);
+				if(s.animation.curAnim == null) s.animation.play(name, true);
+				return;
+			}
+
+			var s:FlxSprite = Reflect.getProperty(Dummy.instance, obj);
+			if(s != null) {
+				s.animation.addByPrefix(name, prefix, framerate, loop);
+				if(s.animation.curAnim == null) s.animation.play(name, true);
+			}
+		});
+
+		Lua_helper.add_callback(lua, "SPRITE_playAnim", function(obj:String, name:String, ?forced:Bool = false, ?reverse:Bool = false, ?startFrame:Int = 0):Bool {
+			if(Dummy.instance.getLuaObject(obj, false) != null) {
+				var luaObj:FlxSprite = Dummy.instance.getLuaObject(obj,false);
+				if(luaObj.animation.getByName(name) != null) luaObj.animation.play(name, forced, reverse, startFrame);
+				return true;
+			}
+			return false;
+		});
+
 		Lua_helper.add_callback(lua, "SPRITE_render", function(tag:String, ?front:Bool = false) {
 			if(Dummy.instance.sprites.exists(tag)) {
 				var thing:ModchartSprite = Dummy.instance.sprites.get(tag);
 				if(!thing.wasAdded) {
-					if(front) Dummy.instance.add(thing);
-					else Dummy.instance.insert(1, thing);
+					if(front) Dummy.instance.add(thing); else Dummy.instance.insert(1, thing);
 				}
 			}
 		});
@@ -310,6 +335,8 @@ class LuaEngine {
 				}));
 			} else Dummy.debugPrint('TWEEN_x: Couldn\'t find object: $vars', true);
 		});
+
+		
 
 		Lua_helper.add_callback(lua, "TWEEN_y", function(tag:String, vars:String, value:Dynamic, duration:Float, ease:String) {
 			var tween:Dynamic = tweenStuff(tag, vars);

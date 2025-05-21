@@ -36,6 +36,7 @@ import flixel.util.FlxSave;
 import flixel.util.FlxSpriteUtil;
 import flixel.util.FlxStringUtil;
 import flixel.util.FlxTimer;
+import flxanimate.frames.FlxAnimateFrames;
 import haxe.CallStack;
 import haxe.crypto.Base64;
 import haxe.io.BytesInput;
